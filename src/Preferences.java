@@ -8,6 +8,7 @@ public enum Preferences {
 	ARROW_START_COLOR(new Color(219, 54, 36)),
 	ARROW_END_COLOR(new Color(41, 52, 184)),
 	CIRCLE_PREVIEW_COLOR(new Color(128, 128, 128)),
+	EDGE_SPREAD_ANGLE(Math.toRadians(12)),
 	PAN_SENSITIVITY(1.0);
 	
 	private Object data;

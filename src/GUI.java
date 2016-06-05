@@ -106,8 +106,8 @@ public class GUI extends JFrame{
 	
 	
 	private HashSet<Circle> circles;
-	private HashSet<Line> lines;
-	private HashSet<Arrow> arrows;
+	private HashSet<Line> edges;
+	private HashMap<Circle, HashMap<Circle, HashSet<Line>>> edgeMap = new HashMap<>();
 
 	private boolean redrawLine;
 	
@@ -180,7 +180,7 @@ public class GUI extends JFrame{
 				changeToolOptions(Tool.ARROW);
 			}
 		});
-		arrowButton.setToolTipText("Arrow Tool: Draws a new arrow.\nKeyboard shortcut: A");
+		arrowButton.setToolTipText("Directed Edge Tool: Draws a new directed edge between two nodes. Select two nodes in succession to draw.\nKeyboard shortcut: A");
 		lineButton = new JButton(lineIcon);
 		lineButton.addActionListener(new ActionListener(){
 			@Override
@@ -189,7 +189,7 @@ public class GUI extends JFrame{
 				changeToolOptions(Tool.LINE);
 			}
 		});		
-		lineButton.setToolTipText("Line Tool: Draws a new line.\nKeyboard shortcut: L");
+		lineButton.setToolTipText("Edge Tool: Draws a new edge between two nodes. Select two nodes in succession to draw.\nKeyboard shortcut: L");
 		panButton = new JButton(panIcon);
 		panButton.addActionListener(new ActionListener(){
 			@Override
@@ -226,8 +226,8 @@ public class GUI extends JFrame{
 		//Add buttons to the toolbar
 		toolbar.add(selectButton);
 		toolbar.add(circleButton);
-		toolbar.add(arrowButton);
 		toolbar.add(lineButton);
+		toolbar.add(arrowButton);
 		toolbar.add(panButton);
 		
 		//Initialize and fill mapping from tools to the corresponding button
@@ -246,8 +246,8 @@ public class GUI extends JFrame{
 		
 		//Set JFrame properties
 		circles = new HashSet<>(); //Set of all circles in the editor
-		lines = new HashSet<>();
-		arrows = new HashSet<>();
+		edges = new HashSet<>();
+		edgeMap = new HashMap<>();
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(1024, 768);
@@ -296,7 +296,7 @@ public class GUI extends JFrame{
 		status.gridy = 3;
 		status.weightx = 0.1;
 		status.weighty = 0.4;
-		status.insets = new Insets (2, 2, 2, 2);
+		status.insets = new Insets(2, 2, 2, 2);
 		status.fill = GridBagConstraints.BOTH;
 		
 		//Initialize and set up the main editor panel
@@ -430,34 +430,54 @@ public class GUI extends JFrame{
 	
 	public void removeCircle(Circle c){
 		circles.remove(c);
-		Iterator<Line> lineit = lines.iterator();
+		Iterator<Line> lineit = edges.iterator();
 		while(lineit.hasNext())
 			if(lineit.next().hasEndpoint(c))
 				lineit.remove();
-		Iterator<Arrow> arrowit = arrows.iterator();
-		while(arrowit.hasNext())
-			if(arrowit.next().hasEndpoint(c))
-				arrowit.remove();
 		panelEditor.remove(c);
 		panelEditor.repaint();
 		panelEditor.revalidate();
 	}
 	
-	public void addLine(Line l){
-		lines.add(l);
+	public void addEdge(Line l){
+		edges.add(l);
+		Circle[] ends = l.getEndpoints();
+		boolean first = edgeMap.containsKey(ends[0]);
+		boolean second = edgeMap.containsKey(ends[1]);
+		if(first && edgeMap.get(ends[0]).containsKey(ends[1])){
+			edgeMap.get(ends[0]).get(ends[1]).add(l);
+		}else if(second && edgeMap.get(ends[1]).containsKey(ends[0])){
+			edgeMap.get(ends[1]).get(ends[0]).add(l);
+		}else if(first){
+			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
+			edgeMap.get(ends[0]).get(ends[1]).add(l);
+		}else if(second){
+			edgeMap.get(ends[1]).put(ends[0], new HashSet<Line>());
+			edgeMap.get(ends[1]).get(ends[0]).add(l);
+		}else{
+			edgeMap.put(ends[0], new HashMap<Circle, HashSet<Line>>());
+			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
+			edgeMap.get(ends[0]).get(ends[1]).add(l);
+		}
+//		if(first && edgeMap.get(ends[0]).containsKey(ends[1])){
+//			edgeMap.get(ends[0]).get(ends[1]).add(l);
+//		}else if(first){
+//			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
+//			edgeMap.get(ends[0]).get(ends[1]).add(l);
+//		}else{
+//			edgeMap.put(ends[0], new HashMap<Circle, HashSet<Line>>());
+//			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
+//			edgeMap.get(ends[0]).get(ends[1]).add(l);
+//		}
 	}
 	
-	public void addArrow(Arrow a){
-		arrows.add(a);
-	}
-	
-	public boolean getRedrawLine(){
-		return redrawLine;
-	}
-	
-	public void setRedrawLine(boolean b){
-		redrawLine = b;
-	}
+//	public boolean getRedrawLine(){
+//		return redrawLine;
+//	}
+//	
+//	public void setRedrawLine(boolean b){
+//		redrawLine = b;
+//	}
 	
 	public void displayProperties(GraphComponent g){
 		String type = "";
@@ -489,12 +509,12 @@ public class GUI extends JFrame{
 		return circles;
 	}
 	
-	public HashSet<Line> getLines(){
-		return lines;
+	public HashSet<Line> getEdges(){
+		return edges;
 	}
 	
-	public HashSet<Arrow> getArrows(){
-		return arrows;
+	public HashMap<Circle, HashMap<Circle, HashSet<Line>>> getEdgeMap(){
+		return edgeMap;
 	}
 	
 	public int currentID(){

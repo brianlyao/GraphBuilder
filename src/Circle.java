@@ -156,8 +156,8 @@ public class Circle extends GraphComponent {
 						}else{
 							Circle sink = gui.getLinePoint();
 							Line newLine = new Line(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
-							gui.addLine(newLine);
-							gui.setRedrawLine(true);
+							gui.addEdge(newLine);
+//							gui.setRedrawLine(true);
 							gui.setLinePoint(null);
 							gui.repaint();
 						}
@@ -167,7 +167,7 @@ public class Circle extends GraphComponent {
 						}else{
 							Circle sink = gui.getArrowPoint();
 							Arrow newArrow = new Arrow(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
-							gui.addArrow(newArrow);
+							gui.addEdge(newArrow);
 //							gui.setRedrawLine(true);
 							gui.setArrowPoint(null);
 							gui.repaint();
@@ -209,7 +209,7 @@ public class Circle extends GraphComponent {
 //						}
 //					}
 					setCoords(newPoint);
-					gui.setRedrawLine(true);
+//					gui.setRedrawLine(true);
 				}
 			}
 			@Override

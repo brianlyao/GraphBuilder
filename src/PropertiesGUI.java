@@ -1,11 +1,9 @@
-import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-
-public class PropertiesGUI extends JFrame {
-	private GraphComponent focus;
+public class PropertiesGUI extends JPanel {
 	
-	public PropertiesGUI(GraphComponent gc){
-		focus = gc;
+	public PropertiesGUI(){
+		
 	}
 
 	
