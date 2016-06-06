@@ -57,12 +57,12 @@ public class ToolOptionsPanel extends JToolBar {
 			this.setLayout(new FlowLayout(FlowLayout.LEADING));
 			circleRadiusLabel = new JLabel("Node Radius (px):");
 			circleRadiusTextField = new JTextField(3);
-			circleRadiusTextField.setText("20");
-			circleRadiusSlider = new JSlider(JSlider.HORIZONTAL, 0, 250, 20);
+			circleRadiusTextField.setText("30");
+			circleRadiusSlider = new JSlider(JSlider.HORIZONTAL, 0, 250, 30);
 			circleRadiusSlider.setPaintTicks(true);
 			circleRadiusSlider.setMinorTickSpacing(10);
 			circleRadiusSlider.setMajorTickSpacing(50);
-			circleRadiusSlider.setPaintLabels(true);
+//			circleRadiusSlider.setPaintLabels(true);
 			circleRadiusTextField.addActionListener(new ActionListener(){
 				@Override
 				public void actionPerformed(ActionEvent arg0) {

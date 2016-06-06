@@ -10,7 +10,7 @@ import javax.swing.*;
 public class Circle extends GraphComponent {
 	private static final int BORDER_THICKNESS = 2;
 	private static final int SELECTED_BORDER_THICKNESS = 1;
-	private static final int DEFAULT_RADIUS = 20;
+	private static final int DEFAULT_RADIUS = 30;
 	private static final int PADDING = 1;
 	private static final int DISTANCE_PADDING = 5;
 	

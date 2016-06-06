@@ -9,6 +9,9 @@ public enum Preferences {
 	ARROW_END_COLOR(new Color(41, 52, 184)),
 	CIRCLE_PREVIEW_COLOR(new Color(128, 128, 128)),
 	EDGE_SPREAD_ANGLE(Math.toRadians(12)),
+	SELF_EDGE_SUBTENDED_ANGLE(Math.toRadians(45)),
+	SELF_EDGE_ARC_ANGLE(Math.toRadians(110)),
+	SELF_EDGE_OFFSET_ANGLE(Math.toRadians(42)),
 	PAN_SENSITIVITY(1.0);
 	
 	private Object data;
