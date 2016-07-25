@@ -150,26 +150,17 @@ public class Circle extends GraphComponent {
 						}
 						repaint();
 						gui.setSelection(source); 
-					}else if(current == Tool.LINE){
+					}else if(current == Tool.LINE || current == Tool.ARROW){
 						if(gui.getLinePoint() == null){
 							gui.setLinePoint(Circle.this);
 						}else{
 							Circle sink = gui.getLinePoint();
 							Line newLine = new Line(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
+							if(current == Tool.ARROW)
+								newLine = new Arrow(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
 							gui.addEdge(newLine);
 //							gui.setRedrawLine(true);
 							gui.setLinePoint(null);
-							gui.repaint();
-						}
-					}else if(current == Tool.ARROW){
-						if(gui.getArrowPoint() == null){
-							gui.setArrowPoint(Circle.this);
-						}else{
-							Circle sink = gui.getArrowPoint();
-							Arrow newArrow = new Arrow(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
-							gui.addEdge(newArrow);
-//							gui.setRedrawLine(true);
-							gui.setArrowPoint(null);
 							gui.repaint();
 						}
 					}
@@ -314,22 +305,18 @@ public class Circle extends GraphComponent {
 			Tool current = gui.getCurrentTool();
 			if(current == Tool.LINE){
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if(gui.getLinePoint() == null){
+				if(gui.getLinePoint() == null)
 					g2d.setColor((Color) Preferences.LINE_START_COLOR.getData());
-					g2d.draw(bounds);
-				}else{
+				else
 					g2d.setColor((Color) Preferences.LINE_END_COLOR.getData());
-					g2d.draw(bounds);
-				}
+				g2d.draw(bounds);
 			}else if(current == Tool.ARROW){
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if(gui.getArrowPoint() == null){
+				if(gui.getLinePoint() == null)
 					g2d.setColor((Color) Preferences.ARROW_START_COLOR.getData());
-					g2d.draw(bounds);
-				}else{
+				else
 					g2d.setColor((Color) Preferences.ARROW_END_COLOR.getData());
-					g2d.draw(bounds);
-				}
+				g2d.draw(bounds);
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 
 public enum Tool {
-	SELECT, NODE, ARROW, LINE, PAN;
+	SELECT, EDGE_SELECT, NODE, ARROW, LINE, PAN;
 
 }

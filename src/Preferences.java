@@ -11,7 +11,10 @@ public enum Preferences {
 	EDGE_SPREAD_ANGLE(Math.toRadians(12)),
 	SELF_EDGE_SUBTENDED_ANGLE(Math.toRadians(45)),
 	SELF_EDGE_ARC_ANGLE(Math.toRadians(110)),
-	SELF_EDGE_OFFSET_ANGLE(Math.toRadians(42)),
+	SELF_EDGE_OFFSET_ANGLE(Math.toRadians(50)),
+	EDGE_SELECT_PREVIEW_COLOR(new Color(170, 170, 170)),
+	EDGE_SELECT_SQUARE_SIZE(5),
+	EDGE_SELECT_SQUARE_COLOR(new Color(230, 53, 54)),
 	PAN_SENSITIVITY(1.0);
 	
 	private Object data;

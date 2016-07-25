@@ -1,15 +1,32 @@
 import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.awt.geom.QuadCurve2D;
 
 public class Line extends GraphComponent {
-	private static final int LINE_THICKNESS = 2;
+	
+	public static final int LINE = 0;
+	public static final int CURVE = 1;
+	public static final int LOOP = 2;
+	
+	private static final int LINE_THICKNESS = 2; // Initial value of edge weight
+	
+	// Endpoint nodes of the edge. For directed edges, c1 is the source, c2 is the sink
 	private Circle c1;
 	private Circle c2;
+	
+	// If the edge is a quadratic bezier curve OR a linear bezier (in the latter case, control is null)
 	private Point2D.Double p1;
 	private Point2D.Double p2;
 	private Point2D.Double control;
+	
+	// If the edge is a self-edge (and thus an arc)
+	private Point2D.Double arcPoint1;
+	private Point2D.Double arcPoint2;
+	private Point2D.Double center;
+	private double radius;
+	
+	private int type;
+	
 	private Color color;
 	private int weight;
 	private String text;
@@ -54,6 +71,34 @@ public class Line extends GraphComponent {
 	
 	public Circle[] getEndpoints(){
 		return new Circle[] {c1, c2};
+	}
+	
+	public Point2D.Double[] getBezierPoints(){
+		return new Point2D.Double[] {p1, control, p2};
+	}
+	
+	public Point2D.Double getCenter(){
+		return center;
+	}
+	
+	public double getRadius(){
+		return radius;
+	}
+	
+	public void setCenter(Point2D.Double p){
+		center = p;
+	}
+	
+	public void setRadius(double r){
+		radius = r;
+	}
+	
+	public int getType(){
+		return type;
+	}
+	
+	public void setType(int t){
+		type = t;
 	}
 	
 	public Color getColor(){

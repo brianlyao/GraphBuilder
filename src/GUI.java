@@ -11,7 +11,48 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
-public class GUI extends JFrame{
+public class GUI extends JFrame {
+	
+	private class ToolShortcut {
+		
+		// Indicates whether the button needs to be pressed down prior to the final key
+		private boolean ctrlNeeded;
+		private boolean shiftNeeded;
+		private boolean altNeeded;
+		
+		private int keyCode; // The final keystroke which completes the shortcut
+		
+		public ToolShortcut(boolean ctrl, boolean shift, boolean alt, int key){
+			ctrlNeeded = ctrl;
+			shiftNeeded = shift;
+			altNeeded = alt;
+
+			keyCode = key;
+		}
+		
+		public ToolShortcut(int key){
+			this(false, false, false, key);
+		}
+		
+		public boolean[] getReqs(){
+			return new boolean[] {ctrlNeeded, shiftNeeded, altNeeded};
+		}
+		
+		public int getFinalKeyCode(){
+			return keyCode;
+		}
+		
+		public int hashCode(){
+			return ("" + ctrlNeeded + shiftNeeded + altNeeded + keyCode).hashCode();
+		}
+		
+		public boolean equals(Object obj){
+			ToolShortcut other = (ToolShortcut) obj;
+			return keyCode == other.keyCode && ctrlNeeded == other.ctrlNeeded && shiftNeeded == other.shiftNeeded && altNeeded == other.altNeeded;
+		}
+		
+	}
+	
 	private final int PANE_PADDING = 10;
 //	private PriorityQueue<Node> order;
 	private int currentID;
@@ -26,6 +67,7 @@ public class GUI extends JFrame{
 	//Tool bar (right below menu bar)
 	private JToolBar toolbar;
 	private JButton selectButton;
+	private JButton edgeSelectButton;
 	private JButton circleButton;
 	private JButton arrowButton;
 	private JButton lineButton;
@@ -33,11 +75,13 @@ public class GUI extends JFrame{
 	
 	//Icons for tool bar
 	private final ImageIcon selectIcon;
+	private final ImageIcon edgeSelectIcon;
 	private final ImageIcon circleIcon;
 	private final ImageIcon arrowIcon;
 	private final ImageIcon lineIcon;
 	private final ImageIcon panIcon;
 	private final ImageIcon selectSelectedIcon;
+	private final ImageIcon edgeSelectSelectedIcon;
 	private final ImageIcon circleSelectedIcon;
 	private final ImageIcon arrowSelectedIcon;
 	private final ImageIcon lineSelectedIcon;
@@ -47,7 +91,11 @@ public class GUI extends JFrame{
 	private Tool currentTool;
 	private HashMap<Tool, JButton> toolButtons;
 	private HashMap<Tool, ImageIcon[]> toolIcons;
-	private HashMap<Character, Tool> toolShortcuts;
+	private HashMap<ToolShortcut, Tool> toolShortcuts;
+	
+	private boolean controlPressed;
+	private boolean altPressed;
+	private boolean shiftPressed;
 	
 	private Circle linePoint;
 	private Circle arrowPoint;
@@ -108,13 +156,10 @@ public class GUI extends JFrame{
 	private HashSet<Circle> circles;
 	private HashSet<Line> edges;
 	private HashMap<Circle, HashMap<Circle, HashSet<Line>>> edgeMap = new HashMap<>();
-
-	private boolean redrawLine;
 	
 	public GUI(){
 		super("Graph Builder 1.0");
 		currentID = 0;
-		redrawLine = false;
 		
 		//Initialize and fill menu bar
 		menuBar = new JMenuBar();
@@ -135,11 +180,13 @@ public class GUI extends JFrame{
 		
 		//Initialize icons for tools
 		selectIcon = new ImageIcon("iconSelect.png");
+		edgeSelectIcon = new ImageIcon("iconEdgeSelect.png");
 		circleIcon = new ImageIcon("iconCircle.png");
 		arrowIcon = new ImageIcon("iconArrow.png");
 		lineIcon = new ImageIcon("iconLine.png");
 		panIcon = new ImageIcon("iconPan.png");
 		selectSelectedIcon = new ImageIcon("iconSelectSelected.png");
+		edgeSelectSelectedIcon = new ImageIcon("iconEdgeSelectSelected.png");
 		circleSelectedIcon = new ImageIcon("iconCircleSelected.png");
 		arrowSelectedIcon = new ImageIcon("iconArrowSelected.png");
 		lineSelectedIcon = new ImageIcon("iconLineSelected.png");
@@ -148,6 +195,7 @@ public class GUI extends JFrame{
 		//Hash tools to both their icons
 		toolIcons = new HashMap<>();
 		toolIcons.put(Tool.SELECT, new ImageIcon[] {selectIcon, selectSelectedIcon});
+		toolIcons.put(Tool.EDGE_SELECT, new ImageIcon[] {edgeSelectIcon, edgeSelectSelectedIcon});
 		toolIcons.put(Tool.NODE, new ImageIcon[] {circleIcon, circleSelectedIcon});
 		toolIcons.put(Tool.ARROW, new ImageIcon[] {arrowIcon, arrowSelectedIcon});
 		toolIcons.put(Tool.LINE, new ImageIcon[] {lineIcon, lineSelectedIcon});
@@ -163,6 +211,15 @@ public class GUI extends JFrame{
 			}
 		});
 		selectButton.setToolTipText("Select Tool: Use the left mouse button to select and drag circles.");
+		edgeSelectButton = new JButton(edgeSelectIcon);
+		edgeSelectButton.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				actionForToolButtons(Tool.EDGE_SELECT);
+				changeToolOptions(Tool.EDGE_SELECT);
+			}
+		});
+		edgeSelectButton.setToolTipText("Edge Select Tool: Use the left mouse button to select the closest edge.");
 		circleButton = new JButton(circleIcon);
 		circleButton.addActionListener(new ActionListener(){
 			@Override
@@ -200,31 +257,62 @@ public class GUI extends JFrame{
 		});
 		panButton.setToolTipText("Pan Tool: Allows you to pan the workspace by dragging the left mouse click.\nKeyboard shortcut: P");
 		
+		//Obviously, these are not pressed by default
+		controlPressed = false;
+		shiftPressed = false;
+		altPressed = false;
+		
 		//Fill mapping from shortcut key to the appropriate tool, and add key listener for shortcuts
 		toolShortcuts = new HashMap<>();
-		toolShortcuts.put('s', Tool.SELECT);
-		toolShortcuts.put('c', Tool.NODE);
-		toolShortcuts.put('a', Tool.ARROW);
-		toolShortcuts.put('l', Tool.LINE);
-		toolShortcuts.put('p', Tool.PAN);
+		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_S), Tool.SELECT);
+		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_E), Tool.EDGE_SELECT);
+		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_C), Tool.NODE);
+		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_A), Tool.ARROW);
+		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_L), Tool.LINE);
+		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_P), Tool.PAN);
 		this.addKeyListener(new KeyListener(){
 			@Override
-			public void keyPressed(KeyEvent arg0) {}
-			@Override
-			public void keyReleased(KeyEvent arg0) {}
-			@Override
-			public void keyTyped(KeyEvent arg0) {
-				char typed = arg0.getKeyChar();
-				Tool lookup = toolShortcuts.get(typed);
-				if(lookup != null && currentTool != lookup){
-					actionForToolButtons(lookup);
-					changeToolOptions(lookup);
+			public void keyPressed(KeyEvent arg0) {
+				int keyCode = arg0.getKeyCode();
+				switch(keyCode){
+					case KeyEvent.VK_SHIFT:
+						shiftPressed = true;
+						break;
+					case KeyEvent.VK_CONTROL:
+						controlPressed = true;
+						break;
+					case KeyEvent.VK_ALT:
+						altPressed = true;
+						break;
+					default:
+						Tool t = toolShortcuts.get(new ToolShortcut(controlPressed, shiftPressed, altPressed, keyCode));
+						actionForToolButtons(t);
+						changeToolOptions(t);
 				}
 			}
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				int keyCode = arg0.getKeyCode();
+				switch(keyCode){
+					case KeyEvent.VK_SHIFT:
+						shiftPressed = false;
+						break;
+					case KeyEvent.VK_CONTROL:
+						controlPressed = false;
+						break;
+					case KeyEvent.VK_ALT:
+						altPressed = false;
+						break;
+					default:
+				}
+			}
+			@Override
+			public void keyTyped(KeyEvent arg0) {}
 		});
 		
 		//Add buttons to the toolbar
 		toolbar.add(selectButton);
+		toolbar.add(edgeSelectButton);
 		toolbar.add(circleButton);
 		toolbar.add(lineButton);
 		toolbar.add(arrowButton);
@@ -233,6 +321,7 @@ public class GUI extends JFrame{
 		//Initialize and fill mapping from tools to the corresponding button
 		toolButtons = new HashMap<>();
 		toolButtons.put(Tool.SELECT, selectButton);
+		toolButtons.put(Tool.EDGE_SELECT, edgeSelectButton);
 		toolButtons.put(Tool.NODE, circleButton);
 		toolButtons.put(Tool.ARROW, arrowButton);
 		toolButtons.put(Tool.LINE, lineButton);
@@ -434,9 +523,20 @@ public class GUI extends JFrame{
 		while(lineit.hasNext())
 			if(lineit.next().hasEndpoint(c))
 				lineit.remove();
+		if(edgeMap.keySet().contains(c)){
+			edgeMap.remove(c);
+		}else{
+			Iterator<Circle> it = edgeMap.keySet().iterator();
+			while(it.hasNext()){
+				if(edgeMap.get(it.next()).keySet().contains(c))
+					it.remove();
+			}
+		}
 		panelEditor.remove(c);
 		panelEditor.repaint();
 		panelEditor.revalidate();
+		if(linePoint == c)
+			linePoint = null;
 	}
 	
 	public void addEdge(Line l){
@@ -459,25 +559,7 @@ public class GUI extends JFrame{
 			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
 			edgeMap.get(ends[0]).get(ends[1]).add(l);
 		}
-//		if(first && edgeMap.get(ends[0]).containsKey(ends[1])){
-//			edgeMap.get(ends[0]).get(ends[1]).add(l);
-//		}else if(first){
-//			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
-//			edgeMap.get(ends[0]).get(ends[1]).add(l);
-//		}else{
-//			edgeMap.put(ends[0], new HashMap<Circle, HashSet<Line>>());
-//			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
-//			edgeMap.get(ends[0]).get(ends[1]).add(l);
-//		}
 	}
-	
-//	public boolean getRedrawLine(){
-//		return redrawLine;
-//	}
-//	
-//	public void setRedrawLine(boolean b){
-//		redrawLine = b;
-//	}
 	
 	public void displayProperties(GraphComponent g){
 		String type = "";
@@ -535,14 +617,6 @@ public class GUI extends JFrame{
 	
 	public void setLinePoint(Circle c){
 		linePoint = c;
-	}
-	
-	public Circle getArrowPoint(){
-		return arrowPoint;
-	}
-	
-	public void setArrowPoint(Circle c){
-		arrowPoint = c;
 	}
 	
 	public int getCurrentRadius(){
