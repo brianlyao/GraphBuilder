@@ -179,18 +179,18 @@ public class GUI extends JFrame {
 		toolbar.setRollover(true);
 		
 		//Initialize icons for tools
-		selectIcon = new ImageIcon("iconSelect.png");
-		edgeSelectIcon = new ImageIcon("iconEdgeSelect.png");
-		circleIcon = new ImageIcon("iconCircle.png");
-		arrowIcon = new ImageIcon("iconArrow.png");
-		lineIcon = new ImageIcon("iconLine.png");
-		panIcon = new ImageIcon("iconPan.png");
-		selectSelectedIcon = new ImageIcon("iconSelectSelected.png");
-		edgeSelectSelectedIcon = new ImageIcon("iconEdgeSelectSelected.png");
-		circleSelectedIcon = new ImageIcon("iconCircleSelected.png");
-		arrowSelectedIcon = new ImageIcon("iconArrowSelected.png");
-		lineSelectedIcon = new ImageIcon("iconLineSelected.png");
-		panSelectedIcon = new ImageIcon("iconPanSelected.png");
+		selectIcon = new ImageIcon("img/iconSelect.png");
+		edgeSelectIcon = new ImageIcon("img/iconEdgeSelect.png");
+		circleIcon = new ImageIcon("img/iconCircle.png");
+		arrowIcon = new ImageIcon("img/iconArrow.png");
+		lineIcon = new ImageIcon("img/iconLine.png");
+		panIcon = new ImageIcon("img/iconPan.png");
+		selectSelectedIcon = new ImageIcon("img/iconSelectSelected.png");
+		edgeSelectSelectedIcon = new ImageIcon("img/iconEdgeSelectSelected.png");
+		circleSelectedIcon = new ImageIcon("img/iconCircleSelected.png");
+		arrowSelectedIcon = new ImageIcon("img/iconArrowSelected.png");
+		lineSelectedIcon = new ImageIcon("img/iconLineSelected.png");
+		panSelectedIcon = new ImageIcon("img/iconPanSelected.png");
 		
 		//Hash tools to both their icons
 		toolIcons = new HashMap<>();
