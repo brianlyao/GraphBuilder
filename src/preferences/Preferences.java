@@ -1,7 +1,9 @@
+package preferences;
 import java.awt.Color;
 
-
+/** A class for holding user preferences. Currently, these are hard-coded, but eventually they will be moved to a file. */
 public enum Preferences {
+	
 	SELECTION_COLOR(Color.BLUE),
 	LINE_START_COLOR(new Color(115, 30, 136)),
 	LINE_END_COLOR(new Color(40, 145, 77)),
@@ -12,21 +14,24 @@ public enum Preferences {
 	SELF_EDGE_SUBTENDED_ANGLE(Math.toRadians(45)),
 	SELF_EDGE_ARC_ANGLE(Math.toRadians(110)),
 	SELF_EDGE_OFFSET_ANGLE(Math.toRadians(50)),
+	EDGE_PREVIEW_COLOR(new Color(170, 170, 170)),
 	EDGE_SELECT_PREVIEW_COLOR(new Color(170, 170, 170)),
-	EDGE_SELECT_SQUARE_SIZE(5),
+	EDGE_SELECT_SQUARE_SIZE(7),
 	EDGE_SELECT_SQUARE_COLOR(new Color(230, 53, 54)),
 	PAN_SENSITIVITY(1.0);
 	
 	private Object data;
-	private Preferences(Object o){
+	
+	Preferences(Object o) {
 		data = o;
 	}
 	
-	public Object getData(){
+	public Object getData() {
 		return data;
 	}
 	
-	public void setData(Object o){
+	public void setData(Object o) {
 		data = o;
 	}
+	
 }

@@ -1,3 +1,4 @@
+package uielements;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -16,10 +17,16 @@ import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import tool.Tool;
+
+/** A panel for displaying options for various tools. */
 public class ToolOptionsPanel extends JToolBar {
 	
+	private static final long serialVersionUID = 3598910131347326252L;
+
 	private GUI gui;
 	
+	// Interface components for the node tool
 	private JLabel circleRadiusLabel;
 	private JTextField circleRadiusTextField;
 	private JSlider circleRadiusSlider;
@@ -39,6 +46,7 @@ public class ToolOptionsPanel extends JToolBar {
 	private JButton circleTextColorButton;
 	private Color circleTextColor;
 	
+	// Interface components for the edge tool
 	private JLabel lineWeightLabel;
 	private JTextField lineWeightTextField;
 	private JSlider lineWeightSlider;
@@ -50,10 +58,16 @@ public class ToolOptionsPanel extends JToolBar {
 	
 	private String choose;
 	
-	public ToolOptionsPanel(GUI g, Tool t){
+	/** Create a new options panel.
+	 * 
+	 * @param g The GUI in which this panel will be.
+	 * @param t The tool whose properties we want to display.
+	 * 
+	 * */
+	public ToolOptionsPanel(GUI g, Tool t) {
 		super();
 		gui = g;
-		if(t == Tool.NODE){
+		if(t == Tool.NODE) {
 			this.setLayout(new FlowLayout(FlowLayout.LEADING));
 			circleRadiusLabel = new JLabel("Node Radius (px):");
 			circleRadiusTextField = new JTextField(3);
@@ -63,7 +77,7 @@ public class ToolOptionsPanel extends JToolBar {
 			circleRadiusSlider.setMinorTickSpacing(10);
 			circleRadiusSlider.setMajorTickSpacing(50);
 //			circleRadiusSlider.setPaintLabels(true);
-			circleRadiusTextField.addActionListener(new ActionListener(){
+			circleRadiusTextField.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					try{
@@ -79,7 +93,7 @@ public class ToolOptionsPanel extends JToolBar {
 					}
 				}
 			});
-			circleRadiusSlider.addChangeListener(new ChangeListener(){
+			circleRadiusSlider.addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
 					circleRadiusTextField.setText(String.valueOf(circleRadiusSlider.getValue()));
@@ -110,7 +124,7 @@ public class ToolOptionsPanel extends JToolBar {
 			fillImage(circleBorderColorImage, circleBorderColor);
 			circleBorderColorIcon = new ImageIcon(circleBorderColorImage);
 			circleBorderColorButton = new JButton(circleBorderColorIcon);
-			circleBorderColorButton.addActionListener(new ActionListener(){
+			circleBorderColorButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					Color c = JColorChooser.showDialog(gui, "Choose Border Color", circleBorderColor);
@@ -125,7 +139,7 @@ public class ToolOptionsPanel extends JToolBar {
 			fillImage(circleTextColorImage, circleTextColor);
 			circleTextColorIcon = new ImageIcon(circleTextColorImage);
 			circleTextColorButton = new JButton(circleTextColorIcon);
-			circleTextColorButton.addActionListener(new ActionListener(){
+			circleTextColorButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					Color c = JColorChooser.showDialog(gui, "Choose Text Color", circleTextColor);
@@ -148,7 +162,7 @@ public class ToolOptionsPanel extends JToolBar {
 			this.addSeparator();
 			this.add(circleTextColorLabel);
 			this.add(circleTextColorButton);
-		}else if(t == Tool.LINE){
+		}else if(t == Tool.LINE) {
 			choose = "Choose Line Color";
 			this.setLayout(new FlowLayout(FlowLayout.LEADING));
 			lineWeightLabel = new JLabel("Line Weight: ");
@@ -158,7 +172,7 @@ public class ToolOptionsPanel extends JToolBar {
 			lineWeightSlider.setPaintTicks(true);
 			lineWeightSlider.setMinorTickSpacing(5);
 			lineWeightSlider.setPaintLabels(true);
-			lineWeightTextField.addActionListener(new ActionListener(){
+			lineWeightTextField.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					try{
@@ -174,7 +188,7 @@ public class ToolOptionsPanel extends JToolBar {
 					}
 				}
 			});
-			lineWeightSlider.addChangeListener(new ChangeListener(){
+			lineWeightSlider.addChangeListener(new ChangeListener() {
 				@Override
 				public void stateChanged(ChangeEvent e) {
 					lineWeightTextField.setText(String.valueOf(lineWeightSlider.getValue()));
@@ -186,11 +200,11 @@ public class ToolOptionsPanel extends JToolBar {
 			fillImage(lineColorImage, lineColor);
 			lineColorIcon = new ImageIcon(lineColorImage);
 			lineColorButton = new JButton(lineColorIcon);
-			lineColorButton.addActionListener(new ActionListener(){
+			lineColorButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					Color c = JColorChooser.showDialog(gui, choose, lineColor);
-					if(c != null){
+					if(c != null) {
 						lineColor = c;
 						fillImage(lineColorImage, c);
 					}
@@ -205,37 +219,40 @@ public class ToolOptionsPanel extends JToolBar {
 		}
 	}
 	
-	public void lineToArrow(){
+	/** Convert this options panel from the edge tool to the directed edge tool. */
+	public void lineToArrow() {
 		lineWeightLabel.setText("Arrow Weight: ");
 		lineColorLabel.setText("Arrow Color: ");
 		choose = "Choose Arrow Color";
 	}
 	
-	public void arrowToLine(){
+	/** Convert this options panel from the directed edge tool to the edge tool. */
+	public void arrowToLine() {
 		lineWeightLabel.setText("Line Weight: ");
 		lineColorLabel.setText("Line Color: ");
 		choose = "Choose Line Color";
 	}
 	
-	public int getCurrentRadius(){
+	public int getCurrentRadius() {
 		return circleRadiusSlider.getValue();
 	}
 	
-	public Color[] getCurrentCircleColors(){
+	public Color[] getCurrentCircleColors() {
 		return new Color[] {circleFillColor, circleBorderColor, circleTextColor};
 	}
 	
-	public int getCurrentLineWeight(){
+	public int getCurrentLineWeight() {
 		return lineWeightSlider.getValue();
 	}
 	
-	public Color getCurrentLineColor(){
+	public Color getCurrentLineColor() {
 		return lineColor;
 	}
 	
-	private void fillImage(BufferedImage b, Color c){
+	private void fillImage(BufferedImage b, Color c) {
 		for(int i = 0 ; i < b.getWidth() ; i++)
 			for(int j = 0 ; j < b.getHeight() ; j++)
 				b.setRGB(i, j, c.getRGB());
 	}
+	
 }

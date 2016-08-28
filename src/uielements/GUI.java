@@ -1,61 +1,75 @@
+package uielements;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.PriorityQueue;
 
 import javax.swing.*;
 import javax.swing.border.*;
-import javax.swing.event.*;
+
+import tool.Tool;
+import components.Circle;
+import components.GraphComponent;
+import components.Line;
 
 public class GUI extends JFrame {
 	
+	private static final long serialVersionUID = -8275121379599770074L;
+	private static final String VERSION = "0.0.3";
+
 	private class ToolShortcut {
 		
 		// Indicates whether the button needs to be pressed down prior to the final key
 		private boolean ctrlNeeded;
 		private boolean shiftNeeded;
 		private boolean altNeeded;
+		private boolean mouse1Needed;
+		private boolean mouse2Needed;
+		private boolean mouse3Needed;
 		
 		private int keyCode; // The final keystroke which completes the shortcut
 		
-		public ToolShortcut(boolean ctrl, boolean shift, boolean alt, int key){
+		public ToolShortcut(boolean ctrl, boolean shift, boolean alt, boolean mouse1, boolean mouse2, boolean mouse3, int key) {
 			ctrlNeeded = ctrl;
 			shiftNeeded = shift;
 			altNeeded = alt;
-
+			mouse1Needed = mouse1;
+			mouse2Needed = mouse2;
+			mouse3Needed = mouse3;
+			
 			keyCode = key;
 		}
 		
-		public ToolShortcut(int key){
-			this(false, false, false, key);
+		public ToolShortcut(int key) {
+			this(false, false, false, false, false, false, key);
 		}
 		
-		public boolean[] getReqs(){
-			return new boolean[] {ctrlNeeded, shiftNeeded, altNeeded};
+		public ToolShortcut(boolean ctrl, boolean shift, boolean alt, int key) {
+			this(ctrl, shift, alt, false, false, false, key);
 		}
 		
-		public int getFinalKeyCode(){
+		public boolean[] getReqs() {
+			return new boolean[] {ctrlNeeded, shiftNeeded, altNeeded, mouse1Needed, mouse2Needed, mouse3Needed};
+		}
+		
+		public int getFinalKeyCode() {
 			return keyCode;
 		}
 		
-		public int hashCode(){
+		public int hashCode() {
 			return ("" + ctrlNeeded + shiftNeeded + altNeeded + keyCode).hashCode();
 		}
 		
-		public boolean equals(Object obj){
+		public boolean equals(Object obj) {
 			ToolShortcut other = (ToolShortcut) obj;
 			return keyCode == other.keyCode && ctrlNeeded == other.ctrlNeeded && shiftNeeded == other.shiftNeeded && altNeeded == other.altNeeded;
 		}
 		
 	}
 	
-	private final int PANE_PADDING = 10;
+//	private final int PANE_PADDING = 10;
 //	private PriorityQueue<Node> order;
-	private int currentID;
 	
 	//Menu bar
 	private JMenuBar menuBar;
@@ -88,40 +102,23 @@ public class GUI extends JFrame {
 	private final ImageIcon panSelectedIcon;
 	// Selected icons have 50% less brightness
 	
-	private Tool currentTool;
+	// Store objects for tool buttons
+	private Tool currentTool; // The tool being used
 	private HashMap<Tool, JButton> toolButtons;
 	private HashMap<Tool, ImageIcon[]> toolIcons;
 	private HashMap<ToolShortcut, Tool> toolShortcuts;
 	
+	// Whether any of the Control, Alt, or Shift keys are pressed down
 	private boolean controlPressed;
 	private boolean altPressed;
 	private boolean shiftPressed;
 	
-	private Circle linePoint;
-	private Circle arrowPoint;
+	private Circle linePoint; // The first node that's selected when drawing an edge
 	
 	//Tool options bar 
 	private final ToolOptionsPanel nodeOptions;
 	private ToolOptionsPanel lineOptions;
 	private JPanel toolOptions;
-//	private JLabel circleRadiusLabel;
-//	private JTextField circleRadiusTextField;
-//	private JSlider circleRadiusSlider;
-//	private JLabel circleFillColorLabel;
-//	private BufferedImage circleFillColorImage;
-//	private ImageIcon circleFillColorIcon;
-//	private JButton circleFillColorButton;
-//	private Color circleFillColor;
-//	private JLabel circleBorderColorLabel;
-//	private BufferedImage circleBorderColorImage;
-//	private ImageIcon circleBorderColorIcon;
-//	private JButton circleBorderColorButton;
-//	private Color circleBorderColor;
-//	private JLabel circleTextColorLabel;
-//	private BufferedImage circleTextColorImage;
-//	private ImageIcon circleTextColorIcon;
-//	private JButton circleTextColorButton;
-//	private Color circleTextColor;
 	
 	//The currently selected item
 	private GraphComponent selection;
@@ -140,26 +137,23 @@ public class GUI extends JFrame {
 	private JPanel appearanceCircleTab;
 	private JPanel descriptionCircleTab;
 	
-	private JLabel generalSelection;
-	private JLabel generalSelectionID;
-	private JLabel generalNodeLocation;
-	private JLabel generalNodeRadius;
-	private JLabel generalNodeEdges;
-	private JButton generalNodeEdgesAll;
-	private JLabel generalNodeIndegree;
-	private JLabel generalNodeOutdegree;
-	private JLabel generalArrowFrom;
-	private JLabel generalArrowTo;
+//	private JLabel generalSelection;
+//	private JLabel generalSelectionID;
+//	private JLabel generalNodeLocation;
+//	private JLabel generalNodeRadius;
+//	private JLabel generalNodeEdges;
+//	private JButton generalNodeEdgesAll;
+//	private JLabel generalNodeIndegree;
+//	private JLabel generalNodeOutdegree;
+//	private JLabel generalArrowFrom;
+//	private JLabel generalArrowTo;
 	
+	private HashSet<Circle> circles; // The set of all nodes
+	private HashSet<Line> edges; // The set of all edges
+	private HashMap<Circle, HashMap<Circle, HashSet<Line>>> edgeMap = new HashMap<>(); // A mapping from a pair of nodes to the edges between them
 	
-	
-	private HashSet<Circle> circles;
-	private HashSet<Line> edges;
-	private HashMap<Circle, HashMap<Circle, HashSet<Line>>> edgeMap = new HashMap<>();
-	
-	public GUI(){
-		super("Graph Builder 1.0");
-		currentID = 0;
+	public GUI() {
+		super("Graph Builder " + VERSION);
 		
 		//Initialize and fill menu bar
 		menuBar = new JMenuBar();
@@ -203,7 +197,7 @@ public class GUI extends JFrame {
 		
 		//Initialize tool buttons and add listeners to them.
 		selectButton = new JButton(selectIcon);
-		selectButton.addActionListener(new ActionListener(){
+		selectButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				actionForToolButtons(Tool.SELECT);
@@ -212,7 +206,7 @@ public class GUI extends JFrame {
 		});
 		selectButton.setToolTipText("Select Tool: Use the left mouse button to select and drag circles.");
 		edgeSelectButton = new JButton(edgeSelectIcon);
-		edgeSelectButton.addActionListener(new ActionListener(){
+		edgeSelectButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				actionForToolButtons(Tool.EDGE_SELECT);
@@ -221,7 +215,7 @@ public class GUI extends JFrame {
 		});
 		edgeSelectButton.setToolTipText("Edge Select Tool: Use the left mouse button to select the closest edge.");
 		circleButton = new JButton(circleIcon);
-		circleButton.addActionListener(new ActionListener(){
+		circleButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				actionForToolButtons(Tool.NODE);
@@ -230,7 +224,7 @@ public class GUI extends JFrame {
 		});
 		circleButton.setToolTipText("Circle Tool: Places a new circle.\nKeyboard shortcut: C");
 		arrowButton = new JButton(arrowIcon);
-		arrowButton.addActionListener(new ActionListener(){
+		arrowButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				actionForToolButtons(Tool.ARROW);
@@ -239,7 +233,7 @@ public class GUI extends JFrame {
 		});
 		arrowButton.setToolTipText("Directed Edge Tool: Draws a new directed edge between two nodes. Select two nodes in succession to draw.\nKeyboard shortcut: A");
 		lineButton = new JButton(lineIcon);
-		lineButton.addActionListener(new ActionListener(){
+		lineButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				actionForToolButtons(Tool.LINE);
@@ -248,7 +242,7 @@ public class GUI extends JFrame {
 		});		
 		lineButton.setToolTipText("Edge Tool: Draws a new edge between two nodes. Select two nodes in succession to draw.\nKeyboard shortcut: L");
 		panButton = new JButton(panIcon);
-		panButton.addActionListener(new ActionListener(){
+		panButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				actionForToolButtons(Tool.PAN);
@@ -270,7 +264,7 @@ public class GUI extends JFrame {
 		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_A), Tool.ARROW);
 		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_L), Tool.LINE);
 		toolShortcuts.put(new ToolShortcut(KeyEvent.VK_P), Tool.PAN);
-		this.addKeyListener(new KeyListener(){
+		this.addKeyListener(new KeyListener() {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
 				int keyCode = arg0.getKeyCode();
@@ -403,42 +397,42 @@ public class GUI extends JFrame {
 		Border lowerEtched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
 		panelProperties.setBorder(BorderFactory.createTitledBorder(lowerEtched, "Properties"));
 		
-		generalCircleTab = new JPanel();
-		GroupLayout gl = new GroupLayout(generalCircleTab);
-		gl.setAutoCreateGaps(true);
-		generalSelection = new JLabel("Selection Type:");
-		generalSelectionID = new JLabel("Selection ID:");
-		generalNodeLocation = new JLabel("Location:");
-		generalNodeRadius = new JLabel("Radius:");
-		generalNodeEdges = new JLabel("Edges:");
-		generalNodeEdgesAll = new JButton("See Edges");
-		generalNodeIndegree = new JLabel("Indegree:");
-		generalNodeOutdegree = new JLabel("Outdegree:");
-		gl.setHorizontalGroup(gl.createParallelGroup(GroupLayout.Alignment.LEADING)
-				.addComponent(generalSelection)
-				.addComponent(generalSelectionID)
-				.addComponent(generalNodeLocation)
-				.addComponent(generalNodeRadius)
-				.addGroup(gl.createSequentialGroup()
-						.addComponent(generalNodeEdges)
-						.addComponent(generalNodeEdgesAll))
-				.addComponent(generalNodeIndegree)
-				.addComponent(generalNodeOutdegree));
-		gl.setVerticalGroup(gl.createSequentialGroup()
-				.addComponent(generalSelection)
-				.addComponent(generalSelectionID)
-				.addComponent(generalNodeLocation)
-				.addComponent(generalNodeRadius)
-				.addGroup(gl.createParallelGroup(GroupLayout.Alignment.BASELINE)
-						.addComponent(generalNodeEdges)
-						.addComponent(generalNodeEdgesAll))
-				.addComponent(generalNodeIndegree)
-				.addComponent(generalNodeOutdegree));
+//		generalCircleTab = new JPanel();
+//		GroupLayout gl = new GroupLayout(generalCircleTab);
+//		gl.setAutoCreateGaps(true);
+//		generalSelection = new JLabel("Selection Type:");
+//		generalSelectionID = new JLabel("Selection ID:");
+//		generalNodeLocation = new JLabel("Location:");
+//		generalNodeRadius = new JLabel("Radius:");
+//		generalNodeEdges = new JLabel("Edges:");
+//		generalNodeEdgesAll = new JButton("See Edges");
+//		generalNodeIndegree = new JLabel("Indegree:");
+//		generalNodeOutdegree = new JLabel("Outdegree:");
+//		gl.setHorizontalGroup(gl.createParallelGroup(GroupLayout.Alignment.LEADING)
+//				.addComponent(generalSelection)
+//				.addComponent(generalSelectionID)
+//				.addComponent(generalNodeLocation)
+//				.addComponent(generalNodeRadius)
+//				.addGroup(gl.createSequentialGroup()
+//						.addComponent(generalNodeEdges)
+//						.addComponent(generalNodeEdgesAll))
+//				.addComponent(generalNodeIndegree)
+//				.addComponent(generalNodeOutdegree));
+//		gl.setVerticalGroup(gl.createSequentialGroup()
+//				.addComponent(generalSelection)
+//				.addComponent(generalSelectionID)
+//				.addComponent(generalNodeLocation)
+//				.addComponent(generalNodeRadius)
+//				.addGroup(gl.createParallelGroup(GroupLayout.Alignment.BASELINE)
+//						.addComponent(generalNodeEdges)
+//						.addComponent(generalNodeEdgesAll))
+//				.addComponent(generalNodeIndegree)
+//				.addComponent(generalNodeOutdegree));
+//		
+//		generalCircleTab.setLayout(gl);
 		
-		generalCircleTab.setLayout(gl);
-		
-		appearanceCircleTab = new JPanel();
-		descriptionCircleTab = new JPanel();
+//		appearanceCircleTab = new JPanel();
+//		descriptionCircleTab = new JPanel();
 		
 		//Initialize and fill out the tabbed pane
 		propertiesCirclePane = new JTabbedPane();
@@ -446,27 +440,8 @@ public class GUI extends JFrame {
 		propertiesCirclePane.addTab("Appearance", appearanceCircleTab);
 		propertiesCirclePane.addTab("Description", descriptionCircleTab);
 		panelProperties.add(propertiesCirclePane, BorderLayout.CENTER);
-//		panelProperties.addComponentListener(new ComponentListener(){
-//			@Override
-//			public void componentHidden(ComponentEvent arg0) {}
-//			@Override
-//			public void componentMoved(ComponentEvent arg0) {}
-//			@Override
-//			public void componentResized(ComponentEvent arg0) {
-//				Rectangle newBounds = ((JPanel) arg0.getSource()).getBounds();
-//				propertiesPane.setBounds(newBounds.x + PANE_PADDING, newBounds.y + PANE_PADDING,
-//										newBounds.width - PANE_PADDING, newBounds.height - PANE_PADDING);
-//				generalTab.setBounds(newBounds.x + PANE_PADDING, newBounds.y + PANE_PADDING,
-//						newBounds.width - PANE_PADDING, newBounds.height - PANE_PADDING);
-//				appearanceTab.setBounds(newBounds.x + PANE_PADDING, newBounds.y + PANE_PADDING,
-//						newBounds.width - PANE_PADDING, newBounds.height - PANE_PADDING);
-//				descriptionTab.setBounds(newBounds.x + PANE_PADDING, newBounds.y + PANE_PADDING,
-//						newBounds.width - PANE_PADDING, newBounds.height - PANE_PADDING);
-//			}
-//			@Override
-//			public void componentShown(ComponentEvent arg0) {}
-//		});
-		
+
+		// Add properties panel
 		add(panelProperties, prop);
 		
 		panelStatus = new JPanel();
@@ -476,31 +451,31 @@ public class GUI extends JFrame {
 	}
 	
 	/** The procedure when a tool button is pressed. Updates the current tool and the button appearance. */
-	private void actionForToolButtons(Tool t){
-		if(currentTool != null){
-			if(currentTool != t){
+	private void actionForToolButtons(Tool t) {
+		if(currentTool != null) {
+			if(currentTool != t) {
 				toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool)[0]);
 				toolButtons.get(t).setIcon(toolIcons.get(t)[1]);
 				currentTool = t;
-			}else{
+			} else {
 				toolButtons.get(t).setIcon(toolIcons.get(t)[0]);
 				currentTool = null;
 			}
-		}else{
+		} else {
 			toolButtons.get(t).setIcon(toolIcons.get(t)[1]);
 			currentTool = t;
 		}
 	}
 	
-	private void changeToolOptions(Tool t){
+	private void changeToolOptions(Tool t) {
 		toolOptions.removeAll();
-		if(currentTool != null && currentTool != Tool.SELECT && currentTool != Tool.PAN){
+		if(currentTool != null && currentTool != Tool.SELECT && currentTool != Tool.PAN) {
 			if(currentTool == Tool.NODE)
 				toolOptions.add(nodeOptions);
-			else if(currentTool == Tool.LINE){
+			else if(currentTool == Tool.LINE) {
 				lineOptions.arrowToLine();
 				toolOptions.add(lineOptions);
-			}else if(currentTool == Tool.ARROW){
+			}else if(currentTool == Tool.ARROW) {
 				lineOptions.lineToArrow();
 				toolOptions.add(lineOptions);
 			}
@@ -509,21 +484,20 @@ public class GUI extends JFrame {
 		toolOptions.revalidate();
 	}
 	
-	public void addCircle(Circle c){
-		c.setID(currentID++);
+	public void addCircle(Circle c) {
 		circles.add(c);
 		panelEditor.add(c);
 		panelEditor.repaint();
 		panelEditor.revalidate();
 	}
 	
-	public void removeCircle(Circle c){
+	public void removeCircle(Circle c) {
 		circles.remove(c);
 		Iterator<Line> lineit = edges.iterator();
 		while(lineit.hasNext())
 			if(lineit.next().hasEndpoint(c))
 				lineit.remove();
-		if(edgeMap.keySet().contains(c)){
+		if(edgeMap.keySet().contains(c)) {
 			edgeMap.remove(c);
 		}else{
 			Iterator<Circle> it = edgeMap.keySet().iterator();
@@ -539,14 +513,14 @@ public class GUI extends JFrame {
 			linePoint = null;
 	}
 	
-	public void addEdge(Line l){
+	public void addEdge(Line l) {
 		edges.add(l);
 		Circle[] ends = l.getEndpoints();
 		boolean first = edgeMap.containsKey(ends[0]);
 		boolean second = edgeMap.containsKey(ends[1]);
-		if(first && edgeMap.get(ends[0]).containsKey(ends[1])){
+		if(first && edgeMap.get(ends[0]).containsKey(ends[1])) {
 			edgeMap.get(ends[0]).get(ends[1]).add(l);
-		}else if(second && edgeMap.get(ends[1]).containsKey(ends[0])){
+		}else if(second && edgeMap.get(ends[1]).containsKey(ends[0])) {
 			edgeMap.get(ends[1]).get(ends[0]).add(l);
 		}else if(first){
 			edgeMap.get(ends[0]).put(ends[1], new HashSet<Line>());
@@ -561,89 +535,86 @@ public class GUI extends JFrame {
 		}
 	}
 	
-	public void displayProperties(GraphComponent g){
-		String type = "";
-		JPanel panel = new JPanel();
-		if(g instanceof Circle){
-			type = "Circle";
-			generalNodeLocation.setText("Location: %d, %d");
-			generalNodeRadius.setText("Radius: %d");
-			generalNodeEdges.setText("Number of Edges: %d");
-			generalNodeEdgesAll.setText("See Edges");
-			generalNodeIndegree.setText("Indegree: %d");
-			generalNodeOutdegree.setText("Outdegree: %d");
-			panel.add(propertiesCirclePane, BorderLayout.CENTER);;
-		}
-		generalSelection.setText(type);
-		generalSelectionID.setText(String.valueOf(g.getID()));
-		JFrame props = new JFrame(String.format("%s Properties: \"%d\"", type, g.getID()));
-		int result = JOptionPane.showConfirmDialog(props, panel);
-		if(result == JOptionPane.OK_OPTION){
-			//TODO
-		}
-	}
+//	public void displayProperties(GraphComponent g){
+//		String type = "";
+//		JPanel panel = new JPanel();
+//		if(g instanceof Circle){
+//			type = "Circle";
+//			generalNodeLocation.setText("Location: %d, %d");
+//			generalNodeRadius.setText("Radius: %d");
+//			generalNodeEdges.setText("Number of Edges: %d");
+//			generalNodeEdgesAll.setText("See Edges");
+//			generalNodeIndegree.setText("Indegree: %d");
+//			generalNodeOutdegree.setText("Outdegree: %d");
+//			panel.add(propertiesCirclePane, BorderLayout.CENTER);;
+//		}
+//		generalSelection.setText(type);
+//		generalSelectionID.setText(String.valueOf(g.getID()));
+//		JFrame props = new JFrame(String.format("%s Properties: \"%d\"", type, g.getID()));
+//		int result = JOptionPane.showConfirmDialog(props, panel);
+//		if(result == JOptionPane.OK_OPTION){
+//			//TODO
+//		}
+//	}
 	
-	public JScrollPane getScrollPane(){
+	public JScrollPane getScrollPane() {
 		return panelEditorScroll;
 	}
 	
-	public HashSet<Circle> getCircles(){
+	public HashSet<Circle> getCircles() {
 		return circles;
 	}
 	
-	public HashSet<Line> getEdges(){
+	public HashSet<Line> getEdges() {
 		return edges;
 	}
 	
-	public HashMap<Circle, HashMap<Circle, HashSet<Line>>> getEdgeMap(){
+	public HashMap<Circle, HashMap<Circle, HashSet<Line>>> getEdgeMap() {
 		return edgeMap;
 	}
 	
-	public int currentID(){
-		return currentID;
-	}
-	
-	public GraphComponent getSelection(){
+	public GraphComponent getSelection() {
 		return selection;
 	}
 	
-	public Tool getCurrentTool(){
+	public Tool getCurrentTool() {
 		return currentTool;
 	}
 	
-	public Circle getLinePoint(){
+	public Circle getLinePoint() {
 		return linePoint;
 	}
 	
-	public void setLinePoint(Circle c){
+	public void setLinePoint(Circle c) {
 		linePoint = c;
 	}
 	
-	public int getCurrentRadius(){
+	public int getCurrentRadius() {
 		if(currentTool == Tool.NODE)
 			return nodeOptions.getCurrentRadius();
 		return -1;
 	}
 	
-	public Color[] getCurrentCircleColors(){
+	public Color[] getCurrentCircleColors() {
 		if(currentTool == Tool.NODE)
 			return nodeOptions.getCurrentCircleColors();
 		return null;
 	}
 	
-	public int getCurrentLineWeight(){
+	public int getCurrentLineWeight() {
 		if(currentTool == Tool.LINE || currentTool == Tool.ARROW)
 			return lineOptions.getCurrentLineWeight();
 		return -1;
 	}
 	
-	public Color getCurrentLineColor(){
+	public Color getCurrentLineColor() {
 		if(currentTool == Tool.LINE || currentTool == Tool.ARROW)
 			return lineOptions.getCurrentLineColor();
 		return null;
 	}
 	
-	public void setSelection(GraphComponent gc){
+	public void setSelection(GraphComponent gc) {
 		selection = gc;
 	}
+	
 }
