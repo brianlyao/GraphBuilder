@@ -1,5 +1,5 @@
-bin/**
-doc/**
-.settings/**
+bin/
+doc/
+.settings/
 .classpath
 .project
