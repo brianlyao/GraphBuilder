@@ -6,8 +6,8 @@ public enum Tool {
 	SELECT,
 	EDGE_SELECT,
 	NODE,
-	ARROW,
-	LINE,
+	DIRECTED_EDGE,
+	EDGE,
 	PAN;
 
 }

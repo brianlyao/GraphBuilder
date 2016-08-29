@@ -1,12 +1,13 @@
 package components;
+
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 
-import uielements.GUI;
+import uielements.Editor;
 
 /** An instance is an edge of the graph. Visually represented by a line, quadratic bezier curve, or loop. */
-public class Line extends GraphComponent {
+public class Edge extends GraphComponent {
 	
 	private static final long serialVersionUID = -6840630886505529490L;
 	
@@ -16,11 +17,11 @@ public class Line extends GraphComponent {
 	
 	private static final int LINE_THICKNESS = 2; // Initial value of edge weight
 	
-	private GUI gui;
+	private Editor editor; // The editor in which this edge is displayed
 	
 	// Endpoint nodes of the edge. For directed edges, c1 is the source, c2 is the sink
-	private Circle c1;
-	private Circle c2;
+	private Node c1;
+	private Node c2;
 	
 	// If the edge is a quadratic bezier curve OR a linear bezier (in the latter case, control is null)
 	private Point2D.Double p1;
@@ -45,15 +46,15 @@ public class Line extends GraphComponent {
 	 * @param c2 Another node. We draw this edge from c1 to c2.
 	 * @param c  The edge's visual color.
 	 * @param w  The edge's visual weight (thickness).
-	 * 
-	 * */
-	public Line(Circle c1, Circle c2, Color c, int w, GUI g) {
+	 * @param ed The Editor this edge will be displayed on.
+	 */
+	public Edge(Node c1, Node c2, Color c, int w, Editor ed) {
 		super();
 		this.c1 = c1;
 		this.c2 = c2;
 		color = c;
 		this.weight = w;
-		gui = g;
+		editor = ed;
 		
 		p1 = new Point2D.Double();
 		p2 = new Point2D.Double();
@@ -74,13 +75,23 @@ public class Line extends GraphComponent {
 		return curve;
 	}
 	
-	/** Returns whether the specified node is one of this edge's endpoints. */
-	public boolean hasEndpoint(Circle c) {
+	/** 
+	 * Returns whether the specified node is one of this edge's endpoints.
+	 * 
+	 * @param c The node we want to check to see if it is one of this edge's endpoints.
+	 * @return true if c is an endpoint of this edge, and false otherwise.
+	 */
+	public boolean hasEndpoint(Node c) {
 		return c == c1 || c == c2;
 	}
 	
-	public Circle[] getEndpoints() {
-		return new Circle[] {c1, c2};
+	/** 
+	 * Get the endpoints of this edge.
+	 * 
+	 * @return An array of two nodes containing both endpoints.
+	 */
+	public Node[] getEndpoints() {
+		return new Node[] {c1, c2};
 	}
 	
 	public Point2D.Double[] getBezierPoints() {
@@ -88,6 +99,8 @@ public class Line extends GraphComponent {
 	}
 	
 	public Point2D.Double getCenter() {
+		if(type != Edge.LOOP)
+			return null;
 		return center;
 	}
 	
@@ -96,6 +109,8 @@ public class Line extends GraphComponent {
 	}
 	
 	public double getRadius() {
+		if(type != Edge.LOOP)
+			return Double.NaN;
 		return radius;
 	}
 	

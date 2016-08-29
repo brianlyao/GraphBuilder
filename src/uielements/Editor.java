@@ -1,4 +1,5 @@
 package uielements;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
@@ -6,17 +7,16 @@ import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Iterator;
 
 import javax.swing.*;
 
+import actions.PlaceNodeAction;
 import preferences.Preferences;
 import tool.Tool;
 import math.Complex;
-import components.Arrow;
-import components.Circle;
-import components.GraphComponent;
-import components.Line;
+import components.*;
+import context.GraphBuilderContext;
 
 /** The main panel on which the user will be drawing graphs on. */
 public class Editor extends JPanel {
@@ -24,20 +24,26 @@ public class Editor extends JPanel {
 	private static final long serialVersionUID = 7327691115632869820L;
 	
 	private GUI gui; // The GUI this editor is placed in
-//	private boolean isDrawing; // Unused for now
 	
 	private Point lastMousePoint; // Keep track of the last mouse position
 	private Point closestEdgeSelectPoint;
-	private Line closestEdge;
+	private Edge closestEdge;
 	
-	/** Constructor for an editor panel.
+	private Node edgeBasePoint; // The first node that's selected when drawing an edge
+	
+	private GraphComponent selection; // The currently selected item
+	
+	private GraphBuilderContext context;
+	
+	/** 
+	 * Constructor for an editor panel.
 	 * 
-	 * @param gui The GUI object we want our editor placed in.
-	 * 
-	 * */
+	 * @param g The GUI object we want our editor placed in.
+	 */
 	public Editor(GUI g) {
 		super();
 		gui = g;
+		context = g.getContext();
 		lastMousePoint = new Point(0, 0);
 		
 		// Initialize the panel with default settings...
@@ -46,42 +52,53 @@ public class Editor extends JPanel {
 		
 		// Listen for mouse events
 		addMouseListener(new MouseListener() {
+			
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				Tool current = gui.getCurrentTool();
-				if(gui.getSelection() != null && current != Tool.EDGE_SELECT) {
-					gui.getSelection().setSelected(false);
-					gui.getSelection().repaint();
-					gui.setSelection(null);
+				
+				// Clicking the canvas will deselect any selection
+				if(selection != null && current != Tool.EDGE_SELECT) {
+					selection.setSelected(false);
+					selection.repaint();
+					selection = null;
 				}
+				
+				// If user clicks the canvas with the node tool, add a new node
 				if(current == Tool.NODE) {
-					Color[] colors = gui.getCurrentCircleColors();
-					int currentRadius = gui.getCurrentRadius();
-					Circle c = new Circle(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius), gui.getCurrentRadius(),
-							String.format("text%d", GraphComponent.getIdPool()), colors[0], colors[1], colors[2], gui);
-					gui.addCircle(c);
+					Color[] colors = gui.getNodeOptionsBar().getCurrentCircleColors();
+					int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
+					Node newNode = new Node(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius), currentRadius,
+							String.format("node%d", GraphComponent.getIdPool()), colors[0], colors[1], colors[2], Editor.this);
+					context.doAction(new PlaceNodeAction(context, newNode));
 				}
 			}
+			
 			@Override
 			public void mouseEntered(MouseEvent arg0) {
 				repaint();
 			}
+			
 			@Override
 			public void mouseExited(MouseEvent arg0) {}
+			
 			@Override
 			public void mousePressed(MouseEvent arg0) {
 				Tool currentTool = gui.getCurrentTool();
-				if(currentTool == Tool.EDGE_SELECT && closestEdge != null){
-					gui.setSelection(closestEdge);
+				if(currentTool == Tool.EDGE_SELECT && closestEdge != null) {
+					selection = closestEdge;
 					closestEdge.setSelected(true);
 				}
 			}
+			
 			@Override
 			public void mouseReleased(MouseEvent arg0) {}
+			
 		});
 		
 		// Listen for dragging and hovering mouse events
 		addMouseMotionListener(new MouseMotionListener() {
+			
 			@Override
 			public void mouseDragged(MouseEvent arg0) {
 				Tool current = gui.getCurrentTool();
@@ -101,6 +118,7 @@ public class Editor extends JPanel {
 				lastMousePoint = arg0.getPoint();
 				repaint();
 			}
+			
 			@Override
 			public void mouseMoved(MouseEvent arg0) {
 				lastMousePoint = arg0.getPoint();
@@ -117,23 +135,23 @@ public class Editor extends JPanel {
 					double minDistance = Double.MAX_VALUE;
 					
 					// Get the edgemap
-					HashMap<Circle, HashMap<Circle, HashSet<Line>>> em = gui.getEdgeMap();
+					HashMap<Node, HashMap<Node, ArrayList<Edge>>> em = context.getEdgeMap();
 					
 					// Iterate through the edgemap
-					for(Circle first : em.keySet()) {
-						for(Circle second : em.get(first).keySet()) {
+					for(Node first : em.keySet()) {
+						for(Node second : em.get(first).keySet()) {
 							// Get set of edges between first and second
-							HashSet<Line> betweenTwo = em.get(first).get(second);
+							ArrayList<Edge> betweenTwo = em.get(first).get(second);
 							
 							// Iterate through edges between the nodes "first" and "second"
 							// For each edge, find the closest distance from the current mouse position to the edge
 							// The Edge Select tool requires this to find the edge closest to the mouse
-							for(Line l : betweenTwo) {
+							for(Edge l : betweenTwo) {
 								double dist = Double.MAX_VALUE;
 								Point closest = null;
 								Point2D.Double[] bcp;
 								switch(l.getType()) {
-									case Line.LINE:
+									case Edge.LINE:
 										bcp = l.getBezierPoints(); // Only the endpoints of the line are stored...
 										Point2D.Double c1 = bcp[0];
 										Point2D.Double c2 = bcp[2];
@@ -176,7 +194,7 @@ public class Editor extends JPanel {
 											dist = Math.abs(c1.y - clickd.y);
 										}
 										break;
-									case Line.CURVE:
+									case Edge.CURVE:
 										bcp = l.getBezierPoints();
 										
 										// To get the closest point on a bezier curve, we're going to need to solve a cubic...
@@ -233,7 +251,7 @@ public class Editor extends JPanel {
 											}
 										}
 										break;
-									case Line.LOOP:
+									case Edge.LOOP:
 										Point2D.Double cen = l.getCenter();
 										
 										// Since a loop is a (part of a) circle, the math for determining the point closest to the mouse is simple
@@ -260,24 +278,131 @@ public class Editor extends JPanel {
 					}
 				}
 			}
+			
 		});
 	}
 	
-	/** Drawing the content of the editor panel. */
+	/**
+	 * Adds the specified node to the graph.
+	 * 
+	 * @param n The node to add to the graph.
+	 */
+	public void addNode(Node n) {
+		context.getNodes().add(n);
+		this.add(n);
+		this.repaint();
+		this.revalidate();
+	}
+	
+	/**
+	 * Removes the specified node from the graph.
+	 * 
+	 * @param n The node to remove.
+	 */
+	public void removeNode(Node n) {
+		context.getNodes().remove(n);
+		HashMap<Node, HashMap<Node, ArrayList<Edge>>> edgeMap = context.getEdgeMap();
+		Iterator<Edge> lineit = context.getEdges().iterator();
+		
+		// Remove all edges neighboring the removed node
+		while(lineit.hasNext())
+			if(lineit.next().hasEndpoint(n))
+				lineit.remove();
+		if(edgeMap.keySet().contains(n)) {
+			edgeMap.remove(n);
+		}else{
+			Iterator<Node> it = edgeMap.keySet().iterator();
+			while(it.hasNext()){
+				if(edgeMap.get(it.next()).keySet().contains(n))
+					it.remove();
+			}
+		}
+		
+		// Remove the node (a JPanel) from the editor panel
+		this.remove(n);
+		this.repaint();
+		this.revalidate();
+		if(edgeBasePoint == n)
+			edgeBasePoint = null;
+	}
+	
+	/** 
+	 * Add an edge to the editor panel.
+	 * 
+	 * @param e The edge we want to add to add to the graph.
+	 */
+	public void addEdge(Edge e) {
+		context.getEdges().add(e);
+		
+		Node[] ends = e.getEndpoints();
+		HashMap<Node, HashMap<Node, ArrayList<Edge>>> edgeMap = context.getEdgeMap();
+		boolean first = edgeMap.containsKey(ends[0]);
+		boolean second = edgeMap.containsKey(ends[1]);
+		if(first && edgeMap.get(ends[0]).containsKey(ends[1])) {
+			edgeMap.get(ends[0]).get(ends[1]).add(e);
+		} else if(second && edgeMap.get(ends[1]).containsKey(ends[0])) {
+			edgeMap.get(ends[1]).get(ends[0]).add(e);
+		} else if(first) {
+			edgeMap.get(ends[0]).put(ends[1], new ArrayList<Edge>());
+			edgeMap.get(ends[0]).get(ends[1]).add(e);
+		} else if(second) {
+			edgeMap.get(ends[1]).put(ends[0], new ArrayList<Edge>());
+			edgeMap.get(ends[1]).get(ends[0]).add(e);
+		} else {
+			edgeMap.put(ends[0], new HashMap<Node, ArrayList<Edge>>());
+			edgeMap.get(ends[0]).put(ends[1], new ArrayList<Edge>());
+			edgeMap.get(ends[0]).get(ends[1]).add(e);
+		}
+	}
+	
+	public GraphBuilderContext getContext() {
+		return context;
+	}
+	
+	public GUI getGUI() {
+		return gui;
+	}
+	
+	public Node getEdgeBasePoint() {
+		return edgeBasePoint;
+	}
+	
+	public void setEdgeBasePoint(Node c) {
+		edgeBasePoint = c;
+	}
+	
+	/**
+	 * Get the currently selected graph component.
+	 * 
+	 * @return The selected GraphComponent.
+	 */
+	public GraphComponent getSelection() {
+		return selection;
+	}
+	
+	/**
+	 * Set which graph component is selected.
+	 * 
+	 * @param gc The GraphComponent which will be selected.
+	 */
+	public void setSelection(GraphComponent gc) {
+		selection = gc;
+	}
+	
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
 		
 		// Explicitly set the position of the nodes; this allows the pane to be scrollable while retaining the position of the circles relative to the top left corner of the editor panel
-		for(Circle c : gui.getCircles())
+		for(Node c : context.getNodes())
 			c.setLocation(c.getCoords());
 		
-		// Draw all edges
-		HashMap<Circle, HashMap<Circle, HashSet<Line>>> edgeMap = gui.getEdgeMap();
-		HashSet<Line> edges;
-		for(Circle first : edgeMap.keySet()) {
-			for(Circle second : edgeMap.get(first).keySet()) {
+		// Draw all edges by iterating through pairs of nodes
+		HashMap<Node, HashMap<Node, ArrayList<Edge>>> edgeMap = context.getEdgeMap();
+		ArrayList<Edge> edges;
+		for(Node first : edgeMap.keySet()) {
+			for(Node second : edgeMap.get(first).keySet()) {
 				edges = edgeMap.get(first).get(second);
 				drawNEdges(g2d, first, second, edges); // Draw the edges between every pair of nodes
 			}
@@ -289,8 +414,9 @@ public class Editor extends JPanel {
 		if(ctool == Tool.NODE) {
 			// Draw preview for the Circle tool
 			g2d.setColor((Color) Preferences.CIRCLE_PREVIEW_COLOR.getData());
-			Ellipse2D.Double preview = new Ellipse2D.Double(lastMousePoint.x - gui.getCurrentRadius(),
-					lastMousePoint.y - gui.getCurrentRadius(), 2*gui.getCurrentRadius(), 2*gui.getCurrentRadius());
+			int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
+			Ellipse2D.Double preview = new Ellipse2D.Double(lastMousePoint.x - currentRadius,
+					lastMousePoint.y - currentRadius, 2*currentRadius, 2*currentRadius);
 			g2d.draw(preview);
 		} else if(ctool == Tool.EDGE_SELECT) {
 			if(closestEdgeSelectPoint != null) {
@@ -301,12 +427,12 @@ public class Editor extends JPanel {
 		}
 		
 		// Draw the "selected" look on the selected edge
-		if(gui.getSelection() instanceof Line) {		
+		if(selection instanceof Edge) {		
 			// Graphically mark the edge as selected
-			Line line = (Line) gui.getSelection();
+			Edge line = (Edge) selection;
 			int side = (Integer) Preferences.EDGE_SELECT_SQUARE_SIZE.getData();
 			g2d.setColor((Color) Preferences.EDGE_SELECT_SQUARE_COLOR.getData());
-			if(line.getType() == Line.LINE || line.getType() == Line.CURVE) {
+			if(line.getType() == Edge.LINE || line.getType() == Edge.CURVE) {
 				Point2D.Double[] pts = line.getBezierPoints();
 				g2d.fillRect((int) (pts[0].x - side / 2.0), (int) (pts[0].y - side / 2.0), side, side);
 				g2d.fillRect((int) (pts[2].x - side / 2.0), (int) (pts[2].y - side / 2.0), side, side);
@@ -326,10 +452,10 @@ public class Editor extends JPanel {
 	 * @param g2d   The Graphics2D object we want to draw with.
 	 * @param c1    A node.
 	 * @param c2    Another node.
-	 * @param edges The set of edges we need to draw between c1 and c2.
+	 * @param edges The list of edges we need to draw between c1 and c2.
 	 * 
 	 * */
-	private static void drawNEdges(Graphics2D g2d, Circle c1, Circle c2, HashSet<Line> edges) {
+	private static void drawNEdges(Graphics2D g2d, Node c1, Node c2, ArrayList<Edge> edges) {
 		// Draw edges between nodes c1 and c2; if numEdges > 1, draw them as quadratic bezier curves
 		double angle = (Double) Preferences.EDGE_SPREAD_ANGLE.getData();
 		double lowerAngle = (1 - edges.size()) * angle / 2;
@@ -338,7 +464,7 @@ public class Editor extends JPanel {
 		double offsetAngle = (Double) Preferences.SELF_EDGE_OFFSET_ANGLE.getData();
 		
 		// Draw the edges one by one
-		for(Line e : edges) {
+		for(Edge e : edges) {
 			g2d.setStroke(new BasicStroke(e.getWeight()));
 			g2d.setColor(e.getColor());
 			if(c1 == c2) {
@@ -354,7 +480,7 @@ public class Editor extends JPanel {
 				double edgeCenterX = centralDist * unitX + nodeCenter.x;
 				double edgeCenterY = centralDist * unitY + nodeCenter.y;
 				g2d.drawOval((int) (edgeCenterX - edgeRadius), (int) (edgeCenterY - edgeRadius), (int) (2 * edgeRadius), (int) (2 * edgeRadius));
-				if(e instanceof Arrow) {
+				if(e instanceof DirectedEdge) {
 					double intersectX = c1.getRadius() * unitX * Math.cos(centralAngle / 2) - c1.getRadius() * unitY * Math.sin(centralAngle / 2);
 					double intersectY = c1.getRadius() * unitX * Math.sin(centralAngle / 2) + c1.getRadius() * unitY * Math.cos(centralAngle / 2);
 					double tanUnitX = intersectX / c1.getRadius();
@@ -368,11 +494,11 @@ public class Editor extends JPanel {
 				}
 				e.setCenter(new Point2D.Double(edgeCenterX, edgeCenterY));
 				e.setRadius(edgeRadius);
-				e.setType(Line.LOOP);
+				e.setType(Edge.LOOP);
 				count++;
 			} else {
 				// The edge is either a line or bezier curve; either way, they get drawn the same way
-				Circle[] ends = e.getEndpoints();
+				Node[] ends = e.getEndpoints();
 				double initAngle = lowerAngle + count * angle;
 				if(ends[0] != c1)
 					initAngle = -initAngle;
@@ -387,7 +513,7 @@ public class Editor extends JPanel {
 				double circ1Y = unitY1 * Math.cos(initAngle) - unitX1 * Math.sin(initAngle);
 				double circ2X = unitX2 * Math.cos(initAngle) - unitY2 * Math.sin(initAngle);
 				double circ2Y = unitX2 * Math.sin(initAngle) + unitY2 * Math.cos(initAngle);
-				if(e instanceof Arrow) {
+				if(e instanceof DirectedEdge) {
 					// Draw the triangular tip of the arrow if the edge is directed
 					double unitX = circ2X / ends[0].getRadius();
 					double unitY = circ2Y / ends[0].getRadius();
@@ -408,9 +534,9 @@ public class Editor extends JPanel {
 				QuadCurve2D curve = new QuadCurve2D.Double(circ1X, circ1Y, controlX, controlY, circ2X, circ2Y);
 				e.setPoints(circ1X, circ1Y, controlX, controlY, circ2X, circ2Y);
 				if(edges.size() == 1)
-					e.setType(Line.LINE);
+					e.setType(Edge.LINE);
 				else
-					e.setType(Line.CURVE);
+					e.setType(Edge.CURVE);
 				g2d.draw(curve);
 				count++;
 			}

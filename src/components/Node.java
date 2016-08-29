@@ -1,4 +1,5 @@
 package components;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
@@ -6,12 +7,13 @@ import java.util.HashSet;
 
 import javax.swing.*;
 
+import actions.MoveNodeAction;
 import preferences.Preferences;
 import tool.Tool;
-import uielements.GUI;
+import uielements.Editor;
 
 /** An instance represents a node (visually represented by a circle) placed on the editor panel. */
-public class Circle extends GraphComponent {
+public class Node extends GraphComponent {
 
 	private static final long serialVersionUID = 7543278908176323314L;
 	
@@ -22,72 +24,92 @@ public class Circle extends GraphComponent {
 	private static final int PADDING = 1;
 //	private static final int DISTANCE_PADDING = 5;
 	
-	private GUI gui;
+	private Editor editor; // The editor in which this node is displayed
 	
-	//Right click menu
+	// Right click menu
 	private JPopupMenu rightClickMenu;
 	private JMenuItem properties;
 	private JMenuItem copy;
 	private JMenuItem delete;
 	
-	private int x; //location on editor panel
+	private int x; // Location on editor panel
 	private int y;
-	private int radius; //radius in pixels
-	private String text; //text displayed
-	private Color color; //fill color
+	private int radius; // Radius in pixels
+	private String text; // Text displayed
+	private Color color; // Fill color
 	private Color lineColor;
 	private Color textColor;
 
-	private Point clickPoint; //coordinate of mouse click relative to the top left corner
+	private Point clickPoint; // Coordinate of mouse click relative to the top left corner of its bounding box
 	private boolean hovering;
 	
-	private HashSet<Line> edges;
+	// Coordinate of node's bounding box's top left corner relative to editor origin when node is clicked
+	private Point editorLocationOnClick;
+	
+	private HashSet<Edge> edges;
 		
-	/** Creates a circle at the top left corner with a radius of 25 pixels. */
-	public Circle(GUI g){
-		this(0, 0, DEFAULT_RADIUS, g);
+	/**
+	 * Creates a circle at the top left corner with a radius of 30 pixels.
+	 * 
+	 * @param ed The editor panel this node is displayed on.
+	 */
+	public Node(Editor ed){
+		this(0, 0, DEFAULT_RADIUS, ed);
 	}
 	
-	/** Creates a circle with the specified location and radius. 
-	 * @param x The x-coordinate of the circle's top left corner.
-	 * @param y The y-coordinate of the circle's top left corner.
-	 * @param r The radius of the circle in pixels. */
-	public Circle(int x, int y, int r, GUI g) {
-		this(x, y, r, null, g);
+	/** 
+	 * Creates a node with the specified location and radius. 
+	 * @param x  The x-coordinate of the circle's top left corner.
+	 * @param y  The y-coordinate of the circle's top left corner.
+	 * @param r  The radius of the circle in pixels.
+	 * @param ed The editor panel this node is displayed on.
+	 */
+	public Node(int x, int y, int r, Editor ed) {
+		this(x, y, r, null, ed);
 	}
 	
-	/** Creates a circle with the specified location, radius, and color. 
-	 * @param x The x-coordinate of the circle's top left corner.
-	 * @param y The y-coordinate of the circle's top left corner.
-	 * @param r The radius of the circle in pixels. 
-	 * @param c The fill color of the circle. */
-	public Circle(int x, int y, int r, Color c, GUI g) {
-		this(x, y, r, null, c, null, null, g);
-	}
-
-	/** Creates a circle with the specified location, radius, color, and border color. 
+	/** 
+	 * Creates a node with the specified location, radius, and color. 
 	 * @param x  The x-coordinate of the circle's top left corner.
 	 * @param y  The y-coordinate of the circle's top left corner.
 	 * @param r  The radius of the circle in pixels. 
 	 * @param c  The fill color of the circle.
-	 * @param lc The border color of the circle. */
-	public Circle(int x, int y, int r, Color c, Color lc, GUI g) {
-		this(x, y, r, null, c, lc, null, g);
+	 * @param ed The editor panel this node is displayed on.
+	 */
+	public Node(int x, int y, int r, Color c, Editor ed) {
+		this(x, y, r, null, c, null, null, ed);
+	}
+
+	/** 
+	 * Creates a node with the specified location, radius, color, and border color. 
+	 * @param x  The x-coordinate of the circle's top left corner.
+	 * @param y  The y-coordinate of the circle's top left corner.
+	 * @param r  The radius of the circle in pixels. 
+	 * @param c  The fill color of the circle.
+	 * @param lc The border color of the circle.
+	 * @param ed The editor panel this node is displayed on.
+	 */
+	public Node(int x, int y, int r, Color c, Color lc, Editor ed) {
+		this(x, y, r, null, c, lc, null, ed);
 	}
 	
-	/** Creates a circle with the specified location, radius, text,
+	/**
+	 * Creates a node with the specified location, radius, text,
 	 * color, and text color. 
 	 * @param x   The x-coordinate of the circle's top left corner.
 	 * @param y   The y-coordinate of the circle's top left corner.
 	 * @param r   The radius of the circle in pixels.
 	 * @param txt The text displayed on the circle.
 	 * @param c   The fill color of the circle.
-	 * @param tc  The color of the circle's text. */
-	public Circle(int x, int y, int r, String txt, Color c, Color tc, GUI g) {
-		this(x, y, r, txt, c, null, tc, g);
+	 * @param tc  The color of the circle's text.
+	 * @param ed  The editor panel this node is displayed on.
+	 */
+	public Node(int x, int y, int r, String txt, Color c, Color tc, Editor ed) {
+		this(x, y, r, txt, c, null, tc, ed);
 	}
 	
-	/** Creates a circle with the specified location, radius, text,
+	/**
+	 * Creates a node with the specified location, radius, text,
 	 * color, border color, text color, and select color.
 	 * @param x   The x-coordinate of the circle's top left corner.
 	 * @param y   The y-coordinate of the circle's top left corner.
@@ -95,8 +117,10 @@ public class Circle extends GraphComponent {
 	 * @param txt The text displayed on the circle.
 	 * @param c   The fill color of the circle.
 	 * @param lc  The border color of the circle.
-	 * @param tc  The color of the circle's text. */
-	public Circle(int x, int y, int r, String txt, Color c, Color lc, Color tc, GUI g) {
+	 * @param tc  The color of the circle's text.
+	 * @param ed  The editor panel this node is displayed on.
+	 */
+	public Node(int x, int y, int r, String txt, Color c, Color lc, Color tc, Editor ed) {
 		super();
 		this.x = x;
 		this.y = y;
@@ -105,7 +129,7 @@ public class Circle extends GraphComponent {
 		color = c;
 		lineColor = lc;
 		textColor = tc;
-		gui = g;
+		editor = ed;
 		edges = new HashSet<>();
 		
 		clickPoint = new Point(-1, -1); // Initialize to a bad value
@@ -129,10 +153,12 @@ public class Circle extends GraphComponent {
 		copy = new JMenuItem("Copy");
 		delete = new JMenuItem("Delete");
 		delete.addActionListener(new ActionListener() {
+			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				gui.removeCircle(Circle.this);
+				editor.removeNode(Node.this);
 			}
+			
 		});
 		rightClickMenu.add(properties);
 		rightClickMenu.addSeparator();
@@ -142,77 +168,79 @@ public class Circle extends GraphComponent {
 		
 		// Listen for mouse events
 		addMouseListener(new MouseListener() {
+			
 			@Override
 			public void mousePressed(MouseEvent e) {
 				clickPoint = e.getPoint();
-				Circle source = (Circle) e.getSource();
+				editorLocationOnClick = new Point(Node.this.x + e.getX(), Node.this.y + e.getY());
+				Node source = (Node) e.getSource();
 				boolean contains = source.containsPoint(clickPoint);
-				if(contains && e.getButton() == MouseEvent.BUTTON3)
+				
+				// Display the right click menu if the node is right clicked
+				if(contains && e.getButton() == MouseEvent.BUTTON3) {
 					rightClickMenu.show(e.getComponent(), e.getX(), e.getY());
-				if(contains) {
-					Tool current = gui.getCurrentTool();
+				} else if(contains) {
+					Tool current = editor.getGUI().getCurrentTool();
 					if(current == Tool.SELECT) {
-						GraphComponent previous = gui.getSelection();
+						GraphComponent previous = editor.getSelection();
 						source.setSelected(true);
 						if(previous != null && previous != source) {
 							previous.setSelected(false);
 							previous.repaint();
-							gui.setSelection(source);
+							editor.setSelection(source);
 						}
 						repaint();
-						gui.setSelection(source); 
-					}else if(current == Tool.LINE || current == Tool.ARROW) {
-						if(gui.getLinePoint() == null) {
-							gui.setLinePoint(Circle.this);
+						editor.setSelection(source); 
+					} else if(current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
+						if(editor.getEdgeBasePoint() == null) {
+							editor.setEdgeBasePoint(Node.this);
 						} else {
-							Circle sink = gui.getLinePoint();
-							Line newLine = new Line(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
-							if(current == Tool.ARROW)
-								newLine = new Arrow(source, sink, gui.getCurrentLineColor(), gui.getCurrentLineWeight(), gui);
-							gui.addEdge(newLine);
-//							gui.setRedrawLine(true);
-							gui.setLinePoint(null);
-							gui.repaint();
+							Node sink = editor.getEdgeBasePoint();
+							Edge newLine = new Edge(source, sink, editor.getGUI().getEdgeOptionsBar().getCurrentLineColor(), editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight(), editor);
+							if(current == Tool.DIRECTED_EDGE)
+								newLine = new DirectedEdge(source, sink, editor.getGUI().getEdgeOptionsBar().getCurrentLineColor(), editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight(), editor);
+							editor.addEdge(newLine);
+							editor.setEdgeBasePoint(null);
+							editor.repaint();
 						}
 					}
 				}
 			}
+			
 			@Override
 			public void mouseClicked(MouseEvent e) {}
+			
 			@Override
 			public void mouseEntered(MouseEvent e) {}
+			
 			@Override
 			public void mouseExited(MouseEvent e) {
 				hovering = false;
 			}
+			
 			@Override
-			public void mouseReleased(MouseEvent e) {}
+			public void mouseReleased(MouseEvent e) {
+				Point locationOnEditor = new Point(Node.this.x + e.getX(), Node.this.y + e.getY());
+				if(!editorLocationOnClick.equals(locationOnEditor))
+					editor.getContext().pushAction(new MoveNodeAction(editor.getContext(), Node.this, editorLocationOnClick, locationOnEditor));
+			}
+			
 		});
 		
 		// Listen for dragging and hovering mouse events
-		addMouseMotionListener(new MouseMotionListener(){
+		addMouseMotionListener(new MouseMotionListener() {
+			
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if(gui.getCurrentTool() == Tool.SELECT && containsPoint(clickPoint)) {
-					Circle c = (Circle) e.getSource();
+				if(editor.getGUI().getCurrentTool() == Tool.SELECT && containsPoint(clickPoint)) {
+					Node c = (Node) e.getSource();
 					Point dragPoint = e.getPoint();
 					Point newPoint = new Point(Math.max(0, c.x + dragPoint.x - clickPoint.x),
 											   Math.max(0, c.y + dragPoint.y - clickPoint.y));
-//					for(Circle c1 : GUI.getCircles()){
-//						Point l1 = c1.getCoords();
-//						int r1 = c1.getRadius();
-//						int left = newPoint.x - l1.x < 0 ? -1 : 1;
-//						if(c != c1 && l1.x + r1 - (newPoint.x + radius) != 0 && Math.sqrt(Math.pow(newPoint.x + radius - (l1.x + r1), 2) + Math.pow(newPoint.y + radius - (l1.y + r1), 2)) < radius + r1 + DISTANCE_PADDING){
-//							double ang = Math.atan((l1.y + r1 - (newPoint.y + radius)) / (l1.x + r1 - (newPoint.x + radius)));
-//							Point newCenter = new Point((int) (l1.x + r1 + left * (radius + r1 + DISTANCE_PADDING) * Math.cos(ang)),
-//														(int) (l1.y + r1 + left * (radius + r1 + DISTANCE_PADDING) * Math.sin(ang)));
-//							newPoint = new Point(Math.max(0, newCenter.x - radius), Math.max(0, newCenter.y - radius));
-//						}
-//					}
 					setCoords(newPoint);
-//					gui.setRedrawLine(true);
 				}
 			}
+			
 			@Override
 			public void mouseMoved(MouseEvent e) {
 				boolean repaintNeeded = false;
@@ -220,7 +248,7 @@ public class Circle extends GraphComponent {
 					if(!hovering)
 						repaintNeeded = true;
 					hovering = true;
-				}else{
+				} else {
 					if(hovering)
 						repaintNeeded = true;
 					hovering = false;
@@ -228,6 +256,7 @@ public class Circle extends GraphComponent {
 				if(repaintNeeded)
 					repaint();
 			}
+			
 		});
 	}
 	
@@ -236,11 +265,11 @@ public class Circle extends GraphComponent {
 		return radius >= Math.sqrt((p.x - radius) * (p.x - radius) + (p.y - radius) * (p.y - radius));
 	}
 	
-	public void addEdge(Line l) {
+	public void addEdge(Edge l) {
 		edges.add(l);
 	}
 	
-	public HashSet<Line> getEdges() {
+	public HashSet<Edge> getEdges() {
 		return edges;
 	}
 	
@@ -311,17 +340,17 @@ public class Circle extends GraphComponent {
 			g2d.setColor((Color) Preferences.SELECTION_COLOR.getData());
 			g2d.draw(bounds);
 		} else if(hovering) {
-			Tool current = gui.getCurrentTool();
-			if(current == Tool.LINE){
+			Tool current = editor.getGUI().getCurrentTool();
+			if(current == Tool.EDGE){
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if(gui.getLinePoint() == null)
+				if(editor.getEdgeBasePoint() == null)
 					g2d.setColor((Color) Preferences.LINE_START_COLOR.getData());
 				else
 					g2d.setColor((Color) Preferences.LINE_END_COLOR.getData());
 				g2d.draw(bounds);
-			} else if(current == Tool.ARROW) {
+			} else if(current == Tool.DIRECTED_EDGE) {
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if(gui.getLinePoint() == null)
+				if(editor.getEdgeBasePoint() == null)
 					g2d.setColor((Color) Preferences.ARROW_START_COLOR.getData());
 				else
 					g2d.setColor((Color) Preferences.ARROW_END_COLOR.getData());
