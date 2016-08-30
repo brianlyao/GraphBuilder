@@ -68,9 +68,11 @@ public class Editor extends JPanel {
 				if(current == Tool.NODE) {
 					Color[] colors = gui.getNodeOptionsBar().getCurrentCircleColors();
 					int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
-					Node newNode = new Node(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius), currentRadius,
-							String.format("node%d", GraphComponent.getIdPool()), colors[0], colors[1], colors[2], Editor.this);
-					context.doAction(new PlaceNodeAction(context, newNode));
+					Point placed = new Point(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius));
+					Node newNode = new Node(placed.x, placed.y, currentRadius, String.format("node%d", GraphComponent.getIdPool()), colors[0], colors[1], colors[2], Editor.this);
+					
+					// Perform the action for placing a node
+					new PlaceNodeAction(context, newNode).actionPerformed(null);
 				}
 			}
 			
@@ -327,7 +329,7 @@ public class Editor extends JPanel {
 	}
 	
 	/** 
-	 * Add an edge to the editor panel.
+	 * Add an edge to the graph.
 	 * 
 	 * @param e The edge we want to add to add to the graph.
 	 */
@@ -353,6 +355,24 @@ public class Editor extends JPanel {
 			edgeMap.get(ends[0]).put(ends[1], new ArrayList<Edge>());
 			edgeMap.get(ends[0]).get(ends[1]).add(e);
 		}
+	}
+	
+	/** 
+	 * Remove an edge from the graph.
+	 * 
+	 * @param e The edge we want to add to add to the graph.
+	 */
+	public void removeEdge(Edge e) {
+		context.getEdges().remove(e);
+		
+		Node[] ends = e.getEndpoints();
+		HashMap<Node, HashMap<Node, ArrayList<Edge>>> edgeMap = context.getEdgeMap();
+		boolean first = edgeMap.containsKey(ends[0]);
+		boolean second = edgeMap.containsKey(ends[1]);
+		if(first && edgeMap.get(ends[0]).containsKey(ends[1]))
+			edgeMap.get(ends[0]).get(ends[1]).remove(e);
+		if(second && edgeMap.get(ends[1]).containsKey(ends[0]))
+			edgeMap.get(ends[1]).get(ends[0]).remove(e);
 	}
 	
 	public GraphBuilderContext getContext() {

@@ -1,10 +1,14 @@
 package actions;
 
+import java.awt.event.ActionEvent;
+
 import context.GraphBuilderContext;
 
 /** The generic action for redoing the most recent (reversible) undone action. */
-public class Redo extends Action {
+public class Redo extends SimpleAction {
 	
+	private static final long serialVersionUID = -7254167000031398300L;
+
 	/**
 	 * @param ctxt The context in which this action occurs.
 	 */
@@ -13,8 +17,9 @@ public class Redo extends Action {
 	}
 
 	@Override
-	public void perform() {
-		getContext().redoAction();
+	public void actionPerformed(ActionEvent e) {
+		if(!getContext().getUndoHistory().isEmpty())
+			getContext().getUndoHistory().pop().actionPerformed(null);
 	}
 	
 }

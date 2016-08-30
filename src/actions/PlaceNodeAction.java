@@ -1,11 +1,15 @@
 package actions;
 
+import java.awt.event.ActionEvent;
+
 import components.Node;
 import context.GraphBuilderContext;
 
 /** An instance represents the action of placing a new node on the editor panel. */
 public class PlaceNodeAction extends ReversibleAction {
 
+	private static final long serialVersionUID = -4739767659367563555L;
+	
 	private Node node;
 	
 	/**
@@ -17,12 +21,16 @@ public class PlaceNodeAction extends ReversibleAction {
 		node = n;
 	}
 	
-	public void perform() {
-		this.getContext().getGUI().getEditor().addNode(node);
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		getContext().getGUI().getEditor().addNode(node);
+		addSelfToHistory();
 	}
 	
+	@Override
 	public void undo() {
-		this.getContext().getGUI().getEditor().removeNode(node);
+		getContext().getGUI().getEditor().removeNode(node);
+		addSelfToUndoHistory();
 	}
 	
 }

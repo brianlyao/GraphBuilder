@@ -7,8 +7,6 @@ import java.util.Stack;
 
 import components.Edge;
 import components.Node;
-
-import actions.Action;
 import actions.ReversibleAction;
 import uielements.GUI;
 
@@ -50,46 +48,21 @@ public class GraphBuilderContext {
 	}
 	
 	/**
-	 * Push an action onto the action history without performing it.
+	 * Get the action history.
 	 * 
-	 * @param a The action to push onto the history.
+	 * @return The Stack of reversible actions corresponding to the action history.
 	 */
-	public void pushAction(ReversibleAction a) {
-		if(a == null)
-			return;
-		actionHistory.push(a);
+	public Stack<ReversibleAction> getActionHistory() {
+		return actionHistory;
 	}
 	
 	/**
-	 * Perform a particular action. If it is reversible, keep track of it in the action history.
+	 * Get the undo history.
 	 * 
-	 * @param a The action to perform.
+	 * @return The Stack of reversible actions corresponding to the undo history.
 	 */
-	public void doAction(Action a) {
-		if(a == null)
-			return;
-		a.perform();
-		if(a instanceof ReversibleAction)
-			actionHistory.push((ReversibleAction) a);
-	}
-	
-	/**
-	 * Undo the last action in the history. If the history is empty, this has no effect.
-	 */
-	public void undoAction() {
-		if(!actionHistory.isEmpty()) {
-			ReversibleAction a = actionHistory.pop();
-			a.undo();
-			undoHistory.push(a);
-		}
-	}
-	
-	/**
-	 * Redo the last action which was undone. If no action has been undone, this has no effect.
-	 */
-	public void redoAction() {
-		if(!undoHistory.isEmpty())
-			doAction(undoHistory.pop());
+	public Stack<ReversibleAction> getUndoHistory() {
+		return undoHistory;
 	}
 	
 	/**

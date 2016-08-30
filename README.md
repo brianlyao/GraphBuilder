@@ -1,4 +1,4 @@
-# GraphBuilder 0.1.0
+# GraphBuilder 0.1.1
 
 GraphBuilder will be an open-source piece of software which allows users to visually construct [graphs](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) on a "editor" panel.
 
@@ -16,7 +16,7 @@ An overview of the packages and what they contain.
 
 ### actions
 
-This package contains implementations of actions. Each action is a procedure the user can carry out in the editor. Some actions are reversible, which allows them to be undone.
+This package contains implementations of actions. Each action is a procedure the user can carry out in the editor. Some actions are reversible, which allows them to be undone. These actions are all implemented using the javax.swing.AbstractAction abstract class, since key bindings require a javax.swing.Action.
 
 ### components
 

@@ -1,12 +1,10 @@
 package uielements;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.HashMap;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
-import keybindings.KeyboardShortcut;
 import keybindings.KeyboardShortcutActions;
 import tool.Tool;
 import uielements.tooloptions.EdgeOptionsBar;
@@ -16,18 +14,13 @@ import context.GraphBuilderContext;
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;
-	private static final String VERSION = "0.1.0";
+	private static final String VERSION = "0.1.1";
 
 //	private final int PANE_PADDING = 10;
 	
 	private MenuBar menuBar; // The menu bar
 	
 	private ToolBar toolBar; // The tool bar
-	
-	// Whether any of the Control, Alt, or Shift keys are pressed down
-	private boolean controlPressed;
-	private boolean altPressed;
-	private boolean shiftPressed;
 	
 	//Tool option bars 
 	private NodeOptionsBar nodeOptions;
@@ -62,52 +55,8 @@ public class GUI extends JFrame {
 		toolBar.setFloatable(false);
 		toolBar.setRollover(true);
 		
-		// Initialize the keyboard shortcuts
+		// Initialize the key bindings and their actions
 		keyActions = new KeyboardShortcutActions(context);
-		
-		// Listen for certain key sequences
-		this.addKeyListener(new KeyListener() {
-			
-			@Override
-			public void keyPressed(KeyEvent arg0) {
-				int keyCode = arg0.getKeyCode();
-				switch(keyCode){
-					case KeyEvent.VK_SHIFT:
-						shiftPressed = true;
-						break;
-					case KeyEvent.VK_CONTROL:
-						controlPressed = true;
-						break;
-					case KeyEvent.VK_ALT:
-						altPressed = true;
-						break;
-					default:
-						KeyboardShortcut kbsc = new KeyboardShortcut(controlPressed, shiftPressed, altPressed, keyCode);
-						context.doAction(keyActions.getAction(kbsc));
-				}
-			}
-			
-			@Override
-			public void keyReleased(KeyEvent arg0) {
-				int keyCode = arg0.getKeyCode();
-				switch(keyCode){
-					case KeyEvent.VK_SHIFT:
-						shiftPressed = false;
-						break;
-					case KeyEvent.VK_CONTROL:
-						controlPressed = false;
-						break;
-					case KeyEvent.VK_ALT:
-						altPressed = false;
-						break;
-					default:
-				}
-			}
-			
-			@Override
-			public void keyTyped(KeyEvent arg0) {}
-			
-		});
 		
 		//Initialize and fill out the options panel
 		toolOptions = new JPanel();

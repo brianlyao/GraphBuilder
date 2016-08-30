@@ -7,6 +7,7 @@ import java.util.HashSet;
 
 import javax.swing.*;
 
+import actions.DeleteNodeAction;
 import actions.MoveNodeAction;
 import preferences.Preferences;
 import tool.Tool;
@@ -156,7 +157,7 @@ public class Node extends GraphComponent {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				editor.removeNode(Node.this);
+				new DeleteNodeAction(editor.getContext(), Node.this).actionPerformed(null);
 			}
 			
 		});
@@ -222,7 +223,7 @@ public class Node extends GraphComponent {
 			public void mouseReleased(MouseEvent e) {
 				Point locationOnEditor = new Point(Node.this.x + e.getX(), Node.this.y + e.getY());
 				if(!editorLocationOnClick.equals(locationOnEditor))
-					editor.getContext().pushAction(new MoveNodeAction(editor.getContext(), Node.this, editorLocationOnClick, locationOnEditor));
+					editor.getContext().getActionHistory().push(new MoveNodeAction(editor.getContext(), Node.this, editorLocationOnClick, locationOnEditor));
 			}
 			
 		});
