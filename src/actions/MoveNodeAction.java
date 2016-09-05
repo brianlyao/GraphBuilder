@@ -31,13 +31,17 @@ public class MoveNodeAction extends ReversibleAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		node.setCoords(toPoint);
+		getContext().getGUI().getEditor().repaint();
 		addSelfToHistory();
+		getContext().updateSaveState();
 	}
 	
 	@Override
 	public void undo() {
 		node.setCoords(fromPoint);
+		getContext().getGUI().getEditor().repaint();
 		addSelfToUndoHistory();
+		getContext().updateSaveState();
 	}
 	
 	public String toString() {

@@ -1,20 +1,30 @@
-package uielements;
+package ui;
+
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.HashMap;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import keybindings.KeyboardShortcutActions;
 import tool.Tool;
-import uielements.tooloptions.EdgeOptionsBar;
-import uielements.tooloptions.NodeOptionsBar;
+import ui.menus.MenuBar;
+import ui.tooloptions.EdgeOptionsBar;
+import ui.tooloptions.NodeOptionsBar;
+import util.GraphBuilderUtils;
 import context.GraphBuilderContext;
 
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;
-	private static final String VERSION = "0.1.1";
+	private static final String VERSION = "0.1.2";
+	
+	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
+	
+	private static final String DEFAULT_FILENAME = "Untitled";
 
 //	private final int PANE_PADDING = 10;
 	
@@ -35,6 +45,8 @@ public class GUI extends JFrame {
 	
 	private JPanel panelStatus;
 	
+	private JFileChooser fileChooser;
+	
 	private KeyboardShortcutActions keyActions; // Object with all keyboard shortcuts and corresponding actions
 	
 	private Tool currentTool; // The tool currently being used
@@ -42,12 +54,12 @@ public class GUI extends JFrame {
 	private GraphBuilderContext context; // The context for the entire program
 	
 	public GUI() {
-		super("Graph Builder " + VERSION);
+		super(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
 		
 		context = new GraphBuilderContext(this);
 		
 		// Initialize and set menu bar
-		menuBar = new MenuBar();
+		menuBar = new MenuBar(this);
 		setJMenuBar(menuBar);
 		
 		// Initialize toolbar
@@ -56,7 +68,12 @@ public class GUI extends JFrame {
 		toolBar.setRollover(true);
 		
 		// Initialize the key bindings and their actions
-		keyActions = new KeyboardShortcutActions(context);
+		keyActions = new KeyboardShortcutActions(this);
+		
+		// Initialize and customize the file chooser
+		fileChooser = new JFileChooser();
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Graph Builder Files", "gbf"));
 		
 		//Initialize and fill out the options panel
 		toolOptions = new JPanel();
@@ -65,10 +82,20 @@ public class GUI extends JFrame {
 		edgeOptions = new EdgeOptionsBar(this);
 		
 		//Set JFrame properties
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setSize(1024, 768);
 		setVisible(true);
 		setLayout(new GridBagLayout());
+		
+		// Perform a certain procedure when the window is closed (with the X button in the top right)
+		addWindowListener(new WindowAdapter() {
+
+			@Override
+			public void windowClosing(WindowEvent e) {
+				GraphBuilderUtils.exitProcedure(context);
+			}
+			
+		});
 		
 		//Manage the layout constraints
 		GridBagConstraints tbargbc = new GridBagConstraints();
@@ -218,6 +245,21 @@ public class GUI extends JFrame {
 	 */
 	public GraphBuilderContext getContext() {
 		return context;
+	}
+	
+	public void updateContext(GraphBuilderContext newContext) {
+		context = newContext;
+		keyActions = new KeyboardShortcutActions(this); // Re-initialize key bindings with correct context
+		this.setTitle(DEFAULT_TITLE + " - " + GraphBuilderUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
+	}
+	
+	/**
+	 * Get a file chooser object for this frame.
+	 * 
+	 * @return A JFileChooser.
+	 */
+	public JFileChooser getFileChooser() {
+		return fileChooser;
 	}
 	
 	/**

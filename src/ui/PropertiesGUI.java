@@ -1,4 +1,4 @@
-package uielements;
+package ui;
 import java.awt.BorderLayout;
 
 import javax.swing.JPanel;

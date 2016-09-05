@@ -1,4 +1,4 @@
-# GraphBuilder 0.1.1
+# GraphBuilder 0.1.2
 
 GraphBuilder will be an open-source piece of software which allows users to visually construct [graphs](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) on a "editor" panel.
 
@@ -24,11 +24,15 @@ This package contains the implementations of various graph components. These are
 
 ### context
 
-This package contains a single context class which will contain data important for just about every part of the program, held in one central class.
+This package contains a single context class which will contain data important for just about every part of the program, held in one central class. This data includes the set of nodes and edges of the graph currently being built, and the history of (reversible) actions the user has performed.
+
+### io
+
+This package contains utility classes for saving graphs to files and loading graphs from files.
 
 ### keybindings
 
-This package currently contains code for keyboard shortcuts and a hard-coded mapping of keyboard shortcuts and corresponding actions.
+This package currently contains code for keyboard shortcuts and a hard-coded mapping of keyboard shortcuts and corresponding actions. These key bindings are bound to the root pane of GraphBuilder's main window frame.
 
 ### math
 
@@ -42,10 +46,18 @@ This tentative package contains a list of user preferences. Ultimately, these wi
 
 This package contains a list of all the tools that the user can use in GraphBuilder.
 
-### uielements
+### ui
 
-This package contains classes related to the UI components necessary for user interaction. This includes the main GUI which appears when the program starts, and the editor panel that appears within it.
+This package contains classes related to the UI components necessary for user interaction. This includes the main window which appears when the program starts, and the editor panel that appears within it.
 
-### uielements.tooloptions
+### ui.menus
+
+This package contains menu UI components.
+
+### ui.tooloptions
 
 This package contains all the "option bars" for each of the tools.
+
+### util
+
+This package contains several utility classes whose methods will be used in several different places.

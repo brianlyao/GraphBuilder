@@ -1,11 +1,11 @@
-package uielements.tooloptions;
+package ui.tooloptions;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JToolBar;
 
-import uielements.GUI;
+import ui.GUI;
 
 /** An abstract class for a bar which displays options for a tools. */
 public abstract class ToolOptionsBar extends JToolBar {

@@ -7,17 +7,19 @@ import javax.swing.KeyStroke;
 
 import context.GraphBuilderContext;
 import tool.Tool;
+import ui.GUI;
 import actions.*;
 
+/** A class containing all the keystroke-to-action mappings. */
 public class KeyboardShortcutActions {
 	
-	private GraphBuilderContext context;
+	private GUI gui; // The GUI we want the keyboard shortcuts to work on
 	
-	public KeyboardShortcutActions(GraphBuilderContext ctxt) {
+	public KeyboardShortcutActions(GUI g) {
 		
-		context = ctxt;
+		GraphBuilderContext ctxt = g.getContext();
 		
-		ActionMap actionMap = context.getGUI().getRootPane().getActionMap();
+		ActionMap actionMap = g.getRootPane().getActionMap();
 		
 		// Actions for switching to tools
 		actionMap.put("select", new SwitchToolAction(ctxt, Tool.SELECT));
@@ -31,7 +33,12 @@ public class KeyboardShortcutActions {
 		actionMap.put("undo", new Undo(ctxt));
 		actionMap.put("redo", new Redo(ctxt));
 		
-		InputMap inputMap = context.getGUI().getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+		// Actions for file io
+		actionMap.put("open", new Open(ctxt));
+		actionMap.put("save", new Save(ctxt));
+		actionMap.put("save as", new SaveAs(ctxt));
+		
+		InputMap inputMap = g.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 		
 		// Keystrokes for switching to tools
 		inputMap.put(KeyStroke.getKeyStroke("typed s"), "select");
@@ -45,16 +52,11 @@ public class KeyboardShortcutActions {
 		inputMap.put(KeyStroke.getKeyStroke("control Z"), "undo");
 		inputMap.put(KeyStroke.getKeyStroke("control Y"), "redo");
 		
+		// Keystrokes for file io
+		inputMap.put(KeyStroke.getKeyStroke("control O"), "open");
+		inputMap.put(KeyStroke.getKeyStroke("control S"), "save");
+		inputMap.put(KeyStroke.getKeyStroke("control shift S"), "save as");
+		
 	}
 	
-//	/** 
-//	 * Get the action corresponding to the specified keyboard shortcut.
-//	 * 
-//	 * @param shortcut The KeyboardShortcut we want to look up.
-//	 * @return The action corresponding to the keyboard shortcut (or null if there is none).
-//	 */
-//	public BaseAction getAction(KeyboardShortcut shortcut) {
-//		return shortcutToAction.get(shortcut);
-//	}
-//	
 }

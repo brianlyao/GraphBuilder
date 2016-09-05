@@ -1,8 +1,8 @@
-import uielements.GUI;
+import ui.GUI;
 
 
 /** The main class, where the interface is initialized. */
-public class Main {
+public class GraphBuilderRunner {
 	
 	public static void main(String[] args) {
 		GUI gui = new GUI();

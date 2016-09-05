@@ -1,4 +1,4 @@
-package uielements.tooloptions;
+package ui.tooloptions;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -17,7 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import tool.Tool;
-import uielements.GUI;
+import ui.GUI;
 
 /** The option bar for the Edge and Directed Edge tools. */
 public class EdgeOptionsBar extends ToolOptionsBar {
@@ -96,13 +96,15 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 	}
 	
 	public int getCurrentLineWeight() {
-		if(getGUI().getCurrentTool() == Tool.EDGE)
+		Tool currentTool = getGUI().getCurrentTool();
+		if(currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE)
 			return lineWeightSlider.getValue();
 		return -1;
 	}
 	
 	public Color getCurrentLineColor() {
-		if(getGUI().getCurrentTool() == Tool.EDGE)
+		Tool currentTool = getGUI().getCurrentTool();
+		if(currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE)
 			return lineColor;
 		return null;
 	}

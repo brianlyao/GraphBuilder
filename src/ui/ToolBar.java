@@ -1,4 +1,4 @@
-package uielements;
+package ui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

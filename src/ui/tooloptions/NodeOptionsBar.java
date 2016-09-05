@@ -1,4 +1,4 @@
-package uielements.tooloptions;
+package ui.tooloptions;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -17,7 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import tool.Tool;
-import uielements.GUI;
+import ui.GUI;
 
 /** The option bar for the Node tool. */
 public class NodeOptionsBar extends ToolOptionsBar {
