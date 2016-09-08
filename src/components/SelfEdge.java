@@ -15,6 +15,7 @@ public class SelfEdge extends Edge {
 	private Point2D.Double arcPoint2;
 	private Point2D.Double center;
 	private double radius;
+	private double offsetAngle;
 	
 	/**
 	 * @param node     The node which is the start and end node of this self-edge.
@@ -24,8 +25,9 @@ public class SelfEdge extends Edge {
 	 * @param directed Whether this edge is directed.
 	 * @param id       The id this node is assigned.
 	 */
-	public SelfEdge(Node node, Color c, int w, boolean directed, GraphBuilderContext ctxt, int id) {
+	public SelfEdge(Node node, Color c, int w, double offsetAngle, boolean directed, GraphBuilderContext ctxt, int id) {
 		super(node, node, c, w, directed, ctxt, id);
+		this.offsetAngle = offsetAngle;
 	}
 	
 	public Point2D.Double getCenter() {
@@ -44,8 +46,12 @@ public class SelfEdge extends Edge {
 		radius = r;
 	}
 	
+	public double getOffsetAngle() {
+		return offsetAngle;
+	}
+	
 	public String toStorageString() {
-		return super.toStorageString();
+		return super.toStorageString() + "," + offsetAngle;
 	}
 
 }

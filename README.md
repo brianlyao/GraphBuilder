@@ -16,7 +16,11 @@ An overview of the packages and what they contain.
 
 ### actions
 
-This package contains implementations of actions. Each action is a procedure the user can carry out in the editor. Some actions are reversible, which allows them to be undone. These actions are all implemented using the javax.swing.AbstractAction abstract class, since key bindings require a javax.swing.Action.
+This package contains implementations of actions. Each action is a procedure the user can carry out in the editor. Some actions are reversible, which allows them to be undone. These actions are all implemented using the javax.swing.AbstractAction abstract class, since key bindings require a javax.swing.Action. The actual "action" performed is specified in the overridden `actionPerformed` method. For reversible actions, there is a corresponding `undo` method which should reverse the changes made by `actionPerformed`.
+
+### actions.file
+
+This subpackage contains actions specific for file actions (such as those which would be found under the "File" menu).
 
 ### components
 

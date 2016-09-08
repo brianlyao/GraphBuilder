@@ -7,7 +7,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.WeakHashMap;
 
 import javax.swing.*;
 
@@ -32,6 +31,10 @@ public class Editor extends JPanel {
 	private Node edgeBasePoint; // The first node that's selected when drawing an edge
 	
 	private GraphComponent selection; // The currently selected item
+	
+	private Edge previewEdge;
+	private int previewEdgeIndex;
+	private boolean drawPreviewUsingObject; // If true, the preview edge should be the object previewEdge
 	
 	/** 
 	 * Constructor for an editor panel.
@@ -84,9 +87,15 @@ public class Editor extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent arg0) {
 				Tool currentTool = gui.getCurrentTool();
-				if(currentTool == Tool.EDGE_SELECT && closestEdge != null) {
+				if(currentTool == Tool.EDGE_SELECT && closestEdge != null && arg0.getButton() == MouseEvent.BUTTON1) {
+					// Select the edge if 
 					selection = closestEdge;
 					closestEdge.setSelected(true);
+				}
+				if(arg0.getButton() == MouseEvent.BUTTON3 && (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) && edgeBasePoint != null) {
+					// Reset base point to "cancel" edge placement
+					edgeBasePoint = null;
+					repaint(); // To "un"-draw the preview
 				}
 			}
 			
@@ -149,8 +158,9 @@ public class Editor extends JPanel {
 							Point2D.Double[] bcp;
 							if(l instanceof SimpleEdge) {
 								SimpleEdge simpe = (SimpleEdge) l;
-								if(simpe.getSimpleEdgeType() == SimpleEdge.LINEAR) {
-									bcp = simpe.getBezierPoints(); // Only the endpoints of the line are stored...
+								bcp = simpe.getBezierPoints();
+								if(bcp[1].x < 0 && bcp[1].y < 0) {
+									// Only the endpoints of the line are stored...
 									Point2D.Double c1 = bcp[0];
 									Point2D.Double c2 = bcp[2];
 									if(c2.x != c1.x && c2.y != c1.y) {
@@ -191,9 +201,7 @@ public class Editor extends JPanel {
 										closest = new Point(lastMousePoint.x, (int) c1.y);
 										dist = Math.abs(c1.y - clickd.y);
 									}
-								} else if(simpe.getSimpleEdgeType() == SimpleEdge.CURVED) {
-									bcp = simpe.getBezierPoints();
-									
+								} else {
 									// To get the closest point on a bezier curve, we're going to need to solve a cubic...
 									double a = bcp[0].x;
 									double b = bcp[0].y;
@@ -294,6 +302,19 @@ public class Editor extends JPanel {
 	}
 	
 	/**
+	 * Sets the last mouse point; we need this if the mouse is not on the Editor panel.
+	 * 
+	 * @param x The x coordinate of the new position.
+	 * @param y The y coordinate of the new position.
+ 	 */
+	public void setLastMousePoint(int x, int y) {
+		if(lastMousePoint != null)
+			lastMousePoint.setLocation(x, y);
+		else
+			lastMousePoint = new Point(x, y);
+	}
+	
+	/**
 	 * Get the currently selected graph component.
 	 * 
 	 * @return The selected GraphComponent.
@@ -311,6 +332,19 @@ public class Editor extends JPanel {
 		selection = gc;
 	}
 	
+	/**
+	 * Set the editor's preview edge and the preview edge's position
+	 * 
+	 * @param edge     The edge object representing the preview edge.
+	 * @param position The position of the preview edge relative to the existing edges between the
+	 *                 the same endpoints the preview edge has.
+	 */
+	public void setPreviewEdge(Edge edge, int position, boolean useThisEdge) {
+		previewEdge = edge;
+		previewEdgeIndex = position;
+		drawPreviewUsingObject = useThisEdge;
+	}
+	
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -321,11 +355,36 @@ public class Editor extends JPanel {
 			c.setLocation(c.getCoords());
 		
 		// Draw all edges by iterating through pairs of nodes
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		HashMap<Node.Pair, ArrayList<Edge>> edgeMap = gui.getContext().getEdgeMap();
-		ArrayList<Edge> edges;
+		
+		// Check if the preview edge's endpoint pair exists in the edge map
+		// If not, then we need to draw it separately
+		if(previewEdge != null) {
+			Node.Pair previewPair = new Node.Pair(previewEdge);
+			if(!edgeMap.keySet().contains(previewPair)) {
+				ArrayList<Edge> previewList = new ArrayList<>();
+				previewList.add(previewEdge);
+				drawEdgesBetweenNodePair(g2d, previewPair, previewList, previewEdge);
+			}
+		}
+		
+		// Iterate through the pairs of nodes in the edge map, and draw the edges between them
+		// If there is a preview edge, we "add" it (not directly) to the list of existing edges
+		// before we draw the list of edges
+		ArrayList<Edge> pairEdges, toDrawEdges;
 		for(Node.Pair pair : edgeMap.keySet()) {
-			edges = edgeMap.get(pair);
-			drawEdgesBetweenNodePair(g2d, pair, edges); // Draw the edges between every pair of nodes
+			pairEdges = edgeMap.get(pair);
+			if(previewEdge != null && pair.equals(new Node.Pair(previewEdge))) {
+				toDrawEdges = new ArrayList<>();
+				for(Edge e : pairEdges)
+					toDrawEdges.add(e);
+				int newIndex = previewEdgeIndex < 0 || previewEdgeIndex > pairEdges.size() ? pairEdges.size() : previewEdgeIndex;
+				toDrawEdges.add(newIndex, previewEdge);
+			} else {
+				toDrawEdges = pairEdges;
+			}
+			drawEdgesBetweenNodePair(g2d, pair, toDrawEdges, previewEdge);
 		}
 		
 		g2d.setStroke(new BasicStroke());
@@ -343,6 +402,22 @@ public class Editor extends JPanel {
 				// Draw the edge select preview
 				g2d.setColor((Color) Preferences.EDGE_SELECT_PREVIEW_COLOR.getData());
 				g2d.drawLine(closestEdgeSelectPoint.x, closestEdgeSelectPoint.y, lastMousePoint.x, lastMousePoint.y);
+			}
+		} else if(ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) {
+			if(edgeBasePoint != null && !drawPreviewUsingObject) {
+				int weight = gui.getEdgeOptionsBar().getCurrentLineWeight();
+				g2d.setStroke(new BasicStroke(weight));
+				g2d.setColor((Color) Preferences.EDGE_PREVIEW_COLOR.getData());
+				Point center = edgeBasePoint.getLocation();
+				center.x += edgeBasePoint.getRadius();
+				center.y += edgeBasePoint.getRadius();
+				g2d.drawLine(center.x, center.y, lastMousePoint.x, lastMousePoint.y);
+				if(ctool == Tool.DIRECTED_EDGE) {
+					double dist = Point.distance(lastMousePoint.x, lastMousePoint.y, center.x, center.y);
+					double unitX = - (lastMousePoint.x - center.x) / dist;
+					double unitY = - (lastMousePoint.y - center.y) / dist;
+					drawArrowTip(g2d, unitX, unitY, lastMousePoint, weight);
+				}
 			}
 		}
 		
@@ -365,7 +440,6 @@ public class Editor extends JPanel {
 				g2d.fillRect((int) (mid.x - side / 2.0), (int) (mid.y - side / 2.0), side, side);
 			}
 		}
-//		repaint(); // Need to find an alternative to this
 	}
 	
 	/** A helper method for drawing the edges between a pair of nodes. 
@@ -373,32 +447,36 @@ public class Editor extends JPanel {
 	 * @param g2d      The Graphics2D object we want to draw with.
 	 * @param nodePair The pair of nodes we are drawing edges between.
 	 * @param edges    The list of edges we need to draw between c1 and c2.
-	 * 
+	 * @param preview  The preview edge object.
 	 * */
-	private static void drawEdgesBetweenNodePair(Graphics2D g2d, Node.Pair nodePair, ArrayList<Edge> edges) {
-		// Draw edges between nodes c1 and c2; if numEdges > 1, draw them as quadratic bezier curves
+	private static void drawEdgesBetweenNodePair(Graphics2D g2d, Node.Pair nodePair, ArrayList<Edge> edges, Edge preview) {
+		// Draw edges between nodes c1 and c2; if edges.size() > 1, draw them as quadratic bezier curves
 		double angle = (Double) Preferences.EDGE_SPREAD_ANGLE.getData();
-		double lowerAngle = (1 - edges.size()) * angle / 2;
-		int count = 0;
-		double defaultAngle = 0;
-		double offsetAngle = (Double) Preferences.SELF_EDGE_OFFSET_ANGLE.getData();
+		double lowerAngle = (1 - edges.size()) * angle / 2.0;
+		int count = 0; // Keep count of how many edges have been drawn so far
 		
 		Node n1 = nodePair.getFirst();
 		
 		// Draw the edges one by one
-		for(Edge e : edges) {
+		Edge e;
+		for(int i = 0 ; i < edges.size() ; i++) {
+			e = edges.get(i);
 			g2d.setStroke(new BasicStroke(e.getWeight()));
 			g2d.setColor(e.getColor());
+			
+			// Split cases by the type of edge
 			if(e instanceof SelfEdge) {
+				// Draw this self edge (looks like a loop)
 				SelfEdge selfe = (SelfEdge) e;
-				// If this is a self-edge; draw a loop
+				double offsetAngle = selfe.getOffsetAngle();
+
 				Point nodeCenter = n1.getCenter();
-				defaultAngle = count * offsetAngle;
+
 				double centralAngle = (Double) Preferences.SELF_EDGE_SUBTENDED_ANGLE.getData();
 				double edgeAngle = (Double) Preferences.SELF_EDGE_ARC_ANGLE.getData();
 				double edgeRadius = Math.sin(centralAngle / 2) * n1.getRadius() / Math.sin(edgeAngle / 2);
-				double unitX = Math.cos(defaultAngle);
-				double unitY = Math.sin(defaultAngle);
+				double unitX = Math.cos(offsetAngle);
+				double unitY = Math.sin(offsetAngle);
 				double centralDist = edgeRadius * Math.cos(edgeAngle / 2) + n1.getRadius() * Math.cos(centralAngle / 2);
 				double edgeCenterX = centralDist * unitX + nodeCenter.x;
 				double edgeCenterY = centralDist * unitY + nodeCenter.y;
@@ -418,7 +496,7 @@ public class Editor extends JPanel {
 				selfe.setCenter(new Point2D.Double(edgeCenterX, edgeCenterY));
 				selfe.setRadius(edgeRadius);
 				count++;
-			} else {
+			} else if(e instanceof SimpleEdge) {
 				SimpleEdge simpe = (SimpleEdge) e;
 				// The edge is either a line or bezier curve; either way, they get drawn the same way
 				Node[] ends = e.getEndpoints();
@@ -438,16 +516,25 @@ public class Editor extends JPanel {
 				double radiusVectorX2 = ends[0].getRadius() * dist * (p1.x - p2.x);
 				double radiusVectorY2 = ends[0].getRadius() * dist * (p1.y - p2.y);
 				
-				if(simpe.getSimpleEdgeType() == SimpleEdge.LINEAR) {
+				// If the index corresponds to the "center" edge, it is drawn as a straight line.
+				if(edges.size() % 2 == 1 && i == edges.size() / 2) {
 					// Draw the line
-					g2d.drawLine((int) radiusVectorX2 + p2.x, (int) radiusVectorY2 + p2.y, (int) radiusVectorX1 + p1.x, (int) radiusVectorY1 + p1.y);
+					double linep1X = radiusVectorX1 + p1.x;
+					double linep1Y = radiusVectorY1 + p1.y;
+					double linep2X = radiusVectorX2 + p2.x;
+					double linep2Y = radiusVectorY2 + p2.y;
+					g2d.drawLine((int) linep2X, (int) linep2Y, (int) linep1X, (int) linep1Y);
+					
+					// Set the control point to a negative value to indicate it does not exist
+					if(preview == null)
+						simpe.setPoints(linep1X, linep1Y, -1, -1, linep2X, linep2Y);
 					
 					// If this edge is directed, draw the arrow
 					if(e.isDirected()) {
 						Point tip = new Point((int) radiusVectorX2 + p2.x, (int) radiusVectorY2 + p2.y);
 						drawArrowTip(g2d, radiusVectorX2 / ends[1].getRadius(), radiusVectorY2 / ends[1].getRadius(), tip, e.getWeight());
 					}
-				} else if(simpe.getSimpleEdgeType() == SimpleEdge.CURVED) {
+				} else {
 					// Rotate the radius vectors by an angle; this is how the curved edges are separated
 					double circ1X = radiusVectorX1 * Math.cos(initAngle) + radiusVectorY1 * Math.sin(initAngle);
 					double circ1Y = radiusVectorY1 * Math.cos(initAngle) - radiusVectorX1 * Math.sin(initAngle);
@@ -478,8 +565,11 @@ public class Editor extends JPanel {
 					
 					// Draw the curve
 					QuadCurve2D curve = new QuadCurve2D.Double(circ1X, circ1Y, controlX, controlY, circ2X, circ2Y);
-					simpe.setPoints(circ1X, circ1Y, controlX, controlY, circ2X, circ2Y);
 					g2d.draw(curve);
+					
+					// Only set the points if we are not also drawing a preview edge
+					if(preview == null)
+						simpe.setPoints(circ1X, circ1Y, controlX, controlY, circ2X, circ2Y);
 				}
 				count++;
 			}
@@ -492,16 +582,17 @@ public class Editor extends JPanel {
 	 * and the weight of the edge.
 	 * 
 	 * @param g2d         The Graphics2D object which will draw the tip.
-	 * @param unitVectorX The x component of the direction the edge is pointing.
-	 * @param unitVectorY The y component of the direction the edge is pointing.
+	 * @param unitVectorX The x component of the (opposite) direction the edge is pointing.
+	 * @param unitVectorY The y component of the (opposite) direction the edge is pointing.
 	 * @param tip         The Point object representing the coordinates of the edge's tip.
 	 * @param weight      The weight of the edge.
 	 */
 	private static void drawArrowTip(Graphics2D g2d, double unitVectorX, double unitVectorY, Point tip, int weight) {
 		double leftCornerX = tip.x + 5 * weight * unitVectorX - 2.5 * weight * unitVectorY;
 		double leftCornerY = tip.y + 5 * weight * unitVectorY - 2.5 * weight * (- unitVectorX);
-		Point rightCorner = new Point((int) (leftCornerX + 5 * weight * unitVectorY), (int) (leftCornerY + 5 * weight * (- unitVectorX)));
-		g2d.fillPolygon(new int[] {tip.x, (int) leftCornerX, rightCorner.x}, new int[] {tip.y, (int) leftCornerY, rightCorner.y}, 3);
+		double rightCornerX = leftCornerX + 5 * weight * unitVectorY;
+		double rightCornerY = leftCornerY + 5 * weight * (- unitVectorX); 
+		g2d.fillPolygon(new int[] {tip.x, (int) leftCornerX, (int) rightCornerX}, new int[] {tip.y, (int) leftCornerY, (int) rightCornerY}, 3);
 	}
 	
 	/** 

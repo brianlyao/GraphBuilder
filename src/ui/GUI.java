@@ -20,7 +20,7 @@ import context.GraphBuilderContext;
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;
-	private static final String VERSION = "0.1.2";
+	private static final String VERSION = "0.1.3";
 	
 	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
 	

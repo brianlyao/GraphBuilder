@@ -49,7 +49,7 @@ public class FileLoader {
 			
 			// Then parse and add all edges so they can refer to the nodes
 			for(String edgeStr : edgeStrs)
-				loadedContext.addEdge(readEdge(loadedContext, edgeStr));
+				loadedContext.addEdge(readEdge(loadedContext, edgeStr), -1);
 			
 			// Set the ID pool afterward, to start where it left off
 			loadedContext.setNextID(idPool);
@@ -106,15 +106,15 @@ public class FileLoader {
 		Node node1 = (Node) context.getIdMap().get(idnode1);
 		if(idnode1 == idnode2) {
 			// Restoring self edge
-			Edge newSelfEdge = new SelfEdge(node1, color, weight, directed, context, id);
+			double offsetAngle = Double.parseDouble(vals[6]); // Extra field
+			Edge newSelfEdge = new SelfEdge(node1, color, weight, offsetAngle, directed, context, id);
 			newSelfEdge.setID(id);
 			return newSelfEdge;
 		}
 		Node node2 = (Node) context.getIdMap().get(idnode2);
 		
-		// Restoring simple edge (should have an extra type field)
-		int type = Integer.parseInt(vals[6]);
-		Edge newSimpleEdge = new SimpleEdge(node1, node2, color, weight, directed, type, context, id);
+		// Restoring simple edge
+		Edge newSimpleEdge = new SimpleEdge(node1, node2, color, weight, directed, context, id);
 		newSimpleEdge.setID(id);
 		return newSimpleEdge;
 	}

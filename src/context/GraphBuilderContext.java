@@ -11,7 +11,6 @@ import java.util.Stack;
 import components.Edge;
 import components.GraphComponent;
 import components.Node;
-import components.SimpleEdge;
 import actions.ReversibleAction;
 import ui.Editor;
 import ui.GUI;
@@ -74,9 +73,9 @@ public class GraphBuilderContext {
 	 * Removes the specified node from the graph.
 	 * 
 	 * @param n The node to remove.
-	 * @return The set of edges that were removed as a result of this node's removal.
+	 * @return The map of edges that was removed as a result of this node's removal.
 	 */
-	public HashSet<Edge> removeNode(Node n) {
+	public HashMap<Node.Pair, ArrayList<Edge>> removeNode(Node n) {
 		nodes.remove(n);
 		// Revalidate the editor panel
 		Editor editor = gui.getEditor();
@@ -88,33 +87,36 @@ public class GraphBuilderContext {
 		Iterator<Edge> lineit = edges.iterator();
 		
 		// Remove all edges neighboring the removed node
-		HashSet<Edge> removed = new HashSet<>();
-		while(lineit.hasNext()) {
-			Edge nxt = lineit.next();
-			if(nxt.hasEndpoint(n)) {
-				removed.add(nxt);
+		while(lineit.hasNext())
+			if(lineit.next().hasEndpoint(n))
 				lineit.remove();
-			}
-		}
 		
 		// Remove all edges neighboring the removed node from edge map
-		while(edgeMapIterator.hasNext())
-			if(edgeMapIterator.next().getKey().hasNode(n))
+		// Keep track of which edges are removed, and return it
+		HashMap<Node.Pair, ArrayList<Edge>> removedSubEdgeMap = new HashMap<>();
+		Map.Entry<Node.Pair, ArrayList<Edge>> temp;
+		while(edgeMapIterator.hasNext()) {
+			temp = edgeMapIterator.next();
+			if(temp.getKey().hasNode(n)) {
+				removedSubEdgeMap.put(temp.getKey(), temp.getValue());
 				edgeMapIterator.remove();
+			}
+		}
 		
 		// If this node was the "base point" for an edge, reset the base point
 		if(editor.getEdgeBasePoint() == n)
 			editor.setEdgeBasePoint(null);
 		
-		return removed;
+		return removedSubEdgeMap;
 	}
 	
 	/** 
 	 * Add an edge to the graph.
 	 * 
-	 * @param e The edge we want to add to add to the graph.
+	 * @param e        The edge we want to add to add to the graph.
+	 * @param position The position (from the left) of the edge relative to other edges sharing e's endpoints.
 	 */
-	public void addEdge(Edge e) {
+	public void addEdge(Edge e, int position) {
 		edges.add(e);
 		
 		Node[] ends = e.getEndpoints();
@@ -126,23 +128,21 @@ public class GraphBuilderContext {
 			edgeMap.put(endsp, new ArrayList<Edge>());
 			addTo = edgeMap.get(endsp);
 		}
-		addTo.add(e);
 		
-		// Whenever a simple edge is added, one is changed from linear to curved or vice versa
-		if(e instanceof SimpleEdge && addTo.size() % 2 == 0)
-			((SimpleEdge) addTo.get(addTo.size() / 2 - 1)).setSimpleEdgeType(SimpleEdge.CURVED);
-		else if(e instanceof SimpleEdge)
-			((SimpleEdge) addTo.get(addTo.size() / 2)).setSimpleEdgeType(SimpleEdge.LINEAR);
-		else
+		// If the position index is out of bounds, just add it to the end
+		if(position < 0 || position > addTo.size())
 			addTo.add(e);
+		else
+			addTo.add(position, e);
 	}
 	
 	/** 
 	 * Remove an edge from the graph.
 	 * 
 	 * @param e The edge we want to add to add to the graph.
+	 * @return The position of the edge before it was removed.
 	 */
-	public void removeEdge(Edge e) {
+	public int removeEdge(Edge e) {
 		edges.remove(e);
 		
 		Node[] ends = e.getEndpoints();
@@ -150,15 +150,9 @@ public class GraphBuilderContext {
 		ArrayList<Edge> removeFrom = edgeMap.get(endsp);
 		if(removeFrom == null)
 			throw new IllegalArgumentException("The edge " + e + " is not in the graph, and cannot be removed.");
+		int index = removeFrom.indexOf(e);
 		removeFrom.remove(e);
-		
-		// Removing a simple edge will change an edge from linear to curved, or vice versa
-		if(removeFrom.size() != 0) {
-			if(removeFrom.get(0) instanceof SimpleEdge && removeFrom.size() % 2 == 0)
-				((SimpleEdge) removeFrom.get(removeFrom.size() / 2)).setSimpleEdgeType(SimpleEdge.CURVED);
-			else if(removeFrom.get(0) instanceof SimpleEdge)
-				((SimpleEdge) removeFrom.get(removeFrom.size() / 2)).setSimpleEdgeType(SimpleEdge.LINEAR);
-		}
+		return index;
 	}
 	
 	/**
@@ -310,10 +304,6 @@ public class GraphBuilderContext {
 		unsaved = true;
 		if(!gui.getTitle().endsWith("*"))
 			gui.setTitle(gui.getTitle() + "*");
-	}
-	
-	public int getActionHistorySizeOnLastSave() {
-		return actionHistorySizeOnLastSave;
 	}
 	
 	public void setActionHistorySizeOnLastSave(int size) {

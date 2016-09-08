@@ -1,7 +1,8 @@
-package actions;
+package actions.file;
 
 import java.awt.event.ActionEvent;
 
+import actions.SimpleAction;
 import util.GraphBuilderUtils;
 import context.GraphBuilderContext;
 

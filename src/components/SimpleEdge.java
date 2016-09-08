@@ -11,15 +11,10 @@ public class SimpleEdge extends Edge {
 
 	private static final long serialVersionUID = 8112193022247906350L;
 	
-	public static final int LINEAR = 0;
-	public static final int CURVED = 1;
-	
 	// The edge is a quadratic bezier curve OR a linear bezier (in the latter case, control is null)
 	private Point2D.Double p1;
 	private Point2D.Double p2;
 	private Point2D.Double control;
-	
-	private int type;
 	
 	/**
 	 * @param n1       The first node endpoint.
@@ -27,13 +22,11 @@ public class SimpleEdge extends Edge {
 	 * @param c        The edge's color.
 	 * @param w        The edge's weight.
 	 * @param directed Whether this edge is directed.
-	 * @param type     The type of the simple edge (linear or curved).
 	 * @param ctxt     The context (graph) this edge exists in.
 	 * 
 	 */
-	public SimpleEdge(Node n1, Node n2, Color c, int w, boolean directed, int type, GraphBuilderContext ctxt, int id) {
+	public SimpleEdge(Node n1, Node n2, Color c, int w, boolean directed, GraphBuilderContext ctxt, int id) {
 		super(n1, n2, c, w, directed, ctxt, id);
-		this.type = type;
 		p1 = new Point2D.Double();
 		p2 = new Point2D.Double();
 		control = new Point2D.Double();
@@ -66,16 +59,8 @@ public class SimpleEdge extends Edge {
 		return new Point2D.Double[] {p1, control, p2};
 	}
 	
-	public int getSimpleEdgeType() {
-		return type;
-	}
-	
-	public void setSimpleEdgeType(int newType) {
-		type = newType;
-	}
-	
 	public String toStorageString() {
-		return super.toStorageString() + "," + type;
+		return super.toStorageString();
 	}
 
 }

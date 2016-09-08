@@ -9,6 +9,9 @@ import context.GraphBuilderContext;
 import tool.Tool;
 import ui.GUI;
 import actions.*;
+import actions.file.Open;
+import actions.file.Save;
+import actions.file.SaveAs;
 
 /** A class containing all the keystroke-to-action mappings. */
 public class KeyboardShortcutActions {

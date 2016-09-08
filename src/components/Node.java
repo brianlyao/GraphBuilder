@@ -3,11 +3,13 @@ package components;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashSet;
 
 import context.GraphBuilderContext;
 import actions.MoveNodeAction;
+import actions.PlaceEdgeAction;
 import preferences.Preferences;
 import tool.Tool;
 import ui.Editor;
@@ -25,6 +27,12 @@ public class Node extends GraphComponent {
 		public Pair(Node n1, Node n2) {
 			node1 = n1;
 			node2 = n2;
+		}
+		
+		public Pair(Edge e) {
+			Node[] ends = e.getEndpoints();
+			node1 = ends[0];
+			node2 = ends[1];
 		}
 		
 		/**
@@ -197,47 +205,52 @@ public class Node extends GraphComponent {
 			public void mousePressed(MouseEvent e) {
 				clickPoint = e.getPoint();
 				editorLocationOnClick.setLocation(Node.this.x, Node.this.y);
-				Node source = (Node) e.getSource();
-				boolean contains = source.containsPoint(clickPoint);
+				Node sink = (Node) e.getSource();
+				boolean contains = sink.containsPoint(clickPoint);
 				
 				// Display the right click menu if the node is right clicked
 				if(contains && e.getButton() == MouseEvent.BUTTON3) {
 					NodeRightClickMenu.show(Node.this, e.getX(), e.getY());
-				} else if(contains) {
+				} else if(contains && e.getButton() == MouseEvent.BUTTON1) {
 					Tool current = editor.getGUI().getCurrentTool();
 					if(current == Tool.SELECT) {
 						GraphComponent previous = editor.getSelection();
-						source.setSelected(true);
-						if(previous != null && previous != source) {
+						sink.setSelected(true);
+						if(previous != null && previous != sink) {
 							previous.setSelected(false);
 							previous.repaint();
-							editor.setSelection(source);
+							editor.setSelection(sink);
 						}
 						repaint();
-						editor.setSelection(source); 
+						editor.setSelection(sink); 
 					} else if(current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
 						if(editor.getEdgeBasePoint() == null) {
 							editor.setEdgeBasePoint(Node.this);
 						} else {
-							Node sink = editor.getEdgeBasePoint();
+							Node source = editor.getEdgeBasePoint();
 							Color currentLineColor = editor.getGUI().getEdgeOptionsBar().getCurrentLineColor();
 							int currentLineWeight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
 							boolean directed = current == Tool.DIRECTED_EDGE;
 							Edge newEdge;
 							
-							// Check if the edge should be a self-edge, linear, or curved
-							if(source == sink) {
-								newEdge = new SelfEdge(source, currentLineColor, currentLineWeight, directed, getContext(), getContext().getNextIDAndInc());
+							// Check if the edge should be a self-edge
+							if(sink == source) {
+								double angle = getSelfEdgeOffsetAngle(Node.this, e.getPoint());
+								newEdge = new SelfEdge(sink, currentLineColor, currentLineWeight, angle, directed, getContext(), getContext().getNextIDAndInc());
 							} else {
-								ArrayList<Edge> pairEdges = getContext().getEdgeMap().get(new Node.Pair(source, sink));
-								if(pairEdges == null || pairEdges.isEmpty()) // If it is null, there are currently no edges between these two nodes
-									newEdge = new SimpleEdge(source, sink, currentLineColor, currentLineWeight, directed, SimpleEdge.LINEAR, getContext(), getContext().getNextIDAndInc());
-								else
-									newEdge = new SimpleEdge(source, sink, currentLineColor, currentLineWeight, directed, SimpleEdge.CURVED, getContext(), getContext().getNextIDAndInc());
+								newEdge = new SimpleEdge(sink, source, currentLineColor, currentLineWeight, directed, getContext(), getContext().getNextIDAndInc());
 							}
 							
-							getContext().addEdge(newEdge);
-							editor.setEdgeBasePoint(null);
+							// Compute the position of this edge (only matters if it is a simple edge)
+							// Add the new edge at the given position
+							ArrayList<Edge> pairEdges = getContext().getEdgeMap().get(new Node.Pair(sink, source)); 
+							int edgePosition = getEdgePosition(sink, source, e.getPoint(), pairEdges);
+							new PlaceEdgeAction(getContext(), newEdge, edgePosition).actionPerformed(null);
+							editor.setEdgeBasePoint(null); 
+							
+							// Remove any existing preview edge object
+							editor.setPreviewEdge(null, -1, false);
+							
 							editor.repaint();
 						}
 					}
@@ -254,8 +267,18 @@ public class Node extends GraphComponent {
 			}
 			
 			@Override
+			public void mouseEntered(MouseEvent e) {
+				if(containsPoint(e.getPoint()))
+					hovering = true;
+			}
+			
+			@Override
 			public void mouseExited(MouseEvent e) {
 				hovering = false;
+				
+				// Remove any existing preview edge object
+				editor.setPreviewEdge(null, -1, false);
+				editor.repaint();
 			}
 			
 		});
@@ -277,21 +300,126 @@ public class Node extends GraphComponent {
 			
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				boolean repaintNeeded = false;
 				if(containsPoint(e.getPoint())) {
-					if(!hovering)
-						repaintNeeded = true;
 					hovering = true;
+					
+					// Draw preview edges correctly
+					Node ebp = editor.getEdgeBasePoint();
+					Tool ctool = editor.getGUI().getCurrentTool();
+					if((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebp != null) {
+						Color previewColor = (Color) Preferences.EDGE_PREVIEW_COLOR.getData();
+						int weight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
+						boolean directed = ctool == Tool.DIRECTED_EDGE;
+						if(ebp != Node.this) {
+							// Compute the preview for a simple edge
+							ArrayList<Edge> existingEdges = getContext().getEdgeMap().get(new Node.Pair(ebp, Node.this));
+							
+							// Get the position of this edge within the existing edges
+							int edgePosition = getEdgePosition(Node.this, ebp, e.getPoint(), existingEdges);
+							
+							// Create edge and set it as the preview
+							SimpleEdge preview = new SimpleEdge(Node.this, ebp, previewColor, weight, directed, getContext(), -1);
+							editor.setPreviewEdge(preview, edgePosition, true);
+						} else {
+							// Compute the preview for a self edge
+							double angle = getSelfEdgeOffsetAngle(Node.this, e.getPoint());
+							SelfEdge preview = new SelfEdge(Node.this, previewColor, weight, angle, directed, getContext(), -1);
+							editor.setPreviewEdge(preview, -1, true);
+						}
+						editor.repaint(); // Repaint editor to update preview edge
+					}
 				} else {
-					if(hovering)
-						repaintNeeded = true;
 					hovering = false;
+					
+					// Check for movement within this Node's panel but not within the node itself
+					editor.setLastMousePoint(Node.this.x + e.getPoint().x, Node.this.y + e.getPoint().y);
+					
+					// Remove any existing preview edge object
+					editor.setPreviewEdge(null, -1, false);
+					editor.repaint();
 				}
-				if(repaintNeeded)
-					repaint();
+				repaint(); // Redraw things like bounding boxes
 			}
 			
 		});
+	}
+	
+	/**
+	 * Helper method for obtaining the "position" of an edge given the pair of node endpoints
+	 * and the position of the mouse on this node's panel.
+	 * 
+	 * @param to               The node the edge is flowing to.
+	 * @param from             The node the edge is flowing from.
+	 * @param mouseEvent       The point corresponding to the cursor's position on the node.
+	 * @param numExistingEdges The number of edges which already exist between to and from.
+	 * @return The integer index of the edge's newly determined position.
+	 */
+	private static int getEdgePosition(Node to, Node from, Point mouseEvent, ArrayList<Edge> existingEdges) {
+		int edgePosition = 0;
+		int numExistingEdges = existingEdges == null ? 0 : existingEdges.size();
+		if(numExistingEdges > 0) {
+			// If there are already edges between the two nodes
+			Point fromCenter = from.getCenter();
+			Point toCenter = to.getCenter();
+			Point mouseEditor = new Point(mouseEvent.x + to.x, mouseEvent.y + to.y);
+			double distCenters = Point.distance(fromCenter.x, fromCenter.y, toCenter.x, toCenter.y);
+			double unitAwayX = (fromCenter.x - toCenter.x) / distCenters;
+			double unitAwayY = (fromCenter.y - toCenter.y) / distCenters;
+			double distCenterMouse = Point.distance(toCenter.x, toCenter.y, mouseEditor.x, mouseEditor.y);
+			double unitToMouseX = (mouseEditor.x - toCenter.x) / distCenterMouse;
+			double unitToMouseY = (mouseEditor.y - toCenter.y) / distCenterMouse;
+			double angleFromCenters = Math.acos(unitAwayX * unitToMouseX + unitAwayY * unitToMouseY);
+			
+			// Check if the mouse is to the "right" of the vector pointing to the base point
+			// Compute the cross product's magnitude; if it is negative, it is to the "right"
+			if(unitAwayX * unitToMouseY - unitAwayY * unitToMouseX < 0)
+				angleFromCenters *= -1;
+			
+			// Compute the angle over which the edges are spread
+			double spreadAngle = (double) Preferences.EDGE_SPREAD_ANGLE.getData();
+			double boundAngle = (spreadAngle * (numExistingEdges - 1)) / 2.0;
+			if(angleFromCenters > boundAngle)
+				edgePosition = numExistingEdges;
+			else if(angleFromCenters < -boundAngle)
+				edgePosition = 0;
+			else
+				edgePosition = (int) ((angleFromCenters + boundAngle) / spreadAngle) + 1;
+			
+			// Indices are one-way; we might have to use the "opposite index depending
+			// on the direction the edge is being drawn from
+			Edge first = existingEdges.get(0);
+			if(numExistingEdges == 1 && to != from && first instanceof SimpleEdge) {
+				if(to == first.getEndpoints()[1])
+					edgePosition = numExistingEdges - edgePosition;
+			} else if(to != from && first instanceof SimpleEdge) {
+				Point2D.Double control = ((SimpleEdge) existingEdges.get(0)).getBezierPoints()[1];
+				double centerToControlDist = Point.distance(control.x, control.y, toCenter.x, toCenter.y);
+				double centerToControlX = (control.x - toCenter.x) / centerToControlDist;
+				double centerToControlY = (control.y - toCenter.y) / centerToControlDist;
+				if(unitAwayX * centerToControlY - unitAwayY * centerToControlX > 0)
+					edgePosition = numExistingEdges - edgePosition;
+			}
+		}
+		return edgePosition;
+	}
+	
+	/**
+	 * Helper method which finds the angle of the cursor relative to some default vector.
+	 * 
+	 * @param n          The node in which the mouse is moving. 
+	 * @param mouseEvent The point at which the cursor is located.
+	 * @return           The angle (in radians) of the cursor's position relative to the default vector.
+	 */
+	private static double getSelfEdgeOffsetAngle(Node n, Point mouseEvent) {
+		final double defaultX = 1; // Default unit vector for an angle of 0
+		final double defaultY = 0;
+		double distCenter = Point.distance(mouseEvent.x, mouseEvent.y, n.radius, n.radius);
+		double diffCenterX = (mouseEvent.x - n.radius) / distCenter;
+		double diffCenterY = (mouseEvent.y - n.radius) / distCenter;
+		double angle = Math.acos(diffCenterX * defaultX + diffCenterY * defaultY);
+		if(mouseEvent.y < n.radius)
+			angle *= -1;
+		return angle;
 	}
 	
 	/**

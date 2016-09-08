@@ -1,7 +1,8 @@
 package actions;
 
 import java.awt.event.ActionEvent;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import components.Edge;
 import components.Node;
@@ -14,7 +15,7 @@ public class DeleteNodeAction extends ReversibleAction {
 	
 	private Node node;
 	
-	private HashSet<Edge> removedEdges; // The set of edges that was removed due to the node's removal
+	private HashMap<Node.Pair, ArrayList<Edge>> removedEdges; // The set of edges that was removed due to the node's removal
 	
 	/**
 	 * @param ctxt The context in which this action occurs.
@@ -23,11 +24,6 @@ public class DeleteNodeAction extends ReversibleAction {
 	public DeleteNodeAction(GraphBuilderContext ctxt, Node n) {
 		super(ctxt);
 		node = n;
-		
-		removedEdges = new HashSet<>();
-		for(Edge e : ctxt.getEdges())
-			if(e.hasEndpoint(n))
-				removedEdges.add(e);
 	}
 	
 	@Override
@@ -41,8 +37,8 @@ public class DeleteNodeAction extends ReversibleAction {
 	public void undo() {
 		getContext().addNode(node);
 		if(removedEdges != null)
-			for(Edge e : removedEdges)
-				getContext().addEdge(e);
+			for(Node.Pair pair : removedEdges.keySet())
+				getContext().getEdgeMap().put(pair, removedEdges.get(pair));
 		addSelfToUndoHistory();
 		getContext().updateSaveState();
 	}
