@@ -18,6 +18,7 @@ import javax.swing.event.ChangeListener;
 
 import tool.Tool;
 import ui.GUI;
+import util.ImageUtils;
 
 /** The option bar for the Node tool. */
 public class NodeOptionsBar extends ToolOptionsBar {
@@ -87,7 +88,7 @@ public class NodeOptionsBar extends ToolOptionsBar {
 		circleTextColor = Color.BLACK;
 		circleFillColorLabel = new JLabel("Fill Color:");
 		circleFillColorImage = new BufferedImage(15, 15, BufferedImage.TYPE_INT_ARGB);
-		ToolOptionsBar.fillImage(circleFillColorImage, circleFillColor);
+		ImageUtils.fillImage(circleFillColorImage, circleFillColor);
 		circleFillColorIcon = new ImageIcon(circleFillColorImage);
 		circleFillColorButton = new JButton(circleFillColorIcon);
 		circleFillColorButton.addActionListener(new ActionListener(){
@@ -96,13 +97,13 @@ public class NodeOptionsBar extends ToolOptionsBar {
 				Color c = JColorChooser.showDialog(NodeOptionsBar.this.getGUI(), "Choose Fill Color", circleFillColor);
 				if(c != null){
 					circleFillColor = c;
-					ToolOptionsBar.fillImage(circleFillColorImage, c);
+					ImageUtils.fillImage(circleFillColorImage, c);
 				}
 			}
 		});
 		circleBorderColorLabel = new JLabel("Border Color:");
 		circleBorderColorImage = new BufferedImage(15, 15, BufferedImage.TYPE_INT_ARGB);
-		ToolOptionsBar.fillImage(circleBorderColorImage, circleBorderColor);
+		ImageUtils.fillImage(circleBorderColorImage, circleBorderColor);
 		circleBorderColorIcon = new ImageIcon(circleBorderColorImage);
 		circleBorderColorButton = new JButton(circleBorderColorIcon);
 		circleBorderColorButton.addActionListener(new ActionListener() {
@@ -111,13 +112,13 @@ public class NodeOptionsBar extends ToolOptionsBar {
 				Color c = JColorChooser.showDialog(NodeOptionsBar.this.getGUI(), "Choose Border Color", circleBorderColor);
 				if(c != null){
 					circleBorderColor = c;
-					ToolOptionsBar.fillImage(circleBorderColorImage, c);
+					ImageUtils.fillImage(circleBorderColorImage, c);
 				}
 			}
 		});
 		circleTextColorLabel = new JLabel("Text Color:");
 		circleTextColorImage = new BufferedImage(15, 15, BufferedImage.TYPE_INT_ARGB);
-		ToolOptionsBar.fillImage(circleTextColorImage, circleTextColor);
+		ImageUtils.fillImage(circleTextColorImage, circleTextColor);
 		circleTextColorIcon = new ImageIcon(circleTextColorImage);
 		circleTextColorButton = new JButton(circleTextColorIcon);
 		circleTextColorButton.addActionListener(new ActionListener() {
@@ -126,7 +127,7 @@ public class NodeOptionsBar extends ToolOptionsBar {
 				Color c = JColorChooser.showDialog(NodeOptionsBar.this.getGUI(), "Choose Text Color", circleTextColor);
 				if(c != null){
 					circleTextColor = c;
-					ToolOptionsBar.fillImage(circleTextColorImage, c);
+					ImageUtils.fillImage(circleTextColorImage, c);
 				}
 			}
 		});

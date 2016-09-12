@@ -1,8 +1,5 @@
 package ui.tooloptions;
 
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-
 import javax.swing.JToolBar;
 
 import ui.GUI;
@@ -26,12 +23,6 @@ public abstract class ToolOptionsBar extends JToolBar {
 	
 	public GUI getGUI() {
 		return gui;
-	}
-	
-	protected static void fillImage(BufferedImage b, Color c) {
-		for(int i = 0 ; i < b.getWidth() ; i++)
-			for(int j = 0 ; j < b.getHeight() ; j++)
-				b.setRGB(i, j, c.getRGB());
 	}
 	
 }

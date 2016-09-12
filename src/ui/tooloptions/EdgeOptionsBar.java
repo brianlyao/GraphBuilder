@@ -18,6 +18,7 @@ import javax.swing.event.ChangeListener;
 
 import tool.Tool;
 import ui.GUI;
+import util.ImageUtils;
 
 /** The option bar for the Edge and Directed Edge tools. */
 public class EdgeOptionsBar extends ToolOptionsBar {
@@ -74,7 +75,7 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 		lineColorLabel = new JLabel("Line Color: ");
 		lineColor = Color.BLACK;
 		lineColorImage = new BufferedImage(15, 15, BufferedImage.TYPE_INT_ARGB);
-		ToolOptionsBar.fillImage(lineColorImage, lineColor);
+		ImageUtils.fillImage(lineColorImage, lineColor);
 		lineColorIcon = new ImageIcon(lineColorImage);
 		lineColorButton = new JButton(lineColorIcon);
 		lineColorButton.addActionListener(new ActionListener() {
@@ -83,7 +84,7 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 				Color c = JColorChooser.showDialog(EdgeOptionsBar.this.getGUI(), choose, lineColor);
 				if(c != null) {
 					lineColor = c;
-					ToolOptionsBar.fillImage(lineColorImage, c);
+					ImageUtils.fillImage(lineColorImage, c);
 				}
 			}
 		});

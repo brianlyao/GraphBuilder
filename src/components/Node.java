@@ -14,6 +14,7 @@ import preferences.Preferences;
 import tool.Tool;
 import ui.Editor;
 import ui.menus.NodeRightClickMenu;
+import util.CoordinateUtils;
 
 /** An instance represents a node (visually represented by a circle) placed on the editor panel. */
 public class Node extends GraphComponent {
@@ -261,6 +262,7 @@ public class Node extends GraphComponent {
 			public void mouseReleased(MouseEvent e) {
 				Point locationOnEditor = new Point(Node.this.x, Node.this.y);
 				if(!editorLocationOnClick.equals(locationOnEditor)) {
+					// Add to the history the movement of the node
 					getContext().getActionHistory().push(new MoveNodeAction(getContext(), Node.this, editorLocationOnClick, locationOnEditor));
 					getContext().updateSaveState();
 				}
@@ -289,10 +291,22 @@ public class Node extends GraphComponent {
 			@Override
 			public void mouseDragged(MouseEvent e) {
 				if(editor.getGUI().getCurrentTool() == Tool.SELECT && containsPoint(clickPoint)) {
-					Node c = (Node) e.getSource();
+					Node n = Node.this;
 					Point dragPoint = e.getPoint();
-					Point newPoint = new Point(Math.max(0, c.x + dragPoint.x - clickPoint.x),
-											   Math.max(0, c.y + dragPoint.y - clickPoint.y));
+					
+					// The new point of this node on the editor
+					Point newPoint;
+					if(editor.getGUI().getGridSettingsDialog().getSnapToGrid()) {
+						// Enforce grid snap
+						Point mouseCenter = new Point(n.x + dragPoint.x, n.y + dragPoint.y);
+						
+						newPoint = CoordinateUtils.closestGridPoint(editor.getGUI(), mouseCenter);
+						newPoint.x -= radius;
+						newPoint.y -= radius;
+					} else {
+						// Drag the node as normal
+						newPoint = new Point(Math.max(0, n.x + dragPoint.x - clickPoint.x), Math.max(0, n.y + dragPoint.y - clickPoint.y));
+					}
 					setCoords(newPoint);
 					editor.repaint();
 				}

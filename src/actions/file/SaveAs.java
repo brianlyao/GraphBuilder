@@ -3,7 +3,7 @@ package actions.file;
 import java.awt.event.ActionEvent;
 
 import actions.SimpleAction;
-import util.GraphBuilderUtils;
+import util.FileUtils;
 import context.GraphBuilderContext;
 
 /** The action of "saving as" a graph to a file. */
@@ -20,7 +20,7 @@ public class SaveAs extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		GraphBuilderUtils.saveAsFileProcedure(getContext());
+		FileUtils.saveAsFileProcedure(getContext());
 	}
 	
 }

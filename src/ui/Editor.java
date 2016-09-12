@@ -13,6 +13,7 @@ import javax.swing.*;
 import actions.PlaceNodeAction;
 import preferences.Preferences;
 import tool.Tool;
+import util.CoordinateUtils;
 import math.Complex;
 import components.*;
 import context.GraphBuilderContext;
@@ -25,7 +26,8 @@ public class Editor extends JPanel {
 	private GUI gui; // The GUI this editor is placed in
 	
 	private Point lastMousePoint; // Keep track of the last mouse position
-	private Point closestEdgeSelectPoint;
+	
+	private Point closestEdgeSelectPoint; // Used for the edge select tool
 	private Edge closestEdge;
 	
 	private Node edgeBasePoint; // The first node that's selected when drawing an edge
@@ -68,7 +70,18 @@ public class Editor extends JPanel {
 				if(current == Tool.NODE) {
 					Color[] colors = gui.getNodeOptionsBar().getCurrentCircleColors();
 					int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
-					Point placed = new Point(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius));
+					
+					// If grid snape is enabled, the location of placement is different
+					Point placed;
+					if(gui.getGridSettingsDialog().getSnapToGrid()) {
+						// Compute "snapped" placement position
+						placed = CoordinateUtils.closestGridPoint(gui, lastMousePoint);
+						placed.x -= currentRadius;
+						placed.y -= currentRadius;
+					} else {
+						// Use regular placement position (at cursor)
+						placed = new Point(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius));
+					}
 					Node newNode = new Node(placed.x, placed.y, currentRadius, "", colors[0], colors[1], colors[2], gui.getContext(), gui.getContext().getNextIDAndInc());
 					
 					// Perform the action for placing a node
@@ -285,18 +298,38 @@ public class Editor extends JPanel {
 		});
 	}
 	
+	/**
+	 * Get the context of the GUI this editor is on.
+	 * 
+	 * @return The context of the GUI this editor is on.
+	 */
 	public GraphBuilderContext getContext() {
 		return gui.getContext();
 	}
 	
+	/**
+	 * Get the GUI this editor is on.
+	 * 
+	 * @return The GUI instance this editor is on.
+	 */
 	public GUI getGUI() {
 		return gui;
 	}
 	
+	/**
+	 * Get the "base point" of the edge being added.
+	 * 
+	 * @return The base (first) point of the edge being added.
+	 */
 	public Node getEdgeBasePoint() {
 		return edgeBasePoint;
 	}
 	
+	/**
+	 * Set the base point of the edge being drawn (usually to null).
+	 * 
+	 * @param n The new base point.
+	 */
 	public void setEdgeBasePoint(Node n) {
 		edgeBasePoint = n;
 	}
@@ -350,12 +383,25 @@ public class Editor extends JPanel {
 		super.paintComponent(g);
 		Graphics2D g2d = (Graphics2D) g;
 		
-		// Explicitly set the position of the nodes; this allows the pane to be scrollable while retaining the position of the circles relative to the top left corner of the editor panel
+		// Explicitly set the position of the nodes; this allows the pane to be scrollable while
+		// retaining the position of the circles relative to the top left corner of the editor panel
 		for(Node c : gui.getContext().getNodes())
 			c.setLocation(c.getCoords());
 		
-		// Draw all edges by iterating through pairs of nodes
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		
+		// Draw grid lines if they are enabled
+		if(gui.getGridSettingsDialog().getShowGrid()) {
+			int level = gui.getGridSettingsDialog().getGridLevel();
+			g2d.setStroke(new BasicStroke(1));
+			g2d.setColor(gui.getGridSettingsDialog().getGridColor());
+			for(int xi = level ; xi < this.getWidth() ; xi += level)
+				g2d.drawLine(xi, 0, xi, this.getHeight());
+			for(int yi = level ; yi < this.getHeight() ; yi += level)
+				g2d.drawLine(0, yi, this.getWidth(), yi);
+		}
+		
+		// Draw all edges by iterating through pairs of nodes
 		HashMap<Node.Pair, ArrayList<Edge>> edgeMap = gui.getContext().getEdgeMap();
 		
 		// Check if the preview edge's endpoint pair exists in the edge map
@@ -388,18 +434,31 @@ public class Editor extends JPanel {
 		}
 		
 		g2d.setStroke(new BasicStroke());
+		
 		// Draw tool-specific graphics
 		Tool ctool = gui.getCurrentTool();
 		if(ctool == Tool.NODE) {
-			// Draw preview for the Circle tool
+			// Draw preview for the Node tool
 			g2d.setColor((Color) Preferences.CIRCLE_PREVIEW_COLOR.getData());
 			int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
-			Ellipse2D.Double preview = new Ellipse2D.Double(lastMousePoint.x - currentRadius,
-					lastMousePoint.y - currentRadius, 2*currentRadius, 2*currentRadius);
+			
+			// If snap to grid is enabled, draw the preview differently
+			Ellipse2D.Double preview;
+			if(gui.getGridSettingsDialog().getSnapToGrid()) {
+				// Draw the "snapped" preview circle
+				Point closestGridPoint = CoordinateUtils.closestGridPoint(gui, lastMousePoint);
+				preview = new Ellipse2D.Double(closestGridPoint.x - currentRadius,
+						closestGridPoint.y - currentRadius, 2*currentRadius, 2*currentRadius);
+			} else{
+				// Draw the normal preview circle (at the cursor location)
+				preview = new Ellipse2D.Double(lastMousePoint.x - currentRadius,
+						lastMousePoint.y - currentRadius, 2*currentRadius, 2*currentRadius);
+			}
+			
 			g2d.draw(preview);
 		} else if(ctool == Tool.EDGE_SELECT) {
 			if(closestEdgeSelectPoint != null) {
-				// Draw the edge select preview
+				// Draw the edge select line to closest edge
 				g2d.setColor((Color) Preferences.EDGE_SELECT_PREVIEW_COLOR.getData());
 				g2d.drawLine(closestEdgeSelectPoint.x, closestEdgeSelectPoint.y, lastMousePoint.x, lastMousePoint.y);
 			}

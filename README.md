@@ -1,4 +1,4 @@
-# GraphBuilder 0.1.2
+# GraphBuilder 0.1.4
 
 GraphBuilder will be an open-source piece of software which allows users to visually construct [graphs](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) on a "editor" panel.
 
@@ -54,13 +54,17 @@ This package contains a list of all the tools that the user can use in GraphBuil
 
 This package contains classes related to the UI components necessary for user interaction. This includes the main window which appears when the program starts, and the editor panel that appears within it.
 
+### ui.dialogs
+
+This subpackage contains dialogs, which will be used to view and modify various settings within GraphBuilder.
+
 ### ui.menus
 
-This package contains menu UI components.
+This subpackage contains menu UI components.
 
 ### ui.tooloptions
 
-This package contains all the "option bars" for each of the tools.
+This subpackage contains all the "option bars" for each of the tools.
 
 ### util
 

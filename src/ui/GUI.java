@@ -11,16 +11,17 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import keybindings.KeyboardShortcutActions;
 import tool.Tool;
+import ui.dialogs.GridSettingsDialog;
 import ui.menus.MenuBar;
 import ui.tooloptions.EdgeOptionsBar;
 import ui.tooloptions.NodeOptionsBar;
-import util.GraphBuilderUtils;
+import util.FileUtils;
 import context.GraphBuilderContext;
 
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;
-	private static final String VERSION = "0.1.3";
+	private static final String VERSION = "0.1.4";
 	
 	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
 	
@@ -31,6 +32,8 @@ public class GUI extends JFrame {
 	private MenuBar menuBar; // The menu bar
 	
 	private ToolBar toolBar; // The tool bar
+	
+	private GridSettingsDialog gridSettingsFrame;
 	
 	//Tool option bars 
 	private NodeOptionsBar nodeOptions;
@@ -47,8 +50,6 @@ public class GUI extends JFrame {
 	
 	private JFileChooser fileChooser;
 	
-	private KeyboardShortcutActions keyActions; // Object with all keyboard shortcuts and corresponding actions
-	
 	private Tool currentTool; // The tool currently being used
 	
 	private GraphBuilderContext context; // The context for the entire program
@@ -62,13 +63,16 @@ public class GUI extends JFrame {
 		menuBar = new MenuBar(this);
 		setJMenuBar(menuBar);
 		
+		// Initialize setting frames
+		gridSettingsFrame = new GridSettingsDialog(this);
+		
 		// Initialize toolbar
 		toolBar = new ToolBar(context);
 		toolBar.setFloatable(false);
 		toolBar.setRollover(true);
 		
 		// Initialize the key bindings and their actions
-		keyActions = new KeyboardShortcutActions(this);
+		KeyboardShortcutActions.initialize(this);
 		
 		// Initialize and customize the file chooser
 		fileChooser = new JFileChooser();
@@ -92,7 +96,7 @@ public class GUI extends JFrame {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				GraphBuilderUtils.exitProcedure(context);
+				FileUtils.exitProcedure(context);
 			}
 			
 		});
@@ -247,10 +251,28 @@ public class GUI extends JFrame {
 		return context;
 	}
 	
+	/**
+	 * Updates the context of this interface to the specified context.
+	 * 
+	 * @param newContext The context to replace the existing one.
+	 */
 	public void updateContext(GraphBuilderContext newContext) {
 		context = newContext;
-		keyActions = new KeyboardShortcutActions(this); // Re-initialize key bindings with correct context
-		this.setTitle(DEFAULT_TITLE + " - " + GraphBuilderUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
+		KeyboardShortcutActions.initialize(this); // Re-initialize key bindings with correct context
+		this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
+	}
+	
+	public MenuBar getMainMenuBar() {
+		return menuBar;
+	}
+	
+	/**
+	 * Get the grid settings dialog.
+	 * 
+	 * @return The grid settings dialog.
+	 */
+	public GridSettingsDialog getGridSettingsDialog() {
+		return gridSettingsFrame;
 	}
 	
 	/**

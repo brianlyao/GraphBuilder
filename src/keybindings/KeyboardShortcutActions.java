@@ -16,10 +16,12 @@ import actions.file.SaveAs;
 /** A class containing all the keystroke-to-action mappings. */
 public class KeyboardShortcutActions {
 	
-	private GUI gui; // The GUI we want the keyboard shortcuts to work on
-	
-	public KeyboardShortcutActions(GUI g) {
-		
+	/**
+	 * Initialize the key bindings in the given GUI.
+	 * 
+	 * @param g The GUI in which we want to apply key bindings.
+	 */
+	public static void initialize(GUI g) {
 		GraphBuilderContext ctxt = g.getContext();
 		
 		ActionMap actionMap = g.getRootPane().getActionMap();
@@ -59,7 +61,6 @@ public class KeyboardShortcutActions {
 		inputMap.put(KeyStroke.getKeyStroke("control O"), "open");
 		inputMap.put(KeyStroke.getKeyStroke("control S"), "save");
 		inputMap.put(KeyStroke.getKeyStroke("control shift S"), "save as");
-		
 	}
-	
+
 }

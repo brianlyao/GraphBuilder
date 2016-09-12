@@ -163,6 +163,8 @@ public class GraphBuilderContext {
 			setAsSaved();
 		else
 			setAsUnsaved();
+		gui.getMainMenuBar().setUndoEnabled(!actionHistory.isEmpty());
+		gui.getMainMenuBar().setRedoEnabled(!undoHistory.isEmpty());
 	}
 	
 	/**

@@ -12,7 +12,7 @@ import ui.GUI;
 import context.GraphBuilderContext;
 
 /** A class of utility methods. */
-public class GraphBuilderUtils {
+public class FileUtils {
 
 	/**
 	 * Perform the procedure for opening a file.
@@ -50,7 +50,7 @@ public class GraphBuilderUtils {
 		if(response == JFileChooser.APPROVE_OPTION) {
 			File toSave = fc.getSelectedFile();
 			FileSaver.saveGraph(context, toSave);
-			gui.setTitle(GUI.DEFAULT_TITLE + " - " + GraphBuilderUtils.getBaseName(toSave));
+			gui.setTitle(GUI.DEFAULT_TITLE + " - " + FileUtils.getBaseName(toSave));
 		}
 	}
 	
