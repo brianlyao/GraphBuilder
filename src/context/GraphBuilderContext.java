@@ -62,7 +62,7 @@ public class GraphBuilderContext {
 	 * @param gc The component to remove.
 	 */
 	public void remove(GraphComponent gc) {
-		if(gc instanceof Node)
+		if (gc instanceof Node)
 			removeNode((Node) gc); 
 		else if(gc instanceof Edge)
 			removeEdge((Edge) gc); 
@@ -101,15 +101,15 @@ public class GraphBuilderContext {
 		Iterator<Edge> lineit = edges.iterator();
 		
 		// Remove all edges neighboring the removed node
-		while(lineit.hasNext())
-			if(lineit.next().hasEndpoint(n))
+		while (lineit.hasNext())
+			if (lineit.next().hasEndpoint(n))
 				lineit.remove();
 		
 		// Remove all edges neighboring the removed node from edge map
 		// Keep track of which edges are removed, and return it
 		HashMap<Node.Pair, ArrayList<Edge>> removedSubEdgeMap = new HashMap<>();
 		Map.Entry<Node.Pair, ArrayList<Edge>> temp;
-		while(edgeMapIterator.hasNext()) {
+		while (edgeMapIterator.hasNext()) {
 			temp = edgeMapIterator.next();
 			if(temp.getKey().hasNode(n)) {
 				removedSubEdgeMap.put(temp.getKey(), temp.getValue());
@@ -118,7 +118,7 @@ public class GraphBuilderContext {
 		}
 		
 		// If this node was the "base point" for an edge, reset the base point
-		if(editor.getEdgeBasePoint() == n)
+		if (editor.getEdgeBasePoint() == n)
 			editor.setEdgeBasePoint(null);
 		
 		return removedSubEdgeMap;
@@ -138,13 +138,13 @@ public class GraphBuilderContext {
 		
 		// Find the list of edges to add this one to, or create it if it doesn't exist
 		ArrayList<Edge> addTo = edgeMap.get(endsp);
-		if(addTo == null) {
+		if (addTo == null) {
 			edgeMap.put(endsp, new ArrayList<Edge>());
 			addTo = edgeMap.get(endsp);
 		}
 		
 		// If the position index is out of bounds, just add it to the end
-		if(position < 0 || position > addTo.size())
+		if (position < 0 || position > addTo.size())
 			addTo.add(e);
 		else
 			addTo.add(position, e);
@@ -162,7 +162,7 @@ public class GraphBuilderContext {
 		Node[] ends = e.getEndpoints();
 		Node.Pair endsp = new Node.Pair(ends[0], ends[1]);
 		ArrayList<Edge> removeFrom = edgeMap.get(endsp);
-		if(removeFrom == null)
+		if (removeFrom == null)
 			throw new IllegalArgumentException("The edge " + e + " is not in the graph, and cannot be removed.");
 		int index = removeFrom.indexOf(e);
 		removeFrom.remove(e);
@@ -173,7 +173,7 @@ public class GraphBuilderContext {
 	 * Updates the "saved" state of the current graph.
 	 */
 	public void updateSaveState() {
-		if(actionHistory.size() == actionHistorySizeOnLastSave)
+		if (actionHistory.size() == actionHistorySizeOnLastSave)
 			setAsSaved();
 		else
 			setAsUnsaved();
@@ -309,7 +309,7 @@ public class GraphBuilderContext {
 	
 	public void setAsSaved() {
 		unsaved = false;
-		if(gui.getTitle().endsWith("*"))
+		if (gui.getTitle().endsWith("*"))
 			gui.setTitle(gui.getTitle().substring(0, gui.getTitle().length() - 1));
 	}
 	
@@ -318,7 +318,7 @@ public class GraphBuilderContext {
 	 */
 	public void setAsUnsaved() {
 		unsaved = true;
-		if(!gui.getTitle().endsWith("*"))
+		if (!gui.getTitle().endsWith("*"))
 			gui.setTitle(gui.getTitle() + "*");
 	}
 	

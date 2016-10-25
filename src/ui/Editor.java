@@ -115,7 +115,7 @@ public class Editor extends JPanel {
 					closestEdge.setSelected(true);
 					repaint(); // To draw the selected look
 				}
-				if(arg0.getButton() == MouseEvent.BUTTON3 && (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) && edgeBasePoint != null) {
+				if (arg0.getButton() == MouseEvent.BUTTON3 && (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) && edgeBasePoint != null) {
 					// Reset base point to "cancel" edge placement
 					edgeBasePoint = null;
 					repaint(); // To "un"-draw the preview
@@ -133,7 +133,7 @@ public class Editor extends JPanel {
 			@Override
 			public void mouseDragged(MouseEvent arg0) {
 				Tool current = gui.getCurrentTool();
-				if(current == Tool.PAN){
+				if (current == Tool.PAN){
 					Point currentPoint = arg0.getPoint();
 					int changeX = currentPoint.x - lastMousePoint.x;
 					int changeY = currentPoint.y - lastMousePoint.y;
@@ -155,7 +155,7 @@ public class Editor extends JPanel {
 				lastMousePoint = arg0.getPoint();
 				Tool currentTool = gui.getCurrentTool();
 				
-				if(currentTool == Tool.EDGE_SELECT) {
+				if (currentTool == Tool.EDGE_SELECT) {
 					// Compute the line and distance to the closest edge 
 					Point2D.Double clickd = new Point2D.Double(lastMousePoint.x, lastMousePoint.y); // Move point
 					
@@ -168,25 +168,25 @@ public class Editor extends JPanel {
 					HashMap<Node.Pair, ArrayList<Edge>> em = gui.getContext().getEdgeMap();
 					
 					// Iterate through the edgemap
-					for(Node.Pair endpoints : em.keySet()) {
+					for (Node.Pair endpoints : em.keySet()) {
 						// Get set of edges between first and second
 						ArrayList<Edge> betweenTwo = em.get(endpoints);
 						
 						// Iterate through edges between the nodes "first" and "second"
 						// For each edge, find the closest distance from the current mouse position to the edge
 						// The Edge Select tool requires this to find the edge closest to the mouse
-						for(Edge l : betweenTwo) {
+						for (Edge l : betweenTwo) {
 							double dist = Double.MAX_VALUE;
 							Point closest = null;
 							Point2D.Double[] bcp;
-							if(l instanceof SimpleEdge) {
+							if (l instanceof SimpleEdge) {
 								SimpleEdge simpe = (SimpleEdge) l;
 								bcp = simpe.getData().getBezierPoints();
-								if(bcp[1].x < 0 && bcp[1].y < 0) {
+								if (bcp[1].x < 0 && bcp[1].y < 0) {
 									// Only the endpoints of the line are stored...
 									Point2D.Double c1 = bcp[0];
 									Point2D.Double c2 = bcp[2];
-									if(c2.x != c1.x && c2.y != c1.y) {
+									if (c2.x != c1.x && c2.y != c1.y) {
 										// Find closest point to line using a parametric line
 										Point2D.Double c1click = new Point2D.Double(clickd.x - c1.x, clickd.y - c1.y);
 										Point2D.Double c1c2 = new Point2D.Double(c2.x - c1.x, c2.y - c1.y);
@@ -198,18 +198,18 @@ public class Editor extends JPanel {
 									    // Only 3 candidates: both endpoints and the intersection of the edge and the line perpendicular to the edge which passes through the cursor
 										double[] dists = new double[3];
 										Point2D.Double[] points = {c1, new Point2D.Double(intersectx, intersecty), c2};
-										for(int i = 0 ; i < dists.length ; i++)
+										for (int i = 0 ; i < dists.length ; i++)
 											dists[i] = points[i].distance(clickd);
 										
 										// If the closest point on the line is NOT actually on the line segment
-										if(t < 0 || t > 1)
+										if (t < 0 || t > 1)
 											dists[1] = Double.MAX_VALUE;
 										
 										// Determine the closest point among the candidates
 										int minind = 0;
 										dist = dists[0];
-										for(int i = 1 ; i < dists.length ; i++) {
-											if(dists[i] < dist) {
+										for (int i = 1 ; i < dists.length ; i++) {
+											if (dists[i] < dist) {
 												dist = dists[i];
 												minind = i;
 											}
@@ -246,24 +246,24 @@ public class Editor extends JPanel {
 									Complex disc0 = new Complex(n2*n2 - 3*n1*n3);
 									Complex disc1 = new Complex(2*n2*n2*n2 - 9*n1*n2*n3 + 27*n1*n1*n4);
 									Complex incbrt = null;
-									if(disc0.isZero()) {
+									if (disc0.isZero()) {
 										incbrt = disc1;
-										if(disc1.getReal() < 0)
+										if (disc1.getReal() < 0)
 											incbrt = incbrt.neg();
 									} else {
 										incbrt = disc1.add(disc1.pow(2).subtract(disc0.pow(3).scale(4)).sqrt()[0]).scale(0.5); 
 									}
 									Complex[] cbrts = incbrt.cbrt();
 									Complex B = new Complex(n2);
-									for(int i = 0 ; i < 3 ; i++)
+									for (int i = 0 ; i < 3 ; i++)
 										roots[i] = B.add(cbrts[i]).add(disc0.divide(cbrts[i])).scale(-1 / (3 * n1));
 									
 									// Temporary holder of the points corresponding to the REAL roots of the cubic
 									ArrayList<Point2D.Double> candidateClosestPoints = new ArrayList<Point2D.Double>();
 									
 									// Determine which roots are real; use these values of t to determine the candidate "closest" points
-									for(Complex rt : roots)
-										if(rt.isReal() && rt.getReal() >= 0 && rt.getReal() <= 1)
+									for (Complex rt : roots)
+										if (rt.isReal() && rt.getReal() >= 0 && rt.getReal() <= 1)
 											candidateClosestPoints.add(getBezierPoint(bcp, rt.getReal()));
 									
 									// Make sure to include the endpoints of the bezier curve
@@ -272,14 +272,14 @@ public class Editor extends JPanel {
 									
 									// Determine, out of the candidate points, which is the closest
 									double tempdist;
-									for(Point2D.Double pt : candidateClosestPoints) {
-										if((tempdist = pt.distance(clickd)) < dist) {
+									for (Point2D.Double pt : candidateClosestPoints) {
+										if ((tempdist = pt.distance(clickd)) < dist) {
 											dist = tempdist; // Set the distance from the cursor for this edge
 											closest = new Point((int) pt.x, (int) pt.y);
 										}
 									}
 								}
-							} else if(l instanceof SelfEdge) {
+							} else if (l instanceof SelfEdge) {
 								SelfEdge selfe = (SelfEdge) l;
 								SelfEdgeData selfeData = selfe.getData();
 								Point2D.Double cen = selfeData.getArcCenter();
@@ -295,7 +295,7 @@ public class Editor extends JPanel {
 							}
 							
 							// Update the closest edge; once the distances to all edges is computed, closestEdge will contain the closest edge
-							if(dist < minDistance){
+							if (dist < minDistance) {
 								minDistance = dist;
 								closestEdge = l;
 								closestEdgeSelectPoint = closest;
@@ -352,7 +352,7 @@ public class Editor extends JPanel {
 	 * @param y The y coordinate of the new position.
  	 */
 	public void setLastMousePoint(int x, int y) {
-		if(lastMousePoint != null)
+		if (lastMousePoint != null)
 			lastMousePoint.setLocation(x, y);
 		else
 			lastMousePoint = new Point(x, y);
@@ -401,9 +401,9 @@ public class Editor extends JPanel {
 			int level = gui.getGridSettingsDialog().getGridLevel();
 			g2d.setStroke(new BasicStroke(1));
 			g2d.setColor(gui.getGridSettingsDialog().getGridColor());
-			for(int xi = level ; xi < this.getWidth() ; xi += level)
+			for (int xi = level ; xi < this.getWidth() ; xi += level)
 				g2d.drawLine(xi, 0, xi, this.getHeight());
-			for(int yi = level ; yi < this.getHeight() ; yi += level)
+			for (int yi = level ; yi < this.getHeight() ; yi += level)
 				g2d.drawLine(0, yi, this.getWidth(), yi);
 		}
 		
@@ -463,7 +463,7 @@ public class Editor extends JPanel {
 			
 			g2d.draw(preview);
 		} else if (ctool == Tool.EDGE_SELECT) {
-			if(closestEdgeSelectPoint != null) {
+			if (closestEdgeSelectPoint != null) {
 				// Draw the edge select line to closest edge
 				g2d.setColor((Color) Preferences.EDGE_SELECT_PREVIEW_COLOR.getData());
 				g2d.drawLine(closestEdgeSelectPoint.x, closestEdgeSelectPoint.y, lastMousePoint.x, lastMousePoint.y);
@@ -477,7 +477,7 @@ public class Editor extends JPanel {
 				center.x += edgeBasePoint.getNodePanel().getRadius();
 				center.y += edgeBasePoint.getNodePanel().getRadius();
 				g2d.drawLine(center.x, center.y, lastMousePoint.x, lastMousePoint.y);
-				if(ctool == Tool.DIRECTED_EDGE) {
+				if (ctool == Tool.DIRECTED_EDGE) {
 					double dist = Point.distance(lastMousePoint.x, lastMousePoint.y, center.x, center.y);
 					double unitX = - (lastMousePoint.x - center.x) / dist;
 					double unitY = - (lastMousePoint.y - center.y) / dist;
@@ -499,7 +499,7 @@ public class Editor extends JPanel {
 					g2d.fillOval((int) (pts[0].x - side / 2.0), (int) (pts[0].y - side / 2.0), side, side);
 					g2d.fillOval((int) (pts[2].x - side / 2.0), (int) (pts[2].y - side / 2.0), side, side);
 					Point2D.Double mid;
-					if(pts[1] != null)
+					if (pts[1] != null)
 						mid = getBezierPoint(pts, 0.5);
 					else
 						mid = new Point2D.Double((pts[0].x + pts[2].x) / 2.0, (pts[0].y + pts[2].y) / 2.0);
@@ -578,7 +578,7 @@ public class Editor extends JPanel {
 				// The edge is either a line or bezier curve; either way, they get drawn the same way
 				Node[] ends = e.getEndpoints();
 				double initAngle = lowerAngle + count * angle;
-				if(ends[0] != n1)
+				if (ends[0] != n1)
 					initAngle = -initAngle;
 				Point p1 = ends[1].getNodePanel().getCenter();
 				Point p2 = ends[0].getNodePanel().getCenter();
@@ -607,11 +607,11 @@ public class Editor extends JPanel {
 					g2d.drawLine((int) linep2X, (int) linep2Y, (int) linep1X, (int) linep1Y);
 					
 					// Set the control point to a negative value to indicate it does not exist
-					if(preview == null)
+					if (preview == null)
 						simpe.getData().setPoints(linep1X, linep1Y, -1, -1, linep2X, linep2Y);
 					
 					// If this edge is directed, draw the arrow
-					if(e.isDirected()) {
+					if (e.isDirected()) {
 						Point tip = new Point((int) radiusVectorX2 + p2.x, (int) radiusVectorY2 + p2.y);
 						drawArrowTip(g2d, radiusVectorX2 / end1r, radiusVectorY2 / end1r, tip, eweight);
 					}

@@ -102,10 +102,10 @@ public class Complex {
 	
 	/** The nth roots of unity. */
 	public static Complex[] rootsOfUnity(int n) {
-		if(n < 1)
+		if (n < 1)
 			return null;
 		Complex[] roots = new Complex[n];
-		for(int i = 0 ; i < n ; i++) {
+		for (int i = 0 ; i < n ; i++) {
 			double ang = (2 * Math.PI * i) / n;
 			roots[i] = new Complex(1, ang, true);
 		}
@@ -114,14 +114,14 @@ public class Complex {
 	
 	/** All nth roots of this complex number. */
 	public Complex[] nthRoot(int n) {
-		if(n < 1)
+		if (n < 1)
 			throw new IllegalArgumentException("A complex number cannot be raised to a root less than 1: " + n);
 		double theta = Math.atan(imag / real);
-		if(real < 0)
+		if (real < 0)
 			theta += Math.PI;
 		Complex[] roots = new Complex[n];
 		double scale = Math.pow(this.abs(), 1.0 / n);
-		for(int i = 0 ; i < n ; i++)
+		for (int i = 0 ; i < n ; i++)
 			roots[i] = new Complex(scale, (theta + 2 * Math.PI * i) / n, true);
 		return roots;
 	}
@@ -138,21 +138,21 @@ public class Complex {
 	
 	/** Return this complex number raised to an integer power. */
 	public Complex pow(int n) {
-		if(n < 0)
+		if (n < 0)
 			return new Complex(1).divide(this.pow(-n));
-		if(isReal())
+		if (isReal())
 			return new Complex(Math.pow(real, n), 0);
-		if(n == 0)
+		if (n == 0)
 			return new Complex(1);
 		double newMod = Math.pow(abs(), n);
 		double theta = Math.atan(imag / real);
-		if(real < 0)
+		if (real < 0)
 			theta += Math.PI;
 		return new Complex(newMod, n * theta, true);
 	}
 	
 	public String toString() {
-		if(imag >= 0)
+		if (imag >= 0)
 			return real + " + " + imag + "i";
 		return real + " - " + (- imag) + "i";
 	}

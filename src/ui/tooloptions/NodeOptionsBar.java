@@ -62,15 +62,15 @@ public class NodeOptionsBar extends ToolOptionsBar {
 		circleRadiusTextField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				try{
+				try {
 					int newRadius = Integer.parseInt(circleRadiusTextField.getText());
-					if(newRadius < circleRadiusSlider.getMinimum() || newRadius > circleRadiusSlider.getMaximum())
+					if (newRadius < circleRadiusSlider.getMinimum() || newRadius > circleRadiusSlider.getMaximum())
 						JOptionPane.showMessageDialog(null,
 							String.format("Must be an integer between %d and %d inclusive.", circleRadiusSlider.getMinimum(), circleRadiusSlider.getMaximum()),
 							"Out of range", JOptionPane.WARNING_MESSAGE);
 					else
 						circleRadiusSlider.setValue(newRadius);
-				}catch(Exception e){
+				} catch(Exception e) {
 					JOptionPane.showMessageDialog(null, "Radius must be a well-formatted integer.", "Invalid integer", JOptionPane.WARNING_MESSAGE);
 				}
 			}
@@ -95,7 +95,7 @@ public class NodeOptionsBar extends ToolOptionsBar {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				Color c = JColorChooser.showDialog(NodeOptionsBar.this.getGUI(), "Choose Fill Color", circleFillColor);
-				if(c != null){
+				if (c != null) {
 					circleFillColor = c;
 					ImageUtils.fillImage(circleFillColorImage, c);
 				}
@@ -110,7 +110,7 @@ public class NodeOptionsBar extends ToolOptionsBar {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				Color c = JColorChooser.showDialog(NodeOptionsBar.this.getGUI(), "Choose Border Color", circleBorderColor);
-				if(c != null){
+				if (c != null) {
 					circleBorderColor = c;
 					ImageUtils.fillImage(circleBorderColorImage, c);
 				}
@@ -125,7 +125,7 @@ public class NodeOptionsBar extends ToolOptionsBar {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				Color c = JColorChooser.showDialog(NodeOptionsBar.this.getGUI(), "Choose Text Color", circleTextColor);
-				if(c != null){
+				if (c != null) {
 					circleTextColor = c;
 					ImageUtils.fillImage(circleTextColorImage, c);
 				}
@@ -147,13 +147,13 @@ public class NodeOptionsBar extends ToolOptionsBar {
 	}
 	
 	public int getCurrentRadius() {
-		if(getGUI().getCurrentTool() == Tool.NODE)
+		if (getGUI().getCurrentTool() == Tool.NODE)
 			return circleRadiusSlider.getValue();
 		return -1;
 	}
 	
 	public Color[] getCurrentCircleColors() {
-		if(getGUI().getCurrentTool() == Tool.NODE)
+		if (getGUI().getCurrentTool() == Tool.NODE)
 			return new Color[] {circleFillColor, circleBorderColor, circleTextColor};
 		return null;
 	}

@@ -23,16 +23,16 @@ public class FileUtils {
 		GUI gui = context.getGUI();
 		JFileChooser fc = gui.getFileChooser();
 		
-		if(context.isUnsaved()) {
+		if (context.isUnsaved()) {
 			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them before opening another file?", "Open: Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
-			if(resp == JOptionPane.YES_OPTION)
+			if (resp == JOptionPane.YES_OPTION)
 				saveFileProcedure(context);
-			else if(resp == JOptionPane.CANCEL_OPTION)
+			else if (resp == JOptionPane.CANCEL_OPTION)
 				return;
 		}
 		
 		int response = fc.showOpenDialog(gui);
-		if(response == JFileChooser.APPROVE_OPTION) {
+		if (response == JFileChooser.APPROVE_OPTION) {
 			File toOpen = fc.getSelectedFile();
 			FileLoader.loadGraph(context, toOpen);
 		}
@@ -47,7 +47,7 @@ public class FileUtils {
 		GUI gui = context.getGUI();
 		JFileChooser fc = gui.getFileChooser();
 		int response = fc.showSaveDialog(gui);
-		if(response == JFileChooser.APPROVE_OPTION) {
+		if (response == JFileChooser.APPROVE_OPTION) {
 			File toSave = fc.getSelectedFile();
 			FileSaver.saveGraph(context, toSave);
 			gui.setTitle(GUI.DEFAULT_TITLE + " - " + FileUtils.getBaseName(toSave));
@@ -60,9 +60,9 @@ public class FileUtils {
 	 * @param context The current context.
 	 */
 	public static void saveFileProcedure(GraphBuilderContext context) {
-		if(!context.existsOnDisk())
+		if (!context.existsOnDisk())
 			saveAsFileProcedure(context);
-		else if(context.isUnsaved())
+		else if (context.isUnsaved())
 			FileSaver.saveGraph(context, context.getCurrentlyLoadedFile());
 	}
 	
@@ -73,11 +73,11 @@ public class FileUtils {
 	 */
 	public static void exitProcedure(GraphBuilderContext context) {
 		GUI gui = context.getGUI();
-		if(context.isUnsaved()) {
+		if (context.isUnsaved()) {
 			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them before exiting GraphBuilder?", "Exit: Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
-			if(resp == JOptionPane.YES_OPTION)
+			if (resp == JOptionPane.YES_OPTION)
 				saveFileProcedure(context);
-			else if(resp == JOptionPane.NO_OPTION)
+			else if (resp == JOptionPane.NO_OPTION)
 				System.exit(0);
 		} else {
 			System.exit(0);
@@ -91,11 +91,11 @@ public class FileUtils {
 	 * @return The name of the file without the extension.
 	 */
 	public static String getBaseName(File f) {
-		if(f == null)
+		if (f == null)
 			return "null";
 		String fn = f.getName();
 		int lastDot = fn.lastIndexOf('.');
-		if(lastDot >= 0)
+		if (lastDot >= 0)
 			return fn.substring(0, lastDot);
 		return fn;
 	}

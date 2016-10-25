@@ -36,8 +36,8 @@ public class DeleteNodeAction extends ReversibleAction {
 	@Override
 	public void undo() {
 		getContext().addNode(node);
-		if(removedEdges != null)
-			for(Node.Pair pair : removedEdges.keySet())
+		if (removedEdges != null)
+			for (Node.Pair pair : removedEdges.keySet())
 				getContext().getEdgeMap().put(pair, removedEdges.get(pair));
 		addSelfToUndoHistory();
 		getContext().updateSaveState();

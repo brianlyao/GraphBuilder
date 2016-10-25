@@ -178,8 +178,8 @@ public class GUI extends JFrame {
 	public void updateTool(Tool t) {
 		HashMap<Tool, JButton> toolButtons = toolBar.getToolButtons();
 		HashMap<Tool, ImageIcon[]> toolIcons = toolBar.getToolIcons();
-		if(currentTool != null) {
-			if(currentTool != t) {
+		if (currentTool != null) {
+			if (currentTool != t) {
 				toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool)[0]);
 				toolButtons.get(t).setIcon(toolIcons.get(t)[1]);
 				currentTool = t;
@@ -200,9 +200,9 @@ public class GUI extends JFrame {
 	 */
 	public void changeToolOptionsBar(Tool t) {
 		toolOptions.removeAll();
-		if(currentTool == Tool.NODE) {
+		if (currentTool == Tool.NODE) {
 			toolOptions.add(nodeOptions);
-		} else if(currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) {
+		} else if (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) {
 			toolOptions.add(edgeOptions);
 		}
 		toolOptions.repaint();

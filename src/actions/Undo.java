@@ -18,7 +18,7 @@ public class Undo extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(!getContext().getActionHistory().isEmpty())
+		if (!getContext().getActionHistory().isEmpty())
 			getContext().getActionHistory().pop().undo();
 	}
 	

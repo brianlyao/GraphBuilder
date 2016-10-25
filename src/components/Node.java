@@ -50,7 +50,7 @@ public class Node extends GraphComponent {
 		 * Checks if the the two nodes in both pairs are identical to each other.
 		 */
 		public boolean equals(Object o) {
-			if(o == null)
+			if (o == null)
 				return false;
 			Pair other = (Pair) o;
 			return (node1 == other.node1 && node2 == other.node2) || (node1 == other.node2 && node2 == other.node1);
@@ -151,13 +151,11 @@ public class Node extends GraphComponent {
 	 * @param id   The id this node is assigned.
 	 */
 	public Node(int x, int y, int r, String txt, Color c, Color lc, Color tc, GraphBuilderContext ctxt, int id) {
-		
 		super(ctxt, id);
 		nodePanel = new NodePanel(x, y, r, txt, c, lc, tc, ctxt.getGUI().getEditor(), this);
 		
 		// This component should be deselected on creation
 		setSelected(false);
-		
 	}
 	
 	/**

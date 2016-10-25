@@ -18,7 +18,7 @@ public class Redo extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(!getContext().getUndoHistory().isEmpty())
+		if (!getContext().getUndoHistory().isEmpty())
 			getContext().getUndoHistory().pop().actionPerformed(null);
 	}
 	

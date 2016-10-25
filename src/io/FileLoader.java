@@ -36,19 +36,19 @@ public class FileLoader {
 			
 			// Read the file line by line (each line contains one component)
 			String line;
-			while((line = fileReader.readLine()) != null) {
-				if(line.startsWith("N:"))
+			while ((line = fileReader.readLine()) != null) {
+				if (line.startsWith("N:"))
 					nodeStrs.add(line);
-				else if(line.startsWith("E:"))
+				else if (line.startsWith("E:"))
 					edgeStrs.add(line);
 			}
 			
 			// First parse all nodes and add them to the context
-			for(String nodeStr : nodeStrs)
+			for (String nodeStr : nodeStrs)
 				loadedContext.addNode(readNode(loadedContext, nodeStr));
 			
 			// Then parse and add all edges so they can refer to the nodes
-			for(String edgeStr : edgeStrs)
+			for (String edgeStr : edgeStrs)
 				loadedContext.addEdge(readEdge(loadedContext, edgeStr), -1);
 			
 			// Set the ID pool afterward, to start where it left off
@@ -104,7 +104,7 @@ public class FileLoader {
 		
 		// Get the endpoints of the edge
 		Node node1 = (Node) context.getIdMap().get(idnode1);
-		if(idnode1 == idnode2) {
+		if (idnode1 == idnode2) {
 			// Restoring self edge
 			double offsetAngle = Double.parseDouble(vals[6]); // Extra field
 			Edge newSelfEdge = new SelfEdge(node1, color, weight, offsetAngle, directed, context, id);

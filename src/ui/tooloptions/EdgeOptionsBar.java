@@ -55,7 +55,7 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 			public void actionPerformed(ActionEvent arg0) {
 				try{
 					int newWeight = Integer.parseInt(lineWeightTextField.getText());
-					if(newWeight < lineWeightSlider.getMinimum() || newWeight > lineWeightSlider.getMaximum())
+					if (newWeight < lineWeightSlider.getMinimum() || newWeight > lineWeightSlider.getMaximum())
 						JOptionPane.showMessageDialog(null,
 							String.format("Must be an integer between %d and %d inclusive.", lineWeightSlider.getMinimum(), lineWeightSlider.getMaximum()),
 							"Out of range", JOptionPane.WARNING_MESSAGE);
@@ -82,7 +82,7 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				Color c = JColorChooser.showDialog(EdgeOptionsBar.this.getGUI(), choose, lineColor);
-				if(c != null) {
+				if (c != null) {
 					lineColor = c;
 					ImageUtils.fillImage(lineColorImage, c);
 				}
@@ -98,14 +98,14 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 	
 	public int getCurrentLineWeight() {
 		Tool currentTool = getGUI().getCurrentTool();
-		if(currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE)
+		if (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE)
 			return lineWeightSlider.getValue();
 		return -1;
 	}
 	
 	public Color getCurrentLineColor() {
 		Tool currentTool = getGUI().getCurrentTool();
-		if(currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE)
+		if (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE)
 			return lineColor;
 		return null;
 	}

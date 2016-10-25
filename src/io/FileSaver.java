@@ -24,16 +24,16 @@ public class FileSaver {
 		HashSet<Edge> edges = context.getEdges();
 		
 		try {
-			if(!target.getName().endsWith(EXTENSION))
+			if (!target.getName().endsWith(EXTENSION))
 				target = new File(target.getAbsolutePath() + EXTENSION);
 			
 			// Write all components to the file (create it if it does not exist)
 			target.createNewFile();
 			PrintWriter pwriter = new PrintWriter(target);
 			pwriter.write(context.getNextID() + "\n");
-			for(Node n : nodes)
+			for (Node n : nodes)
 				pwriter.write(n.toStorageString() + "\n");
-			for(Edge e : edges)
+			for (Edge e : edges)
 				pwriter.write(e.toStorageString() + "\n");
 			pwriter.close();
 			

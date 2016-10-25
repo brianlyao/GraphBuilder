@@ -95,9 +95,9 @@ public class GridSettingsDialog extends JDialog {
 				String entered = gridLevelTextField.getText();
 				try {
 					int newValue = Integer.parseInt(entered);
-					if(newValue < MIN_GRID_LEVEL)
+					if (newValue < MIN_GRID_LEVEL)
 						JOptionPane.showMessageDialog(GridSettingsDialog.this, "The integer you entered is too small. It must be at least " + MIN_GRID_LEVEL + ".", "Grid Settings: Error", JOptionPane.INFORMATION_MESSAGE);
-					else if(newValue > MAX_GRID_LEVEL)
+					else if (newValue > MAX_GRID_LEVEL)
 						JOptionPane.showMessageDialog(GridSettingsDialog.this, "The integer you entered is too large. It must be at most " + MAX_GRID_LEVEL + ".", "Grid Settings: Error", JOptionPane.INFORMATION_MESSAGE);
 					else
 						gridLevelSlider.setValue(newValue); // Set the slider's value
