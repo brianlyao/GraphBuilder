@@ -3,7 +3,7 @@ package actions;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 
-import components.Node;
+import components.display.NodePanel;
 import context.GraphBuilderContext;
 
 /** An instance represents the action of moving a node on the editor panel.*/
@@ -11,7 +11,7 @@ public class MoveNodeAction extends ReversibleAction {
 
 	private static final long serialVersionUID = 5561193877847969890L;
 	
-	private Node node;
+	private NodePanel nodePanel;
 	private Point fromPoint;
 	private Point toPoint;
 	
@@ -21,16 +21,16 @@ public class MoveNodeAction extends ReversibleAction {
 	 * @param from The point the node was moved from.
 	 * @param to   The point the node was moved to.
 	 */
-	public MoveNodeAction(GraphBuilderContext ctxt, Node n, Point from, Point to) {
+	public MoveNodeAction(GraphBuilderContext ctxt, NodePanel np, Point from, Point to) {
 		super(ctxt);
-		node = n;
+		nodePanel = np;
 		fromPoint = from;
 		toPoint = to;
 	}
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		node.setCoords(toPoint);
+		nodePanel.setCoords(toPoint);
 		getContext().getGUI().getEditor().repaint();
 		addSelfToHistory();
 		getContext().updateSaveState();
@@ -38,7 +38,7 @@ public class MoveNodeAction extends ReversibleAction {
 	
 	@Override
 	public void undo() {
-		node.setCoords(fromPoint);
+		nodePanel.setCoords(fromPoint);
 		getContext().getGUI().getEditor().repaint();
 		addSelfToUndoHistory();
 		getContext().updateSaveState();

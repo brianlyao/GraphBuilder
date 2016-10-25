@@ -24,7 +24,11 @@ This subpackage contains actions specific for file actions (such as those which 
 
 ### components
 
-This package contains the implementations of various graph components. These are essential for holding the data necessary to draw them on the editor panel. Currently, this contains implementations of nodes (circles) and edges (lines and arrows), the most basic components of a graph.
+This package contains the implementations of various graph components. These contain only the logic for the components of the data structure. Currently, this contains implementations of nodes and edges (both directed and undirected), the most basic components of a graph.
+
+### components.display
+
+This package contains data required for each component's visual display on the editor panel.
 
 ### context
 

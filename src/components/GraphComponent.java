@@ -1,17 +1,13 @@
 package components;
 
-import javax.swing.JPanel;
-
 import context.GraphBuilderContext;
 
-/** Abstract class for a component of the graph the user can interact with. */
-public abstract class GraphComponent extends JPanel {
-
-	private static final long serialVersionUID = -7725155749149231451L;
+/** Abstract class for a component of the graph. */
+public abstract class GraphComponent {
 	
-	private int id;
-	private boolean selected;
-	private int priority;
+	private int id; // The unique id of this component
+	private boolean selected; // Whether this component is selected
+	private int priority; // Unused priority field
 	
 	private GraphBuilderContext context;
 	

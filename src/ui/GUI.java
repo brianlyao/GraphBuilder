@@ -26,8 +26,6 @@ public class GUI extends JFrame {
 	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
 	
 	private static final String DEFAULT_FILENAME = "Untitled";
-
-//	private final int PANE_PADDING = 10;
 	
 	private MenuBar menuBar; // The menu bar
 	

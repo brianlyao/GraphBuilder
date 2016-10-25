@@ -1,21 +1,13 @@
 package components;
 
 import java.awt.Color;
-import java.awt.geom.Point2D;
+
+import components.display.SelfEdgeData;
 
 import context.GraphBuilderContext;
 
 /** An edge whose endpoints are the same node. */
 public class SelfEdge extends Edge {
-
-	private static final long serialVersionUID = -8346635669774916440L;
-	
-	// A self-edge is drawn as a circular arc
-	private Point2D.Double arcPoint1;
-	private Point2D.Double arcPoint2;
-	private Point2D.Double center;
-	private double radius;
-	private double offsetAngle;
 	
 	/**
 	 * @param node     The node which is the start and end node of this self-edge.
@@ -26,32 +18,22 @@ public class SelfEdge extends Edge {
 	 * @param id       The id this node is assigned.
 	 */
 	public SelfEdge(Node node, Color c, int w, double offsetAngle, boolean directed, GraphBuilderContext ctxt, int id) {
-		super(node, node, c, w, directed, ctxt, id);
-		this.offsetAngle = offsetAngle;
+		super(node, node, new SelfEdgeData(c, w, offsetAngle), directed, ctxt, id);
 	}
 	
-	public Point2D.Double getCenter() {
-		return center;
+	/**
+	 * Get the data for this self edge's display.
+	 * 
+	 * @return The SelfEdgeData object corresponding to this self edge.
+	 */
+	@Override
+	public SelfEdgeData getData() {
+		return (SelfEdgeData) super.getData();
 	}
 	
-	public void setCenter(Point2D.Double p) {
-		center = p;
-	}
-	
-	public double getRadius() {
-		return radius;
-	}
-	
-	public void setRadius(double r) {
-		radius = r;
-	}
-	
-	public double getOffsetAngle() {
-		return offsetAngle;
-	}
-	
+	@Override
 	public String toStorageString() {
-		return super.toStorageString() + "," + offsetAngle;
+		return super.toStorageString() + "," + this.getData().getOffsetAngle();
 	}
 
 }

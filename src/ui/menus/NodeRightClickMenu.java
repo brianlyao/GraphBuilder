@@ -6,13 +6,12 @@ import java.awt.event.ActionListener;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import components.Node;
-
+import components.display.NodePanel;
 import actions.DeleteNodeAction;
 
 public class NodeRightClickMenu {
 	
-	public static void show(final Node n, final int x, final int y) {
+	public static void show(final NodePanel n, final int x, final int y) {
 		JPopupMenu menu = new JPopupMenu();
 		JMenuItem properties = new JMenuItem("View/Edit Properties");
 		JMenuItem copy = new JMenuItem("Copy");
@@ -21,7 +20,7 @@ public class NodeRightClickMenu {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				new DeleteNodeAction(n.getContext(), n).actionPerformed(null);
+				new DeleteNodeAction(n.getNode().getContext(), n.getNode()).actionPerformed(null);
 			}
 			
 		});

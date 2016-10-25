@@ -61,6 +61,7 @@ public class KeyboardShortcutActions {
 		inputMap.put(KeyStroke.getKeyStroke("control O"), "open");
 		inputMap.put(KeyStroke.getKeyStroke("control S"), "save");
 		inputMap.put(KeyStroke.getKeyStroke("control shift S"), "save as");
+		
 	}
 
 }

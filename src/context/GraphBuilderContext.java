@@ -57,6 +57,18 @@ public class GraphBuilderContext {
 	}
 	
 	/**
+	 * Remove the specified graph component.
+	 * 
+	 * @param gc The component to remove.
+	 */
+	public void remove(GraphComponent gc) {
+		if(gc instanceof Node)
+			removeNode((Node) gc); 
+		else if(gc instanceof Edge)
+			removeEdge((Edge) gc); 
+	}
+	
+	/**
 	 * Adds the specified node to the graph.
 	 * 
 	 * @param n The node to add to the graph.
@@ -64,7 +76,7 @@ public class GraphBuilderContext {
 	public void addNode(Node n) {
 		Editor editor = gui.getEditor();
 		nodes.add(n);
-		editor.add(n);
+		editor.add(n.getNodePanel());
 		editor.repaint();
 		editor.revalidate();
 	}
@@ -76,10 +88,12 @@ public class GraphBuilderContext {
 	 * @return The map of edges that was removed as a result of this node's removal.
 	 */
 	public HashMap<Node.Pair, ArrayList<Edge>> removeNode(Node n) {
+		// Remove the node from the set of all nodes in this context
 		nodes.remove(n);
+		
 		// Revalidate the editor panel
 		Editor editor = gui.getEditor();
-		editor.remove(n);
+		editor.remove(n.getNodePanel());
 		editor.repaint();
 		editor.revalidate();
 		
