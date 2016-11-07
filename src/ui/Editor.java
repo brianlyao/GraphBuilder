@@ -8,6 +8,7 @@ import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import javax.swing.*;
 
@@ -17,6 +18,7 @@ import tool.Tool;
 import util.CoordinateUtils;
 import math.Complex;
 import components.*;
+import components.display.NodePanel;
 import components.display.SelfEdgeData;
 import context.GraphBuilderContext;
 
@@ -34,7 +36,9 @@ public class Editor extends JPanel {
 	
 	private Node edgeBasePoint; // The first node that's selected when drawing an edge
 	
-	private HashSet<GraphComponent> selected;
+	private HashSet<GraphComponent> selected; // Set of selections
+	
+	private HashMap<NodePanel, Point> nodePanelPosition; // Map from panel to upper left corner position on editor
 	
 	private Edge previewEdge;
 	private int previewEdgeIndex;
@@ -50,6 +54,7 @@ public class Editor extends JPanel {
 		gui = g;
 		lastMousePoint = new Point(0, 0);
 		selected = new HashSet<>();
+		nodePanelPosition = new HashMap<>();
 		
 		// Initialize the panel with default settings...
 		setBackground(Color.WHITE);
@@ -59,24 +64,37 @@ public class Editor extends JPanel {
 		addMouseListener(new MouseListener() {
 			
 			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				Tool current = gui.getCurrentTool();
-				
-				// Clicking the canvas will deselect any selection
-				if (!selected.isEmpty() && current != Tool.EDGE_SELECT) {
-					for (GraphComponent gc : selected) {
-						// Mark all selections as deselected
-						gc.setSelected(false);
+			public void mouseClicked(MouseEvent arg0) {}
+			
+			@Override
+			public void mouseEntered(MouseEvent evt) {
+				repaint();
+			}
+			
+			@Override
+			public void mouseExited(MouseEvent arg0) {}
+			
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				Tool currentTool = gui.getCurrentTool();
+				if (currentTool == Tool.SELECT) {
+					// Clicking the canvas will deselect all selections
+					Iterator<GraphComponent> selectionIterator = selected.iterator();
+					GraphComponent tempSelection;
+					while (selectionIterator.hasNext()) {
+						// Mark current component as deselected
+						tempSelection = selectionIterator.next();
+						tempSelection.setSelected(false);
 						
 						// If the selection is a node, redraw its panel
-						if (gc instanceof Node)
-							((Node) gc).getNodePanel().repaint();
+						if (tempSelection instanceof Node)
+							((Node) tempSelection).getNodePanel().repaint();
+						
+						// Remove this component from the set of selections
+						selectionIterator.remove();
 					}
-					selected.clear(); // Empty set of selections
-				}
-				
-				// If user clicks the canvas with the node tool, add a new node
-				if (current == Tool.NODE) {
+				} else if (currentTool == Tool.NODE && SwingUtilities.isLeftMouseButton(evt)) {
+					// If user left clicks the canvas with the node tool, add a new node
 					Color[] colors = gui.getNodeOptionsBar().getCurrentCircleColors();
 					int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
 					
@@ -91,32 +109,24 @@ public class Editor extends JPanel {
 						// Use regular placement position (at cursor)
 						placed = new Point(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius));
 					}
+					// By default, the new node has no text
 					Node newNode = new Node(placed.x, placed.y, currentRadius, "", colors[0], colors[1], colors[2], gui.getContext(), gui.getContext().getNextIDAndInc());
 					
 					// Perform the action for placing a node
-					new PlaceNodeAction(gui.getContext(), newNode).actionPerformed(null);
+					PlaceNodeAction placeAction = new PlaceNodeAction(gui.getContext(), newNode);
+					placeAction.actionPerformed(null);
+					gui.getContext().pushReversibleAction(placeAction, true);
 				}
-			}
-			
-			@Override
-			public void mouseEntered(MouseEvent arg0) {
-				repaint();
-			}
-			
-			@Override
-			public void mouseExited(MouseEvent arg0) {}
-			
-			@Override
-			public void mousePressed(MouseEvent arg0) {
-				Tool currentTool = gui.getCurrentTool();
-				if (currentTool == Tool.EDGE_SELECT && closestEdge != null && arg0.getButton() == MouseEvent.BUTTON1) {
-					// Select the edge if 
+				
+				if (currentTool == Tool.EDGE_SELECT && closestEdge != null && SwingUtilities.isLeftMouseButton(evt)) {
+					// Select the edge
 					selected.add(closestEdge);
 					closestEdge.setSelected(true);
 					repaint(); // To draw the selected look
 				}
-				if (arg0.getButton() == MouseEvent.BUTTON3 && (currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) && edgeBasePoint != null) {
-					// Reset base point to "cancel" edge placement
+				
+				if ((currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) && edgeBasePoint != null && SwingUtilities.isRightMouseButton(evt)) {
+					// Reset base point to "cancel" edge placement using right click
 					edgeBasePoint = null;
 					repaint(); // To "un"-draw the preview
 				}
@@ -131,10 +141,10 @@ public class Editor extends JPanel {
 		addMouseMotionListener(new MouseMotionListener() {
 			
 			@Override
-			public void mouseDragged(MouseEvent arg0) {
+			public void mouseDragged(MouseEvent evt) {
 				Tool current = gui.getCurrentTool();
 				if (current == Tool.PAN){
-					Point currentPoint = arg0.getPoint();
+					Point currentPoint = evt.getPoint();
 					int changeX = currentPoint.x - lastMousePoint.x;
 					int changeY = currentPoint.y - lastMousePoint.y;
 					JScrollPane sp = gui.getScrollPane();
@@ -146,13 +156,13 @@ public class Editor extends JPanel {
 					horiz.setValue(newHorizVal);
 					vert.setValue(newVertVal);
 				}
-				lastMousePoint = arg0.getPoint();
+				lastMousePoint = evt.getPoint();
 				repaint();
 			}
 			
 			@Override
-			public void mouseMoved(MouseEvent arg0) {
-				lastMousePoint = arg0.getPoint();
+			public void mouseMoved(MouseEvent evt) {
+				lastMousePoint = evt.getPoint();
 				Tool currentTool = gui.getCurrentTool();
 				
 				if (currentTool == Tool.EDGE_SELECT) {
@@ -358,14 +368,41 @@ public class Editor extends JPanel {
 			lastMousePoint = new Point(x, y);
 	}
 	
+	public HashMap<NodePanel, Point> getNodePanelPositionMap() {
+		return nodePanelPosition;
+	}
+	
+	public void addNodePanelEntry(NodePanel np) {
+		nodePanelPosition.put(np, np.getCoords());
+	}
+	
+	public void removeNodePanelEntry(NodePanel np) {
+		nodePanelPosition.remove(np);
+	}
+	
+	/**
+	 * Add the given component to the set of selections.
+	 * 
+	 * @param gc The selected component.
+	 */
 	public void addSelection(GraphComponent gc) {
 		selected.add(gc);
 	}
 	
+	/**
+	 * Remove the given component from the set of selections.
+	 * 
+	 * @param gc The deselected component.
+	 */
 	public void removeSelection(GraphComponent gc) {
 		selected.remove(gc);
 	}
 	
+	/**
+	 * Get the set of all selected components.
+	 * 
+	 * @return The HashSet of selected components.
+	 */
 	public HashSet<GraphComponent> getSelections() {
 		return selected;
 	}

@@ -15,20 +15,23 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import components.Edge;
 import components.GraphComponent;
 import components.Node;
 import components.SelfEdge;
 import components.SimpleEdge;
-
 import preferences.Preferences;
-import actions.MoveNodeAction;
+import actions.MoveNodesAction;
 import actions.PlaceEdgeAction;
+import structures.OrderedPair;
 import tool.Tool;
 import ui.Editor;
 import ui.menus.NodeRightClickMenu;
@@ -60,10 +63,7 @@ public class NodePanel extends JPanel {
 
 	private Point clickPoint; // Coordinate of mouse click relative to the top left corner of its bounding box
 	
-	private boolean hovering;
-	
-	// Coordinate of node's bounding box's top left corner relative to editor origin when node is clicked
-	private Point editorLocationOnClick;
+	private boolean hovering; // True when the mouse is hovering over the circle
 	
 	/**
 	 * Creates a node with the specified location, radius, text,
@@ -91,8 +91,6 @@ public class NodePanel extends JPanel {
 		editor = ed;
 		node = n;
 		
-		clickPoint = new Point(-1, -1); // Initialize to a bad value
-		editorLocationOnClick = new Point(-1, -1);
 		hovering = false;
 		
 		setOpaque(false);
@@ -102,29 +100,31 @@ public class NodePanel extends JPanel {
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
+				// Store the point we clicked on relative to the upper left corner of the panel
 				clickPoint = e.getPoint();
-				editorLocationOnClick.setLocation(NodePanel.this.x, NodePanel.this.y);
 				NodePanel sinkPanel = NodePanel.this;
-				Node sink = NodePanel.this.node;
+				Node sink = sinkPanel.node;
 				boolean contains = sinkPanel.containsPoint(clickPoint);
 				
 				// Display the right click menu if the node is right clicked
-				if (contains && e.getButton() == MouseEvent.BUTTON3) {
+				if (contains && SwingUtilities.isRightMouseButton(e)) {
 					NodeRightClickMenu.show(NodePanel.this, e.getX(), e.getY());
-				} else if (contains && e.getButton() == MouseEvent.BUTTON1) {
+				} else if (contains && SwingUtilities.isLeftMouseButton(e)) {
 					Tool current = editor.getGUI().getCurrentTool();
 					if (current == Tool.SELECT) {
 						// If this node was clicked while the select tool is held
 						HashSet<GraphComponent> currentSelections = editor.getSelections();
-						if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK || (e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.SHIFT_MASK) {
+						if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK || (e.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
 							// If the user was holding down the control or shift keys, add or remove
 							// this node from the set of selections
 							if (currentSelections.contains(sink)) {
 								editor.removeSelection(sink);
 								sink.setSelected(false);
+								editor.removeNodePanelEntry(sinkPanel);
 							} else {
 								editor.addSelection(sink);
 								sink.setSelected(true);
+								editor.addNodePanelEntry(sinkPanel);
 							}
 						} else if (!sink.getSelected()) {
 							// Otherwise, if this node is not already selected, remove all existing
@@ -141,14 +141,20 @@ public class NodePanel extends JPanel {
 								
 								gcit.remove();
 							}
+							
+							// Add this node as a selection
 							editor.addSelection(sink);
 							sink.setSelected(true);
+							editor.addNodePanelEntry(sinkPanel);
 						}
 						repaint();
 					} else if (current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
+						// If we left click on the node with an edge tool
 						if (editor.getEdgeBasePoint() == null) {
+							// If the base point is not set, set this node as the base point
 							editor.setEdgeBasePoint(node);
 						} else {
+							// If the base point is set, draw a new edge
 							Node source = editor.getEdgeBasePoint();
 							NodePanel sourcePanel = source.getNodePanel();
 							Color currentLineColor = editor.getGUI().getEdgeOptionsBar().getCurrentLineColor();
@@ -165,15 +171,21 @@ public class NodePanel extends JPanel {
 							}
 							
 							// Compute the position of this edge (only matters if it is a simple edge)
-							// Add the new edge at the given position
 							ArrayList<Edge> pairEdges = editor.getContext().getEdgeMap().get(new Node.Pair(sink, source)); 
 							int edgePosition = getEdgePosition(sinkPanel, sourcePanel, e.getPoint(), pairEdges);
-							new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition).actionPerformed(null);
+							
+							// Add the new edge at the given position
+							PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);
+							placeAction.actionPerformed(null);
+							editor.getContext().pushReversibleAction(placeAction, true);
+							
+							// Reset base point, now that the edge has been placed
 							editor.setEdgeBasePoint(null); 
 							
 							// Remove any existing preview edge object
 							editor.setPreviewEdge(null, -1, false);
 							
+							// Repaint to immediately draw the new edge
 							editor.repaint();
 						}
 					}
@@ -182,11 +194,28 @@ public class NodePanel extends JPanel {
 			
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				Point locationOnEditor = new Point(NodePanel.this.x, NodePanel.this.y);
-				if(!editorLocationOnClick.equals(locationOnEditor)) {
-					// Add to the history the movement of the node
-					editor.getContext().getActionHistory().push(new MoveNodeAction(editor.getContext(), NodePanel.this, editorLocationOnClick, locationOnEditor));
-					editor.getContext().updateSaveState();
+				// A mapping from the moved panels to their original position (before the move)
+				HashMap<NodePanel, OrderedPair<Point>> movementMap = new HashMap<>();
+				Point originalPoint;
+				Point currentPoint;
+				for (Map.Entry<NodePanel, Point> npEntry : editor.getNodePanelPositionMap().entrySet()) {
+					originalPoint = npEntry.getValue();
+					currentPoint = npEntry.getKey().getCoords();
+					
+					// Only add this node panel to movement map if it moved (start and end points are different)
+					if (!originalPoint.equals(currentPoint)) {
+						OrderedPair<Point> movement = new OrderedPair<>(originalPoint, currentPoint);
+						movementMap.put(npEntry.getKey(), movement);
+					}
+				}
+				
+				// If the map is not empty, push a move node action
+				if (!movementMap.isEmpty()) {
+					MoveNodesAction moveAction = new MoveNodesAction(editor.getContext(), movementMap);
+					editor.getContext().pushReversibleAction(moveAction, true);
+					
+					// The movement is complete, so we clear the node panel position map
+					editor.getNodePanelPositionMap().clear();
 				}
 			}
 			
@@ -212,24 +241,50 @@ public class NodePanel extends JPanel {
 			
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if(editor.getGUI().getCurrentTool() == Tool.SELECT && containsPoint(clickPoint)) {
-					NodePanel n = NodePanel.this;
+				if (editor.getGUI().getCurrentTool() == Tool.SELECT && containsPoint(clickPoint) && SwingUtilities.isLeftMouseButton(e)) {
+					// If the panel is dragged using left click and the select tool
+					NodePanel thisPanel = NodePanel.this;
 					Point dragPoint = e.getPoint();
 					
 					// The new point of this node on the editor
 					Point newPoint;
-					if(editor.getGUI().getGridSettingsDialog().getSnapToGrid()) {
+					if (editor.getGUI().getGridSettingsDialog().getSnapToGrid()) {
 						// Enforce grid snap
-						Point mouseCenter = new Point(n.x + dragPoint.x, n.y + dragPoint.y);
+						Point mouseCenter = new Point(thisPanel.x + dragPoint.x, thisPanel.y + dragPoint.y);
 						
 						newPoint = CoordinateUtils.closestGridPoint(editor.getGUI(), mouseCenter);
 						newPoint.x -= radius;
 						newPoint.y -= radius;
 					} else {
 						// Drag the node as normal
-						newPoint = new Point(Math.max(0, n.x + dragPoint.x - clickPoint.x), Math.max(0, n.y + dragPoint.y - clickPoint.y));
+						newPoint = new Point(thisPanel.x + dragPoint.x - clickPoint.x, thisPanel.y + dragPoint.y - clickPoint.y);
 					}
-					setCoords(newPoint);
+					
+					// Keep newPoint in the bounds of the editor
+					CoordinateUtils.enforceBoundaries(newPoint, 0, editor.getWidth() - 2 * thisPanel.radius, 0, editor.getHeight() - 2 * thisPanel.radius);
+					
+					// Compute the net change in position for this node
+					int changeX = newPoint.x - thisPanel.x;
+					int changeY = newPoint.y - thisPanel.y;
+					
+					// Set the new coordinates of the current node panel
+					thisPanel.setCoords(newPoint);
+					
+					// Iterate through all selected nodes, and move them the same amount, bypassing
+					// grid snap to maintain the structure
+					Node thisPanelNode = thisPanel.getNode();
+					for (GraphComponent selection : editor.getSelections()) {
+						if (selection != thisPanelNode && selection instanceof Node) {
+							// Compute the new coordinates of the selected nodes, and update them
+							NodePanel selectionNodePanel = ((Node) selection).getNodePanel();
+							int selectionRadius = selectionNodePanel.getRadius();
+							Point newSelectionPoint = new Point(selectionNodePanel.getXCoord() + changeX, selectionNodePanel.getYCoord() + changeY);
+							CoordinateUtils.enforceBoundaries(newSelectionPoint, 0, editor.getWidth() - 2 * selectionRadius, 0, editor.getHeight() - 2 * selectionRadius);
+							selectionNodePanel.setCoords(newSelectionPoint);
+						}
+					}
+					
+					// Redraw the editor to update the position of the panel(s)
 					editor.repaint();
 				}
 			}
@@ -243,6 +298,7 @@ public class NodePanel extends JPanel {
 					if (editor.getEdgeBasePoint() != null) {
 						NodePanel ebpPanel = editor.getEdgeBasePoint().getNodePanel();
 						Tool ctool = editor.getGUI().getCurrentTool();
+						
 						if((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebpPanel != null) {
 							Color previewColor = (Color) Preferences.EDGE_PREVIEW_COLOR.getData();
 							int weight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
@@ -407,6 +463,24 @@ public class NodePanel extends JPanel {
 	}
 	
 	/**
+	 * Get the x coordinate of this panel's upper left corner (relative to the editor).
+	 * 
+	 * @return The integer x-coordinate.
+	 */
+	public int getXCoord() {
+		return x;
+	}
+	
+	/**
+	 * Get the y coordinate of this panel's upper left corner (relative to the editor).
+	 * 
+	 * @return The integer y-coordinate.
+	 */
+	public int getYCoord() {
+		return y;
+	}
+	
+	/**
 	 * Get the coordinates of the node's upper left corner.
 	 * 
 	 * @return The point correspoinding to the upper left corner of this panel's bounding box.
@@ -423,6 +497,17 @@ public class NodePanel extends JPanel {
 	public void setCoords(Point p) {
 		x = p.x;
 		y = p.y;
+	}
+	
+	/**
+	 * Set the coordinates of the panel's upper left corner.
+	 * 
+	 * @param x The new x-coordinate of the panels' upper left corner.
+	 * @param y The new y-coordinate of the panels' upper left corner.
+	 */
+	public void setCoords(int x, int y) {
+		this.x = x;
+		this.y = y;
 	}
 	
 	public int getRadius() {
@@ -459,36 +544,41 @@ public class NodePanel extends JPanel {
 		Ellipse2D.Double circle = new Ellipse2D.Double(PADDING, PADDING, 2*radius, 2*radius);
 		g2d.setStroke(new BasicStroke(BORDER_THICKNESS));
 		g2d.setColor(fillColor);
+		
+		// Draw the circle, border, and text
 		g2d.fill(circle);
-		if(borderColor != null) {
+		if (borderColor != null) {
 			g2d.setColor(borderColor);
 			g2d.draw(circle);
 		}
-		if(textColor != null && text != null) {
+		if (textColor != null && text != null) {
 			g2d.setColor(textColor);
 			Rectangle bounds = g2d.getFontMetrics().getStringBounds(text, g2d).getBounds();
 			g2d.drawString(text, radius - bounds.width/2, radius + bounds.height/2);
 		}
+		
+		// Compute the rectangular bounds of the node
 		Rectangle bounds = circle.getBounds();
 		bounds.x -= SELECTED_BORDER_THICKNESS;
 		bounds.y -= SELECTED_BORDER_THICKNESS;
 		bounds.width += 2*SELECTED_BORDER_THICKNESS;
 		bounds.height += 2*SELECTED_BORDER_THICKNESS;
-		boolean contains = containsPoint(clickPoint);
-		if(node.getSelected() && contains) {
+		if (node.getSelected()) {
+			// Draw the selection "box" if the node is selected
 			g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
 			g2d.setColor((Color) Preferences.SELECTION_COLOR.getData());
 			g2d.draw(bounds);
-		} else if(hovering) {
+		} else if (hovering) {
+			// Draw various "hover" visual effects
 			Tool current = editor.getGUI().getCurrentTool();
-			if(current == Tool.EDGE){
+			if (current == Tool.EDGE){
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
 				if(editor.getEdgeBasePoint() == null)
 					g2d.setColor((Color) Preferences.LINE_START_COLOR.getData());
 				else
 					g2d.setColor((Color) Preferences.LINE_END_COLOR.getData());
 				g2d.draw(bounds);
-			} else if(current == Tool.DIRECTED_EDGE) {
+			} else if (current == Tool.DIRECTED_EDGE) {
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
 				if(editor.getEdgeBasePoint() == null)
 					g2d.setColor((Color) Preferences.ARROW_START_COLOR.getData());
@@ -497,6 +587,11 @@ public class NodePanel extends JPanel {
 				g2d.draw(bounds);
 			}
 		}
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("NodePanel[x=%d, y=%d, txt=%s]", x, y, text);
 	}
 	
 }

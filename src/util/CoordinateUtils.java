@@ -6,6 +6,13 @@ import ui.GUI;
 
 public class CoordinateUtils {
 	
+	/**
+	 * Returns the closest point on the grid from the given point.
+	 * 
+	 * @param g    The GUI with the grid in question.
+	 * @param from The point we want to compute the closest grid point from.
+	 * @return     The point corresponding to the point on the grid closest to "from".
+	 */
 	public static Point closestGridPoint(GUI g, Point from) {
 		int level = g.getGridSettingsDialog().getGridLevel();
 		
@@ -31,6 +38,22 @@ public class CoordinateUtils {
 		else
 			newPoint = new Point(highX, highY);
 		return newPoint;
+	}
+	
+	/**
+	 * Enforce the boundaries of the workspace on the point, so it remains "in bounds" as specified by the parameters.
+	 * 
+	 * @param test        The point we want to test for in/out of bounds.
+	 * @param lowerBoundX The lower bound of the X coordinate.
+	 * @param upperBoundX The upper bound of the X coordinate.
+	 * @param lowerBoundY The lower bound of the Y coordinate.
+	 * @param upperBoundY The upper bound of the Y coordinate.
+	 */
+	public static void enforceBoundaries(Point test, int lowerBoundX, int upperBoundX, int lowerBoundY, int upperBoundY) {
+		test.x = Math.max(test.x, lowerBoundX);
+		test.x = Math.min(test.x, upperBoundX);
+		test.y = Math.max(test.y, lowerBoundY);
+		test.y = Math.min(test.y, upperBoundY);
 	}
 	
 }

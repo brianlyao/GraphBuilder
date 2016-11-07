@@ -18,8 +18,11 @@ public class Undo extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (!getContext().getActionHistory().isEmpty())
-			getContext().getActionHistory().pop().undo();
+		if (!getContext().getActionHistory().isEmpty()) {
+			ReversibleAction action = getContext().getActionHistory().pop();
+			action.undo();
+			getContext().pushReversibleUndoAction(action, true);
+		}
 	}
 	
 }

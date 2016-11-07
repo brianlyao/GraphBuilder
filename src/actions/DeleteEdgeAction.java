@@ -25,15 +25,11 @@ public class DeleteEdgeAction extends ReversibleAction {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		position = getContext().removeEdge(edge);
-		addSelfToUndoHistory();
-		getContext().updateSaveState();
 	}
 
 	@Override
 	public void undo() {
 		getContext().addEdge(edge, position);
-		addSelfToHistory();
-		getContext().updateSaveState();
 	}
 	
 }

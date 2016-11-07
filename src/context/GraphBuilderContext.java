@@ -32,7 +32,7 @@ public class GraphBuilderContext {
 
 	private File currentlyLoaded;
 	
-	private int actionHistorySizeOnLastSave;
+	private int actionIdOnLastSave;
 	
 	private int idPool;
 	
@@ -51,6 +51,7 @@ public class GraphBuilderContext {
 		// Initialize action histories
 		actionHistory = new Stack<>();
 		undoHistory = new Stack<>();
+		actionIdOnLastSave = -1;
 		
 		// The idpool
 		idPool = 0;
@@ -170,10 +171,34 @@ public class GraphBuilderContext {
 	}
 	
 	/**
+	 * Add a reversible action to the top of the action history stack.
+	 * 
+	 * @param action           The action to push.
+	 * @param affectsSaveState Whether the action affects the save state (will making this action cause the file to be unsaved?).
+	 */
+	public void pushReversibleAction(ReversibleAction action, boolean affectsSaveState) {
+		actionHistory.push(action);
+		if (affectsSaveState)
+			updateSaveState();
+	}
+	
+	/**
+	 * Add an reversible action to the top of the undo history stack.
+	 * 
+	 * @param action           The action to push.
+	 * @param affectsSaveState Whether the action affects the save state (will making this action cause the file to be unsaved?).
+	 */
+	public void pushReversibleUndoAction(ReversibleAction action, boolean affectsSaveState) {
+		undoHistory.push(action);
+		if (affectsSaveState)
+			updateSaveState();
+	}
+	
+	/**
 	 * Updates the "saved" state of the current graph.
 	 */
-	public void updateSaveState() {
-		if (actionHistory.size() == actionHistorySizeOnLastSave)
+	public void updateSaveState() { 
+		if ((actionHistory.isEmpty() && actionIdOnLastSave < 0) || actionHistory.peek().actionId() == actionIdOnLastSave)
 			setAsSaved();
 		else
 			setAsUnsaved();
@@ -322,8 +347,8 @@ public class GraphBuilderContext {
 			gui.setTitle(gui.getTitle() + "*");
 	}
 	
-	public void setActionHistorySizeOnLastSave(int size) {
-		actionHistorySizeOnLastSave = size;
+	public void setActionIdOnLastSave(int id) {
+		actionIdOnLastSave = id;
 	}
 
 }

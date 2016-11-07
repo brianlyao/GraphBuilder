@@ -28,16 +28,12 @@ public class PlaceEdgeAction extends ReversibleAction {
 	public void actionPerformed(ActionEvent arg0) {
 		getContext().addEdge(edge, position);
 		getContext().getGUI().getEditor().repaint();
-		addSelfToHistory();
-		getContext().updateSaveState();
 	}
 
 	@Override
 	public void undo() {
 		position = getContext().removeEdge(edge);
 		getContext().getGUI().getEditor().repaint();
-		addSelfToUndoHistory();
-		getContext().updateSaveState();
 	}
 	
 }

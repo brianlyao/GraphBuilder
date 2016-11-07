@@ -10,6 +10,7 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import keybindings.KeyboardShortcutActions;
+import structures.OrderedPair;
 import tool.Tool;
 import ui.dialogs.GridSettingsDialog;
 import ui.menus.MenuBar;
@@ -55,6 +56,13 @@ public class GUI extends JFrame {
 	public GUI() {
 		super(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
 		
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Unable to determine the system's default look and feel.", "Look And Feel", JOptionPane.PLAIN_MESSAGE);
+		}
+		
+		// Initialize the context (empty) for this GUI
 		context = new GraphBuilderContext(this);
 		
 		// Initialize and set menu bar
@@ -144,7 +152,7 @@ public class GUI extends JFrame {
 		statusgbc.insets = new Insets(2, 2, 2, 2);
 		statusgbc.fill = GridBagConstraints.BOTH;
 		
-		//Initialize and set up the main editor panel
+		// Initialize and set up the main editor panel
 		editor = new Editor(this);
 		panelEditorScroll = new JScrollPane(editor, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		panelEditorScroll.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -154,7 +162,7 @@ public class GUI extends JFrame {
 		vert.setValue((vert.getMaximum()  + vert.getVisibleAmount() - vert.getMinimum())/2);
 		add(panelEditorScroll, editorgbc);
 		
-		//Initialize and set up the properties panel, used when someone right clicks an object and clicks properties
+		// Initialize and set up the properties panel, used when someone right clicks an object and clicks properties
 		panelProperties = new JPanel();
 		Border lowerEtched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
 		panelProperties.setBorder(BorderFactory.createTitledBorder(lowerEtched, "Properties"));
@@ -177,18 +185,18 @@ public class GUI extends JFrame {
 	 */
 	public void updateTool(Tool t) {
 		HashMap<Tool, JButton> toolButtons = toolBar.getToolButtons();
-		HashMap<Tool, ImageIcon[]> toolIcons = toolBar.getToolIcons();
+		HashMap<Tool, OrderedPair<ImageIcon>> toolIcons = toolBar.getToolIcons();
 		if (currentTool != null) {
 			if (currentTool != t) {
-				toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool)[0]);
-				toolButtons.get(t).setIcon(toolIcons.get(t)[1]);
+				toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool).getFirst());
+				toolButtons.get(t).setIcon(toolIcons.get(t).getSecond());
 				currentTool = t;
 			} else {
-				toolButtons.get(t).setIcon(toolIcons.get(t)[0]);
+				toolButtons.get(t).setIcon(toolIcons.get(t).getFirst());
 				currentTool = null;
 			}
 		} else {
-			toolButtons.get(t).setIcon(toolIcons.get(t)[1]);
+			toolButtons.get(t).setIcon(toolIcons.get(t).getSecond());
 			currentTool = t;
 		}
 	}

@@ -24,15 +24,11 @@ public class PlaceNodeAction extends ReversibleAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		getContext().addNode(node);
-		addSelfToHistory();
-		getContext().updateSaveState();
 	}
 	
 	@Override
 	public void undo() {
 		getContext().removeNode(node);
-		addSelfToUndoHistory();
-		getContext().updateSaveState();
 	}
 	
 }

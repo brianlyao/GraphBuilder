@@ -50,6 +50,10 @@ This package contains classes for additional math beyond what Java's distributio
 
 This tentative package contains a list of user preferences. Ultimately, these will be moved to a configuration file.
 
+### structures
+
+This package will contain useful (custom) data structures.
+
 ### tool
 
 This package contains a list of all the tools that the user can use in GraphBuilder.

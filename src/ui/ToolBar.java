@@ -8,6 +8,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JToolBar;
 
+import structures.OrderedPair;
 import tool.Tool;
 import context.GraphBuilderContext;
 
@@ -17,7 +18,7 @@ public class ToolBar extends JToolBar {
 
 	private GraphBuilderContext context;
 	
-	private HashMap<Tool, ImageIcon[]> toolIcons;
+	private HashMap<Tool, OrderedPair<ImageIcon>> toolIcons;
 	private HashMap<Tool, JButton> toolButtons;
 	
 	//Tool bar (right below menu bar)
@@ -63,12 +64,12 @@ public class ToolBar extends JToolBar {
 		
 		//Hash tools to both their icons
 		toolIcons = new HashMap<>();
-		toolIcons.put(Tool.SELECT, new ImageIcon[] {selectIcon, selectSelectedIcon});
-		toolIcons.put(Tool.EDGE_SELECT, new ImageIcon[] {edgeSelectIcon, edgeSelectSelectedIcon});
-		toolIcons.put(Tool.NODE, new ImageIcon[] {nodeIcon, nodeSelectedIcon});
-		toolIcons.put(Tool.DIRECTED_EDGE, new ImageIcon[] {arrowIcon, arrowSelectedIcon});
-		toolIcons.put(Tool.EDGE, new ImageIcon[] {lineIcon, lineSelectedIcon});
-		toolIcons.put(Tool.PAN, new ImageIcon[] {panIcon, panSelectedIcon});
+		toolIcons.put(Tool.SELECT, new OrderedPair<>(selectIcon, selectSelectedIcon));
+		toolIcons.put(Tool.EDGE_SELECT, new OrderedPair<>(edgeSelectIcon, edgeSelectSelectedIcon));
+		toolIcons.put(Tool.NODE, new OrderedPair<>(nodeIcon, nodeSelectedIcon));
+		toolIcons.put(Tool.DIRECTED_EDGE, new OrderedPair<>(arrowIcon, arrowSelectedIcon));
+		toolIcons.put(Tool.EDGE, new OrderedPair<>(lineIcon, lineSelectedIcon));
+		toolIcons.put(Tool.PAN, new OrderedPair<>(panIcon, panSelectedIcon));
 		
 		//Initialize tool buttons and add listeners to them.
 		selectButton = new JButton(selectIcon);
@@ -156,7 +157,7 @@ public class ToolBar extends JToolBar {
 		toolButtons.put(Tool.PAN, panButton);
 	}
 	
-	public HashMap<Tool, ImageIcon[]> getToolIcons() {
+	public HashMap<Tool, OrderedPair<ImageIcon>> getToolIcons() {
 		return toolIcons;
 	}
 	

@@ -18,8 +18,11 @@ public class Redo extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (!getContext().getUndoHistory().isEmpty())
-			getContext().getUndoHistory().pop().actionPerformed(null);
+		if (!getContext().getUndoHistory().isEmpty()) {
+			ReversibleAction action = getContext().getUndoHistory().pop();
+			action.actionPerformed(null);
+			getContext().pushReversibleAction(action, true);
+		}
 	}
 	
 }

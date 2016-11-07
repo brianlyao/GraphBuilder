@@ -16,20 +16,6 @@ public abstract class ReversibleAction extends SimpleAction {
 		super(ctxt);
 	}
 	
-	/**
-	 * Used to add this action to the history.
-	 */
-	public void addSelfToHistory() {
-		getContext().getActionHistory().push(this);
-	}
-	
-	/**
-	 * Used to add this action to the undo history;
-	 */
-	public void addSelfToUndoHistory() {
-		getContext().getUndoHistory().push(this);
-	}
-	
 	/** Abstract method for undoing this particular action. */
 	public abstract void undo();
 	

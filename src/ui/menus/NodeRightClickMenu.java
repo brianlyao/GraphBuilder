@@ -20,7 +20,9 @@ public class NodeRightClickMenu {
 			
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				new DeleteNodeAction(n.getNode().getContext(), n.getNode()).actionPerformed(null);
+				DeleteNodeAction deleteAction = new DeleteNodeAction(n.getNode().getContext(), n.getNode());
+				deleteAction.actionPerformed(null);
+				n.getNode().getContext().pushReversibleAction(deleteAction, true);
 			}
 			
 		});

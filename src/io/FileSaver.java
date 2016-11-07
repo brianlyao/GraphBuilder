@@ -39,7 +39,7 @@ public class FileSaver {
 			
 			// Update the context to indicate it is saved
 			context.setCurrentlyLoadedFile(target);
-			context.setActionHistorySizeOnLastSave(context.getActionHistory().size());
+			context.setActionIdOnLastSave(context.getActionHistory().peek().actionId());
 			context.setAsSaved();
 		} catch (Exception e) {
 			e.printStackTrace();
