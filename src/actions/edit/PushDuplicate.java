@@ -30,7 +30,7 @@ public class PushDuplicate extends SimpleAction {
 		if (!this.getContext().getGUI().getEditor().getSelections().isEmpty()) {
 			Duplicate duplicateAction = new Duplicate(this.getContext(), full);
 			duplicateAction.actionPerformed(null);
-			this.getContext().pushReversibleAction(duplicateAction, true);
+			this.getContext().pushReversibleAction(duplicateAction, true, false);
 		}
 	}
 	

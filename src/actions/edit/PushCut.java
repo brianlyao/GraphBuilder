@@ -30,7 +30,7 @@ public class PushCut extends SimpleAction {
 		if (!this.getContext().getGUI().getEditor().getSelections().isEmpty()) {
 			Cut cutAction = new Cut(this.getContext(), full);
 			cutAction.actionPerformed(null);
-			this.getContext().pushReversibleAction(cutAction, true);
+			this.getContext().pushReversibleAction(cutAction, true, false);
 		}
 	}
 	

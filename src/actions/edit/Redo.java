@@ -27,7 +27,7 @@ public class Redo extends SimpleAction {
 		if (!getContext().getUndoHistory().isEmpty()) {
 			ReversibleAction action = getContext().getUndoHistory().pop();
 			action.actionPerformed(null);
-			getContext().pushReversibleAction(action, true);
+			getContext().pushReversibleAction(action, true, true);
 		}
 	}
 	

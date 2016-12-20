@@ -112,7 +112,7 @@ public class NodePanel extends JPanel {
 			public void mouseClicked(MouseEvent e) {
 				boolean contains = NodePanel.this.containsPoint(clickPoint);
 				if (contains && SwingUtilities.isRightMouseButton(e)) {
-					NodeRightClickMenu.show(editor.getContext(), NodePanel.this, e.getX(), e.getY());
+					NodeRightClickMenu.show(NodePanel.this, e.getX(), e.getY());
 				}
 			}
 			
@@ -181,7 +181,7 @@ public class NodePanel extends JPanel {
 							// Add the new edge between the chosen nodes
 							PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);
 							placeAction.actionPerformed(null);
-							editor.getContext().pushReversibleAction(placeAction, true);
+							editor.getContext().pushReversibleAction(placeAction, true, false);
 							
 							// Reset base point, now that the edge has been placed
 							editor.setEdgeBasePoint(null); 
@@ -216,7 +216,7 @@ public class NodePanel extends JPanel {
 				// If the map is not empty, push a move node action
 				if (!movementMap.isEmpty()) {
 					MoveNodesAction moveAction = new MoveNodesAction(editor.getContext(), movementMap);
-					editor.getContext().pushReversibleAction(moveAction, true);
+					editor.getContext().pushReversibleAction(moveAction, true, false);
 					
 					// The movement is complete, so we clear the node panel position map
 					editor.getNodePanelPositionMap().clear();

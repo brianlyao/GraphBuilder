@@ -26,7 +26,7 @@ public class PushPaste extends SimpleAction {
 		if (!this.getContext().getClipboard().isEmpty()) {
 			Paste pasteAction = new Paste(this.getContext());
 			pasteAction.actionPerformed(null);
-			this.getContext().pushReversibleAction(pasteAction, true);
+			this.getContext().pushReversibleAction(pasteAction, true, false);
 		}
 	}
 	

@@ -119,7 +119,7 @@ public class Editor extends JPanel {
 					// Perform the action for placing a node
 					PlaceNodeAction placeAction = new PlaceNodeAction(gui.getContext(), newNode);
 					placeAction.actionPerformed(null);
-					gui.getContext().pushReversibleAction(placeAction, true);
+					gui.getContext().pushReversibleAction(placeAction, true, false);
 				}
 				
 				if (currentTool == Tool.EDGE_SELECT && closestEdge != null && SwingUtilities.isLeftMouseButton(evt)) {

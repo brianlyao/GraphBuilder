@@ -20,12 +20,11 @@ import ui.Editor;
 public class EditorRightClickMenu {
 
 	/**
-	 * Display the menu on the provided editor.
+	 * Display the menu on the provided editor at the specified location.
 	 * 
-	 * @param ctxt
-	 * @param editor
-	 * @param x
-	 * @param y
+	 * @param editor The editor to display the menu over.
+	 * @param x      The x-coordinate at which to display the menu.
+	 * @param y      The y-coordinate at which to display the menu.
 	 */
 	public static void show(final Editor editor, final int x, final int y) {
 		final GraphBuilderContext ctxt = editor.getContext();
@@ -37,12 +36,9 @@ public class EditorRightClickMenu {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (!currentClipboard.isEmpty()) {
-					// Only paste if we have anything copied.
-					Paste pasteAction = new Paste(ctxt, new Point(x, y));
-					pasteAction.actionPerformed(null);
-					ctxt.pushReversibleAction(pasteAction, true);
-				}
+				Paste pasteAtPoint = new Paste(ctxt, new Point(x, y));
+				pasteAtPoint.actionPerformed(null);
+				ctxt.pushReversibleAction(pasteAtPoint, true, false);
 			}
 			
 		});

@@ -205,13 +205,16 @@ public class GraphBuilderContext {
 	 * 
 	 * @param action           The action to push.
 	 * @param affectsSaveState Whether the action affects the save state (will making this action cause the file to be unsaved?).
+	 * @param redo             Whether the pushed action is a redo of some undone action.
 	 */
-	public void pushReversibleAction(ReversibleAction action, boolean affectsSaveState) {
+	public void pushReversibleAction(ReversibleAction action, boolean affectsSaveState, boolean redo) {
 		actionHistory.push(action);
 		if (affectsSaveState) {
 			updateSaveState();
 		}
-		undoHistory.clear();
+		if (!redo) {
+			undoHistory.clear();
+		}
 	}
 	
 	/**
@@ -222,8 +225,9 @@ public class GraphBuilderContext {
 	 */
 	public void pushReversibleUndoAction(ReversibleAction action, boolean affectsSaveState) {
 		undoHistory.push(action);
-		if (affectsSaveState)
+		if (affectsSaveState) {
 			updateSaveState();
+		}
 	}
 	
 	/**

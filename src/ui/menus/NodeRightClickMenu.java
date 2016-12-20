@@ -15,9 +15,22 @@ import actions.edit.Duplicate;
 import actions.edit.PushCut;
 import actions.edit.PushDelete;
 
+/**
+ * The right click menu which appears when the user right clicks on a node.
+ * 
+ * @author Brian
+ */
 public class NodeRightClickMenu {
 	
-	public static void show(final GraphBuilderContext ctxt, final NodePanel n, final int x, final int y) {
+	/**
+	 * Display the menu on the provided node at the specified location.
+	 * 
+	 * @param n The node panel to display the menu on.
+	 * @param x      The x-coordinate at which to display the menu.
+	 * @param y      The y-coordinate at which to display the menu.
+	 */
+	public static void show(final NodePanel n, final int x, final int y) {
+		final GraphBuilderContext ctxt = n.getNode().getContext();
 		JPopupMenu menu = new JPopupMenu();
 		boolean selectionsNotEmpty = !ctxt.getGUI().getEditor().getSelections().isEmpty();
 		JMenuItem properties = new JMenuItem("View/Edit Properties");
@@ -59,7 +72,7 @@ public class NodeRightClickMenu {
 			public void actionPerformed(ActionEvent e) {
 				Duplicate duplicateAction = new Duplicate(ctxt, false);
 				duplicateAction.actionPerformed(null);
-				ctxt.pushReversibleAction(duplicateAction, true);
+				ctxt.pushReversibleAction(duplicateAction, true, false);
 			}
 			
 		});
@@ -72,7 +85,7 @@ public class NodeRightClickMenu {
 			public void actionPerformed(ActionEvent e) {
 				Duplicate duplicateFullAction = new Duplicate(ctxt, true);
 				duplicateFullAction.actionPerformed(null);
-				ctxt.pushReversibleAction(duplicateFullAction, true);
+				ctxt.pushReversibleAction(duplicateFullAction, true, false);
 			}
 			
 		});
