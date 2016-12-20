@@ -7,6 +7,11 @@ import javax.swing.JOptionPane;
 
 import ui.GUI;
 
+/**
+ * A utility class with exception-related procedures.
+ * 
+ * @author Brian
+ */
 public class ExceptionUtils {
 
 	public static void displayException(GUI parent, Exception e) {

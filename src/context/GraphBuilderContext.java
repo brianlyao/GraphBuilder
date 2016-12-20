@@ -2,16 +2,20 @@ package context;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
+import clipboard.Clipboard;
 import components.Edge;
 import components.GraphComponent;
 import components.Node;
 import actions.ReversibleAction;
+import structures.OrderedPair;
+import structures.UnorderedNodePair;
 import ui.Editor;
 import ui.GUI;
 
@@ -23,10 +27,12 @@ public class GraphBuilderContext {
 	private HashSet<Node> nodes; // The set of all nodes
 	private HashSet<Edge> edges; // The set of all edges
 	private HashMap<Integer, GraphComponent> idMap;
-	private HashMap<Node.Pair, ArrayList<Edge>> edgeMap; // A mapping from a pair of nodes to the edges between them
+	private HashMap<UnorderedNodePair, ArrayList<Edge>> edgeMap; // A mapping from a pair of nodes to the edges between them
 	
 	private Stack<ReversibleAction> actionHistory; // A collection of the most recent reversible actions
 	private Stack<ReversibleAction> undoHistory; // A collection of the most recent undos
+	
+	private Clipboard clipboard;
 	
 	private boolean unsaved; // If the current graph is unsaved
 
@@ -47,6 +53,9 @@ public class GraphBuilderContext {
 		edges = new HashSet<>();
 		idMap = new HashMap<>();
 		edgeMap = new HashMap<>();
+		
+		// Initialize empty clipboard
+		clipboard = new Clipboard(this);
 		
 		// Initialize action histories
 		actionHistory = new Stack<>();
@@ -70,6 +79,17 @@ public class GraphBuilderContext {
 	}
 	
 	/**
+	 * Remove the specified graph components.
+	 * 
+	 * @param components The collection of graph components to remove.
+	 */
+	public void removeAll(Collection<? extends GraphComponent> components) {
+		for (GraphComponent gc : components) {
+			remove(gc);
+		}
+	}
+	
+	/**
 	 * Adds the specified node to the graph.
 	 * 
 	 * @param n The node to add to the graph.
@@ -78,6 +98,7 @@ public class GraphBuilderContext {
 		Editor editor = gui.getEditor();
 		nodes.add(n);
 		editor.add(n.getNodePanel());
+//		editor.setComponentZOrder(n.getNodePanel(), n.getID());
 		editor.repaint();
 		editor.revalidate();
 	}
@@ -88,7 +109,7 @@ public class GraphBuilderContext {
 	 * @param n The node to remove.
 	 * @return The map of edges that was removed as a result of this node's removal.
 	 */
-	public HashMap<Node.Pair, ArrayList<Edge>> removeNode(Node n) {
+	public HashMap<UnorderedNodePair, ArrayList<Edge>> removeNode(Node n) {
 		// Remove the node from the set of all nodes in this context
 		nodes.remove(n);
 		
@@ -98,7 +119,7 @@ public class GraphBuilderContext {
 		editor.repaint();
 		editor.revalidate();
 		
-		Iterator<Map.Entry<Node.Pair, ArrayList<Edge>>> edgeMapIterator = edgeMap.entrySet().iterator();
+		Iterator<Map.Entry<UnorderedNodePair, ArrayList<Edge>>> edgeMapIterator = edgeMap.entrySet().iterator();
 		Iterator<Edge> lineit = edges.iterator();
 		
 		// Remove all edges neighboring the removed node
@@ -106,21 +127,25 @@ public class GraphBuilderContext {
 			if (lineit.next().hasEndpoint(n))
 				lineit.remove();
 		
-		// Remove all edges neighboring the removed node from edge map
 		// Keep track of which edges are removed, and return it
-		HashMap<Node.Pair, ArrayList<Edge>> removedSubEdgeMap = new HashMap<>();
-		Map.Entry<Node.Pair, ArrayList<Edge>> temp;
+		HashMap<UnorderedNodePair, ArrayList<Edge>> removedSubEdgeMap = new HashMap<>();
+		Map.Entry<UnorderedNodePair, ArrayList<Edge>> temp;
 		while (edgeMapIterator.hasNext()) {
 			temp = edgeMapIterator.next();
-			if(temp.getKey().hasNode(n)) {
+			if (temp.getKey().hasNode(n)) {
 				removedSubEdgeMap.put(temp.getKey(), temp.getValue());
 				edgeMapIterator.remove();
+				editor.removeSelections(temp.getValue());
 			}
 		}
 		
 		// If this node was the "base point" for an edge, reset the base point
 		if (editor.getEdgeBasePoint() == n)
 			editor.setEdgeBasePoint(null);
+		
+		// Remove this node from selections
+		editor.removeSelection(n);
+		this.getGUI().getMainMenuBar().updateWithSelection();
 		
 		return removedSubEdgeMap;
 	}
@@ -134,8 +159,8 @@ public class GraphBuilderContext {
 	public void addEdge(Edge e, int position) {
 		edges.add(e);
 		
-		Node[] ends = e.getEndpoints();
-		Node.Pair endsp = new Node.Pair(ends[0], ends[1]);
+		OrderedPair<Node> ends = e.getEndpoints();
+		UnorderedNodePair endsp = new UnorderedNodePair(ends.getFirst(), ends.getSecond());
 		
 		// Find the list of edges to add this one to, or create it if it doesn't exist
 		ArrayList<Edge> addTo = edgeMap.get(endsp);
@@ -160,13 +185,18 @@ public class GraphBuilderContext {
 	public int removeEdge(Edge e) {
 		edges.remove(e);
 		
-		Node[] ends = e.getEndpoints();
-		Node.Pair endsp = new Node.Pair(ends[0], ends[1]);
+		OrderedPair<Node> ends = e.getEndpoints();
+		UnorderedNodePair endsp = new UnorderedNodePair(ends.getFirst(), ends.getSecond());
 		ArrayList<Edge> removeFrom = edgeMap.get(endsp);
 		if (removeFrom == null)
 			throw new IllegalArgumentException("The edge " + e + " is not in the graph, and cannot be removed.");
 		int index = removeFrom.indexOf(e);
 		removeFrom.remove(e);
+		
+		// Remove the edge from selections
+		this.getGUI().getEditor().removeSelection(e);
+		this.getGUI().getMainMenuBar().updateWithSelection();
+		
 		return index;
 	}
 	
@@ -178,8 +208,10 @@ public class GraphBuilderContext {
 	 */
 	public void pushReversibleAction(ReversibleAction action, boolean affectsSaveState) {
 		actionHistory.push(action);
-		if (affectsSaveState)
+		if (affectsSaveState) {
 			updateSaveState();
+		}
+		undoHistory.clear();
 	}
 	
 	/**
@@ -204,6 +236,15 @@ public class GraphBuilderContext {
 			setAsUnsaved();
 		gui.getMainMenuBar().setUndoEnabled(!actionHistory.isEmpty());
 		gui.getMainMenuBar().setRedoEnabled(!undoHistory.isEmpty());
+	}
+	
+	/**
+	 * Get the clipboard of the current context.
+	 * 
+	 * @return The clipboard object of this context.
+	 */
+	public Clipboard getClipboard() {
+		return clipboard;
 	}
 	
 	/**
@@ -292,7 +333,7 @@ public class GraphBuilderContext {
 	 * 
 	 * @return The edge map.
 	 */
-	public HashMap<Node.Pair, ArrayList<Edge>> getEdgeMap() {
+	public HashMap<UnorderedNodePair, ArrayList<Edge>> getEdgeMap() {
 		return edgeMap;
 	}
 
@@ -332,6 +373,9 @@ public class GraphBuilderContext {
 		return unsaved;
 	}
 	
+	/**
+	 * Mark the graph in this context as saved, which changes the GUI's appearance slightly.
+	 */
 	public void setAsSaved() {
 		unsaved = false;
 		if (gui.getTitle().endsWith("*"))
@@ -347,6 +391,11 @@ public class GraphBuilderContext {
 			gui.setTitle(gui.getTitle() + "*");
 	}
 	
+	/**
+	 * Set the value of the last action ID before the last save occurred.
+	 * 
+	 * @param id The new value.
+	 */
 	public void setActionIdOnLastSave(int id) {
 		actionIdOnLastSave = id;
 	}

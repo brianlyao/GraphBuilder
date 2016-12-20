@@ -11,7 +11,11 @@ import javax.swing.JOptionPane;
 import ui.GUI;
 import context.GraphBuilderContext;
 
-/** A class of utility methods. */
+/**
+ * A utility class with procedures related to file IO.
+ * 
+ * @author Brian
+ */
 public class FileUtils {
 
 	/**

@@ -14,6 +14,20 @@ public class SelfEdgeData extends EdgeData {
 	private double offsetAngle;
 	
 	/**
+	 * Copy constructor.
+	 * 
+	 * @param sed The self edge data object to be copied.
+	 */
+	public SelfEdgeData(SelfEdgeData sed) {
+		super(sed);
+		arcPoint1 = new Point2D.Double();
+		arcPoint2 = new Point2D.Double();
+		arcCenter = new Point2D.Double();
+		radius = sed.radius;
+		offsetAngle = sed.offsetAngle;
+	}
+	
+	/**
 	 * Instantiate a data object for a self-edge. Should only be invoked by the SelfEdge constructor.
 	 * 
 	 * @param selfEdge    The self-edge this data object describes.
@@ -21,8 +35,8 @@ public class SelfEdgeData extends EdgeData {
 	 * @param w           The edge's visual weight (thickness).
 	 * @param offsetAngle The visual angle at which the self-edge is positioned (relative to 0, which is on the right).
 	 */
-	public SelfEdgeData(Color c, int w, double offsetAngle) {
-		super(c, w);
+	public SelfEdgeData(Color c, int w, String txt, double offsetAngle) {
+		super(c, w, txt);
 		this.offsetAngle = offsetAngle;
 	}
 	

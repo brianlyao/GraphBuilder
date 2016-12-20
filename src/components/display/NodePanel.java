@@ -17,7 +17,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.swing.JPanel;
@@ -32,6 +31,7 @@ import preferences.Preferences;
 import actions.MoveNodesAction;
 import actions.PlaceEdgeAction;
 import structures.OrderedPair;
+import structures.UnorderedNodePair;
 import tool.Tool;
 import ui.Editor;
 import ui.menus.NodeRightClickMenu;
@@ -66,6 +66,15 @@ public class NodePanel extends JPanel {
 	private boolean hovering; // True when the mouse is hovering over the circle
 	
 	/**
+	 * Copy constructor.
+	 * 
+	 * @param np The node panel to copy.
+	 */
+	public NodePanel(NodePanel np, Node newNode) {
+		this(np.x, np.y, np.radius, new String(np.text), new Color(np.fillColor.getRGB()), new Color(np.borderColor.getRGB()), new Color(np.textColor.getRGB()), np.editor, newNode);
+	}
+	
+	/**
 	 * Creates a node with the specified location, radius, text,
 	 * color, border color, text color, select color, and id.
 	 * 
@@ -80,7 +89,6 @@ public class NodePanel extends JPanel {
 	 * @param id   The id this node is assigned.
 	 */
 	public NodePanel(int x, int y, int r, String txt, Color c, Color lc, Color tc, Editor ed, Node n) {
-		
 		this.x = x;
 		this.y = y;
 		radius = r;
@@ -93,10 +101,20 @@ public class NodePanel extends JPanel {
 		
 		hovering = false;
 		
+		clickPoint = new Point();
+		
 		setOpaque(false);
 		
 		// Listen for mouse events
 		addMouseListener(new MouseAdapter() {
+			
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				boolean contains = NodePanel.this.containsPoint(clickPoint);
+				if (contains && SwingUtilities.isRightMouseButton(e)) {
+					NodeRightClickMenu.show(editor.getContext(), NodePanel.this, e.getX(), e.getY());
+				}
+			}
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -107,9 +125,7 @@ public class NodePanel extends JPanel {
 				boolean contains = sinkPanel.containsPoint(clickPoint);
 				
 				// Display the right click menu if the node is right clicked
-				if (contains && SwingUtilities.isRightMouseButton(e)) {
-					NodeRightClickMenu.show(NodePanel.this, e.getX(), e.getY());
-				} else if (contains && SwingUtilities.isLeftMouseButton(e)) {
+				if (contains && SwingUtilities.isLeftMouseButton(e)) {
 					Tool current = editor.getGUI().getCurrentTool();
 					if (current == Tool.SELECT) {
 						// If this node was clicked while the select tool is held
@@ -119,35 +135,23 @@ public class NodePanel extends JPanel {
 							// this node from the set of selections
 							if (currentSelections.contains(sink)) {
 								editor.removeSelection(sink);
-								sink.setSelected(false);
 								editor.removeNodePanelEntry(sinkPanel);
 							} else {
 								editor.addSelection(sink);
-								sink.setSelected(true);
 								editor.addNodePanelEntry(sinkPanel);
 							}
 						} else if (!sink.getSelected()) {
 							// Otherwise, if this node is not already selected, remove all existing
 							// selections and select this node
-							Iterator<GraphComponent> gcit = currentSelections.iterator();
-							GraphComponent temp;
-							while (gcit.hasNext()) {
-								temp = gcit.next();
-								temp.setSelected(false);
-								
-								// If a selection is a node, redraw it
-								if (temp instanceof Node)
-									((Node) temp).getNodePanel().repaint();
-								
-								gcit.remove();
-							}
+							editor.removeAllSelections();
+							editor.repaint();
 							
 							// Add this node as a selection
 							editor.addSelection(sink);
-							sink.setSelected(true);
 							editor.addNodePanelEntry(sinkPanel);
 						}
-						repaint();
+						editor.getGUI().getMainMenuBar().updateWithSelection();
+						repaint(); // Redraw this node panel
 					} else if (current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
 						// If we left click on the node with an edge tool
 						if (editor.getEdgeBasePoint() == null) {
@@ -165,16 +169,16 @@ public class NodePanel extends JPanel {
 							// Check if the edge should be a self-edge
 							if(sink == source) {
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
-								newEdge = new SelfEdge(sink, currentLineColor, currentLineWeight, angle, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
+								newEdge = new SelfEdge(sink, currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, angle, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
 							} else {
-								newEdge = new SimpleEdge(sink, source, currentLineColor, currentLineWeight, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
+								newEdge = new SimpleEdge(sink, source, currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
 							}
 							
 							// Compute the position of this edge (only matters if it is a simple edge)
-							ArrayList<Edge> pairEdges = editor.getContext().getEdgeMap().get(new Node.Pair(sink, source)); 
+							ArrayList<Edge> pairEdges = editor.getContext().getEdgeMap().get(new UnorderedNodePair(sink, source)); 
 							int edgePosition = getEdgePosition(sinkPanel, sourcePanel, e.getPoint(), pairEdges);
 							
-							// Add the new edge at the given position
+							// Add the new edge between the chosen nodes
 							PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);
 							placeAction.actionPerformed(null);
 							editor.getContext().pushReversibleAction(placeAction, true);
@@ -183,7 +187,7 @@ public class NodePanel extends JPanel {
 							editor.setEdgeBasePoint(null); 
 							
 							// Remove any existing preview edge object
-							editor.setPreviewEdge(null, -1, false);
+							editor.clearPreviewEdge();
 							
 							// Repaint to immediately draw the new edge
 							editor.repaint();
@@ -305,18 +309,18 @@ public class NodePanel extends JPanel {
 							boolean directed = ctool == Tool.DIRECTED_EDGE;
 							if(ebpPanel != NodePanel.this) {
 								// Compute the preview for a simple edge
-								ArrayList<Edge> existingEdges = editor.getContext().getEdgeMap().get(new Node.Pair(ebpPanel.node, node));
+								ArrayList<Edge> existingEdges = editor.getContext().getEdgeMap().get(new UnorderedNodePair(ebpPanel.node, node));
 								
 								// Get the position of this edge within the existing edges
 								int edgePosition = getEdgePosition(NodePanel.this, ebpPanel, e.getPoint(), existingEdges);
 								
 								// Create edge and set it as the preview
-								SimpleEdge preview = new SimpleEdge(node, ebpPanel.node, previewColor, weight, directed, editor.getContext(), -1);
+								SimpleEdge preview = new SimpleEdge(node, ebpPanel.node, previewColor, weight, Edge.DEFAULT_TEXT, directed, editor.getContext(), -1);
 								editor.setPreviewEdge(preview, edgePosition, true);
 							} else {
 								// Compute the preview for a self edge
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
-								SelfEdge preview = new SelfEdge(node, previewColor, weight, angle, directed, editor.getContext(), -1);
+								SelfEdge preview = new SelfEdge(node, previewColor, weight, Edge.DEFAULT_TEXT, angle,  directed, editor.getContext(), -1);
 								editor.setPreviewEdge(preview, -1, true);
 							}
 							editor.repaint(); // Repaint editor to update preview edge
@@ -379,11 +383,11 @@ public class NodePanel extends JPanel {
 			else
 				edgePosition = (int) ((angleFromCenters + boundAngle) / spreadAngle) + 1;
 			
-			// Indices are one-way; we might have to use the "opposite index depending
+			// Indices are one-way; we might have to use the "opposite index" depending
 			// on the direction the edge is being drawn from
 			Edge first = existingEdges.get(0);
 			if(numExistingEdges == 1 && to != from && first instanceof SimpleEdge) {
-				if(to == first.getEndpoints()[1].getNodePanel())
+				if(to == first.getEndpoints().getSecond().getNodePanel())
 					edgePosition = numExistingEdges - edgePosition;
 			} else if(to != from && first instanceof SimpleEdge) {
 				Point2D.Double control = ((SimpleEdge) existingEdges.get(0)).getData().getBezierPoints()[1];
@@ -510,10 +514,38 @@ public class NodePanel extends JPanel {
 		this.y = y;
 	}
 	
+	/**
+	 * Get the x-coordinate of the panel's lower right corner.
+	 * 
+	 * @return The integer x-coordinate.
+	 */
+	public int getLowerRightX() {
+		return x + 2 * radius;
+	}
+	
+	/**
+	 * Get the y-coordinate of the panel's lower right corner.
+	 * 
+	 * @return The integer y-coordinate.
+	 */
+	public int getLowerRightY() {
+		return y + 2 * radius;
+	}
+	
+	/**
+	 * Get the radius of the drawn node.
+	 * 
+	 * @return The integer radius of the node's visual circle representation.
+	 */
 	public int getRadius() {
 		return radius;
 	}
 	
+	/**
+	 * Set the new value of the radius of this node.
+	 * 
+	 * @param r The new integer radius of the node's visual circle representation.
+	 */
 	public void setRadius(int r) {
 		radius = r;
 	}

@@ -1,9 +1,16 @@
 package util;
 
 import java.awt.Point;
+import java.util.Collection;
 
+import components.Node;
 import ui.GUI;
 
+/**
+ * A utility class with coordinate-related procedures.
+ * 
+ * @author Brian
+ */
 public class CoordinateUtils {
 	
 	/**
@@ -54,6 +61,24 @@ public class CoordinateUtils {
 		test.x = Math.min(test.x, upperBoundX);
 		test.y = Math.max(test.y, lowerBoundY);
 		test.y = Math.min(test.y, upperBoundY);
+	}
+	
+	/**
+	 * Find the "center of mass" of a collection of nodes, treating all nodes
+	 * as having equal mass.
+	 * 
+	 * @param nodes The collection of nodes.
+	 * @return The point at the center of mass.
+	 */
+	public static Point centerOfMass(Collection<Node> nodes) {
+		int xSum = 0;
+		int ySum = 0;
+		for (Node node : nodes) {
+			Point center = node.getNodePanel().getCenter();
+			xSum += center.x;
+			ySum += center.y;
+		}
+		return new Point(xSum / nodes.size(), ySum / nodes.size());
 	}
 	
 }

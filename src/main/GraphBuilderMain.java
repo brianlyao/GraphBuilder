@@ -1,12 +1,16 @@
 package main;
+
 import ui.GUI;
 
-
-/** The main class, where the interface is initialized. */
+/**
+ * The main top-level class, where the interface is initialized.
+ * 
+ * @author Brian
+ */
 public class GraphBuilderMain {
 	
 	public static void main(String[] args) {
-		GUI gui = new GUI();
+		new GUI();
 	}
 	
 }

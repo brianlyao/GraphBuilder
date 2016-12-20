@@ -6,6 +6,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,7 +15,10 @@ import javax.swing.*;
 
 import actions.PlaceNodeAction;
 import preferences.Preferences;
+import structures.OrderedPair;
+import structures.UnorderedNodePair;
 import tool.Tool;
+import ui.menus.EditorRightClickMenu;
 import util.CoordinateUtils;
 import math.Complex;
 import components.*;
@@ -22,7 +26,11 @@ import components.display.NodePanel;
 import components.display.SelfEdgeData;
 import context.GraphBuilderContext;
 
-/** The main panel on which the user will be drawing graphs on. */
+/**
+ * The main panel on which the user will be drawing graphs.
+ * 
+ * @author Brian
+ */
 public class Editor extends JPanel {
 	
 	private static final long serialVersionUID = 7327691115632869820L;
@@ -64,7 +72,11 @@ public class Editor extends JPanel {
 		addMouseListener(new MouseListener() {
 			
 			@Override
-			public void mouseClicked(MouseEvent arg0) {}
+			public void mouseClicked(MouseEvent arg0) {
+				if (SwingUtilities.isRightMouseButton(arg0)) {
+					EditorRightClickMenu.show(Editor.this, arg0.getX(), arg0.getY());
+				}
+			}
 			
 			@Override
 			public void mouseEntered(MouseEvent evt) {
@@ -79,19 +91,11 @@ public class Editor extends JPanel {
 				Tool currentTool = gui.getCurrentTool();
 				if (currentTool == Tool.SELECT) {
 					// Clicking the canvas will deselect all selections
-					Iterator<GraphComponent> selectionIterator = selected.iterator();
-					GraphComponent tempSelection;
-					while (selectionIterator.hasNext()) {
-						// Mark current component as deselected
-						tempSelection = selectionIterator.next();
-						tempSelection.setSelected(false);
-						
-						// If the selection is a node, redraw its panel
-						if (tempSelection instanceof Node)
-							((Node) tempSelection).getNodePanel().repaint();
-						
-						// Remove this component from the set of selections
-						selectionIterator.remove();
+					if ((evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK)) == 0
+							&& SwingUtilities.isLeftMouseButton(evt)) {
+						Editor.this.removeAllSelections();
+						Editor.this.repaint();
+						gui.getMainMenuBar().updateWithSelection();
 					}
 				} else if (currentTool == Tool.NODE && SwingUtilities.isLeftMouseButton(evt)) {
 					// If user left clicks the canvas with the node tool, add a new node
@@ -122,6 +126,7 @@ public class Editor extends JPanel {
 					// Select the edge
 					selected.add(closestEdge);
 					closestEdge.setSelected(true);
+					gui.getMainMenuBar().updateWithSelection();
 					repaint(); // To draw the selected look
 				}
 				
@@ -175,10 +180,10 @@ public class Editor extends JPanel {
 					double minDistance = Double.MAX_VALUE;
 					
 					// Get the edgemap
-					HashMap<Node.Pair, ArrayList<Edge>> em = gui.getContext().getEdgeMap();
+					HashMap<UnorderedNodePair, ArrayList<Edge>> em = gui.getContext().getEdgeMap();
 					
 					// Iterate through the edgemap
-					for (Node.Pair endpoints : em.keySet()) {
+					for (UnorderedNodePair endpoints : em.keySet()) {
 						// Get set of edges between first and second
 						ArrayList<Edge> betweenTwo = em.get(endpoints);
 						
@@ -368,14 +373,29 @@ public class Editor extends JPanel {
 			lastMousePoint = new Point(x, y);
 	}
 	
+	/**
+	 * Get the mapping from node panel to position.
+	 * 
+	 * @return The mapping of node panel to position.
+	 */
 	public HashMap<NodePanel, Point> getNodePanelPositionMap() {
 		return nodePanelPosition;
 	}
 	
+	/**
+	 * Add a new entry to the mapping from node panel to position.
+	 * 
+	 * @param np The node panel we want to add.
+	 */
 	public void addNodePanelEntry(NodePanel np) {
 		nodePanelPosition.put(np, np.getCoords());
 	}
 	
+	/**
+	 * Remove an entry from the mapping from node panel to position.
+	 * 
+	 * @param np The node panel whose entry to remove.
+	 */
 	public void removeNodePanelEntry(NodePanel np) {
 		nodePanelPosition.remove(np);
 	}
@@ -387,6 +407,18 @@ public class Editor extends JPanel {
 	 */
 	public void addSelection(GraphComponent gc) {
 		selected.add(gc);
+		gc.setSelected(true);
+	}
+	
+	/**
+	 * Add the given components to the set of selections.
+	 * 
+	 * @param components The collection of graph components.
+	 */
+	public void addSelections(Collection<? extends GraphComponent> components) {
+		for (GraphComponent component : components) {
+			this.addSelection(component);
+		}
 	}
 	
 	/**
@@ -396,6 +428,32 @@ public class Editor extends JPanel {
 	 */
 	public void removeSelection(GraphComponent gc) {
 		selected.remove(gc);
+		gc.setSelected(false);
+	}
+	
+	/**
+	 * Remove the given components from the set of selections.
+	 * 
+	 * @param components The deselected components.
+	 */
+	public void removeSelections(Collection<? extends GraphComponent> components) {
+		for (GraphComponent gc : components) {
+			selected.remove(gc);
+			gc.setSelected(false);
+		}
+	}
+	
+	/**
+	 * Clear all selections.
+	 */
+	public void removeAllSelections() {
+		Iterator<GraphComponent> selectedIterator = selected.iterator();
+		GraphComponent temp;
+		while (selectedIterator.hasNext()) {
+			temp = selectedIterator.next();
+			temp.setSelected(false);
+			selectedIterator.remove();
+		}
 	}
 	
 	/**
@@ -418,6 +476,13 @@ public class Editor extends JPanel {
 		previewEdge = edge;
 		previewEdgeIndex = position;
 		drawPreviewUsingObject = useThisEdge;
+	}
+	
+	/**
+	 * Clear the preview edge object.
+	 */
+	public void clearPreviewEdge() {
+		this.setPreviewEdge(null, -1, false);
 	}
 	
 	@Override
@@ -445,12 +510,12 @@ public class Editor extends JPanel {
 		}
 		
 		// Draw all edges by iterating through pairs of nodes
-		HashMap<Node.Pair, ArrayList<Edge>> edgeMap = gui.getContext().getEdgeMap();
+		HashMap<UnorderedNodePair, ArrayList<Edge>> edgeMap = gui.getContext().getEdgeMap();
 		
 		// Check if the preview edge's endpoint pair exists in the edge map
 		// If not, then we need to draw it separately
 		if (previewEdge != null) {
-			Node.Pair previewPair = new Node.Pair(previewEdge);
+			UnorderedNodePair previewPair = new UnorderedNodePair(previewEdge);
 			if (!edgeMap.keySet().contains(previewPair)) {
 				ArrayList<Edge> previewList = new ArrayList<>();
 				previewList.add(previewEdge);
@@ -462,9 +527,9 @@ public class Editor extends JPanel {
 		// If there is a preview edge, we "add" it (not directly) to the list of existing edges
 		// before we draw the list of edges
 		ArrayList<Edge> pairEdges, toDrawEdges;
-		for (Node.Pair pair : edgeMap.keySet()) {
+		for (UnorderedNodePair pair : edgeMap.keySet()) {
 			pairEdges = edgeMap.get(pair);
-			if (previewEdge != null && pair.equals(new Node.Pair(previewEdge))) {
+			if (previewEdge != null && pair.equals(new UnorderedNodePair(previewEdge))) {
 				toDrawEdges = new ArrayList<>();
 				for(Edge e : pairEdges)
 					toDrawEdges.add(e);
@@ -553,7 +618,7 @@ public class Editor extends JPanel {
 	 * @param edges    The list of edges we need to draw between c1 and c2.
 	 * @param preview  The preview edge object.
 	 * */
-	private static void drawEdgesBetweenNodePair(Graphics2D g2d, Node.Pair nodePair, ArrayList<Edge> edges, Edge preview) {
+	private static void drawEdgesBetweenNodePair(Graphics2D g2d, UnorderedNodePair nodePair, ArrayList<Edge> edges, Edge preview) {
 		// Draw edges between nodes c1 and c2; if edges.size() > 1, draw them as quadratic bezier curves
 		double angle = (Double) Preferences.EDGE_SPREAD_ANGLE.getData();
 		double lowerAngle = (1 - edges.size()) * angle / 2.0;
@@ -613,19 +678,19 @@ public class Editor extends JPanel {
 				SimpleEdge simpe = (SimpleEdge) e;
 				
 				// The edge is either a line or bezier curve; either way, they get drawn the same way
-				Node[] ends = e.getEndpoints();
+				OrderedPair<Node> ends = e.getEndpoints();
 				double initAngle = lowerAngle + count * angle;
-				if (ends[0] != n1)
+				if (ends.getFirst() != n1)
 					initAngle = -initAngle;
-				Point p1 = ends[1].getNodePanel().getCenter();
-				Point p2 = ends[0].getNodePanel().getCenter();
+				Point p1 = ends.getSecond().getNodePanel().getCenter();
+				Point p2 = ends.getFirst().getNodePanel().getCenter();
 				
 				// Reciprocal of distance between the centers of the nodes
 				double dist = 1 / Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 				
 				// Get the radii of both ends
-				int end0r = ends[0].getNodePanel().getRadius();
-				int end1r = ends[1].getNodePanel().getRadius();
+				int end0r = ends.getFirst().getNodePanel().getRadius();
+				int end1r = ends.getSecond().getNodePanel().getRadius();
 				
 				// Compute components of vectors pointing from one node to the other
 				// The length of the vectors is the radius of the node they point from

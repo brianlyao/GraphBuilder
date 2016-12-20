@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
-/** A class of utilily methods for image drawing. */
+/** A class of utility methods for image drawing. */
 public class ImageUtils {
 	
 	/**

@@ -12,6 +12,11 @@ import structures.OrderedPair;
 import tool.Tool;
 import context.GraphBuilderContext;
 
+/**
+ * The main tool bar at the top of the GUI.
+ * 
+ * @author Brian
+ */
 public class ToolBar extends JToolBar {
 
 	private static final long serialVersionUID = -4276539066793201017L;
@@ -157,10 +162,20 @@ public class ToolBar extends JToolBar {
 		toolButtons.put(Tool.PAN, panButton);
 	}
 	
+	/**
+	 * Get the mapping from tool to icons.
+	 * 
+	 * @return The mapping from tool to icons.
+	 */
 	public HashMap<Tool, OrderedPair<ImageIcon>> getToolIcons() {
 		return toolIcons;
 	}
 	
+	/**
+	 * Get the mapping from tool to tool buttons.
+	 * 
+	 * @return The mapping from tool to tool buttons.
+	 */
 	public HashMap<Tool, JButton> getToolButtons() {
 		return toolButtons;
 	}

@@ -12,14 +12,29 @@ public class SimpleEdgeData extends EdgeData {
 	private Point2D.Double control;
 	
 	/**
+	 * Copy constructor.
+	 * 
+	 * @param sed The simple edge data object to copy.
+	 */
+	public SimpleEdgeData(SimpleEdgeData sed) {
+		super(sed);
+		p1 = new Point2D.Double();
+		p2 = new Point2D.Double();
+		control = new Point2D.Double();
+		p1.setLocation(sed.p1);
+		p2.setLocation(sed.p2);
+		control.setLocation(sed.control);
+	}
+	
+	/**
 	 * Instantiate a data object for a simple edge. Should only be invoked by the SimpleEdge constructor.
 	 * 
 	 * @param simpleEdge The simple edge this data describes.
 	 * @param c          The edge's visual color.
 	 * @param w          The edge's visual weight (thickness).
 	 */
-	public SimpleEdgeData(Color c, int w) {
-		super(c, w);
+	public SimpleEdgeData(Color c, int w, String txt) {
+		super(c, w, txt);
 		
 		p1 = new Point2D.Double();
 		p2 = new Point2D.Double();

@@ -4,6 +4,7 @@ import java.awt.Color;
 /** A class for holding user preferences. Currently, these are hard-coded, but eventually they will be moved to a file. */
 public enum Preferences {
 	
+	LOG_FILE_PATH("log.txt"),
 	SELECTION_COLOR(Color.BLUE),
 	LINE_START_COLOR(new Color(115, 30, 136)),
 	LINE_END_COLOR(new Color(40, 145, 77)),

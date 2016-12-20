@@ -3,13 +3,18 @@ package ui;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 
 import javax.swing.*;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import preferences.Preferences;
 import keybindings.KeyboardShortcutActions;
+import logger.Logger;
 import structures.OrderedPair;
 import tool.Tool;
 import ui.dialogs.GridSettingsDialog;
@@ -22,11 +27,13 @@ import context.GraphBuilderContext;
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;
-	private static final String VERSION = "0.1.4";
+	private static final String VERSION = "0.1.5";
 	
 	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
 	
 	private static final String DEFAULT_FILENAME = "Untitled";
+	
+	private Logger logger; // Logger object for writing logs
 	
 	private MenuBar menuBar; // The menu bar
 	
@@ -57,9 +64,25 @@ public class GUI extends JFrame {
 		super(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
 		
 		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			logger = new Logger(new File((String) Preferences.LOG_FILE_PATH.getData()));
+		} catch (IOException e1) {
+			JOptionPane.showMessageDialog(this, "Unable to initialize logger. This means that any crashes/problems will not be logged! ", "Logger Initialization Failed", JOptionPane.WARNING_MESSAGE);
+		}
+		
+		try {
+			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+				if ("Nimbus".equals(info.getName())) {
+					UIManager.setLookAndFeel(info.getClassName());
+					break;
+				}
+			}
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Unable to determine the system's default look and feel.", "Look And Feel", JOptionPane.PLAIN_MESSAGE);
+			try {
+				logger.writeEntry(Logger.WARNING, "Nimbus look and feel not found; backing off to system look and feel."); 
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (Exception e2) {
+				logger.writeEntry(Logger.WARNING, "Unable to identify system look and feel.");
+			}
 		}
 		
 		// Initialize the context (empty) for this GUI
@@ -176,6 +199,9 @@ public class GUI extends JFrame {
 		panelStatus.setBorder(lowerEtched);
 		add(panelStatus, statusgbc);
 		revalidate();
+		
+		// By default, start with the Select tool
+		this.updateTool(Tool.SELECT);
 	}
 	
 	/** 
@@ -268,6 +294,11 @@ public class GUI extends JFrame {
 		this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
 	}
 	
+	/**
+	 * Get the menu bar object on this GUI.
+	 * 
+	 * @return The menu bar.
+	 */
 	public MenuBar getMainMenuBar() {
 		return menuBar;
 	}

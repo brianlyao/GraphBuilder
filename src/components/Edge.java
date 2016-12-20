@@ -1,15 +1,16 @@
 package components;
 
+import structures.OrderedPair;
 import components.display.EdgeData;
-
 import context.GraphBuilderContext;
 
 /** An instance is an edge of the graph. Visually represented by a line, quadratic bezier curve, or loop. */
 public abstract class Edge extends GraphComponent {
 	
+	public static final String DEFAULT_TEXT = "";
+	
 	// Endpoint nodes of the edge. For directed edges, c1 is the source, c2 is the sink
-	private Node n1;
-	private Node n2;
+	private OrderedPair<Node> endpoints;
 	
 	// Data for this edge's visual appearance
 	private EdgeData data;
@@ -19,20 +20,25 @@ public abstract class Edge extends GraphComponent {
 	
 	/** Create a new edge. 
 	 * 
-	 * @param n1       A node.
-	 * @param n2       Another node. We draw this edge from c1 to c2.
-	 * @param ctxt     The context (graph) this edge exists in.
+	 * @param n1       A node endpoint.
+	 * @param n2       Another node endpoint. We draw this edge from c1 to c2.
+	 * @param data     The data object associated with this Edge.
 	 * @param directed Whether this edge is directed.
+	 * @param ctxt     The context (graph) this edge exists in.
 	 * @param id       The id this node is assigned.
 	 */
 	public Edge(Node n1, Node n2, EdgeData data, boolean directed, GraphBuilderContext ctxt, int id) {
 		super(ctxt, id);
-		this.n1 = n1;
-		this.n2 = n2;
+		this.endpoints = new OrderedPair<>(n1, n2);
 		this.data = data;
 		this.directed = directed;
 	}
 	
+	/**
+	 * Get the edge data associated with this edge.
+	 * 
+	 * @return The EdgeData object.
+	 */
 	public EdgeData getData() {
 		return data;
 	}
@@ -53,7 +59,7 @@ public abstract class Edge extends GraphComponent {
 	 * @return true if c is an endpoint of this edge, and false otherwise.
 	 */
 	public boolean hasEndpoint(Node c) {
-		return c == n1 || c == n2;
+		return c == endpoints.getFirst() || c == endpoints.getSecond();
 	}
 	
 	/** 
@@ -61,16 +67,22 @@ public abstract class Edge extends GraphComponent {
 	 * 
 	 * @return An array of two nodes containing both endpoints.
 	 */
-	public Node[] getEndpoints() {
-		return new Node[] {n1, n2};
+	public OrderedPair<Node> getEndpoints() {
+		return endpoints;
 	}
 	
+	@Override
 	public String toString() {
+		Node n1 = endpoints.getFirst();
+		Node n2 = endpoints.getSecond();
 		return String.format("Edge[id=%d, node1id=%d, node2id=%d, color=%s, weight=%d, directed=%s]", getID(), n1.getID(), n2.getID(), data.getColor(), data.getWeight(), directed);
 	}
 	
+	@Override
 	public String toStorageString() {
-		return String.format("E:%d,%d,%d,%d,%d,%d", getID(), n1.getID(), n2.getID(), data.getColor().getRGB(), data.getWeight(), directed ? 1 : 0);
+		Node n1 = endpoints.getFirst();
+		Node n2 = endpoints.getSecond();
+		return String.format("E:%d,%d,%d,%d,%d,%d,%s", getID(), n1.getID(), n2.getID(), data.getColor().getRGB(), data.getWeight(), directed ? 1 : 0, data.getText());
 	}
 	
 }

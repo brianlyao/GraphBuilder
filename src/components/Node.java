@@ -5,64 +5,10 @@ import java.awt.Point;
 import java.util.HashSet;
 
 import components.display.NodePanel;
-
 import context.GraphBuilderContext;
 
 /** An instance represents a node (visually represented by a circle) placed on the editor panel. */
 public class Node extends GraphComponent {
-
-	/** An instance is an unordered pair of Nodes. */
-	public static class Pair {
-		
-		private final Node node1;
-		private final Node node2;
-		
-		public Pair(Node n1, Node n2) {
-			node1 = n1;
-			node2 = n2;
-		}
-		
-		public Pair(Edge e) {
-			Node[] ends = e.getEndpoints();
-			node1 = ends[0];
-			node2 = ends[1];
-		}
-		
-		/**
-		 * Check if this pair has the specified node.
-		 * 
-		 * @param n The node we want to compare with the pair's contents.
-		 * @return true if n is contained in this pair, false otherwise.
-		 */
-		public boolean hasNode(Node n) {
-			return n == node1 || n == node2;
-		}
-		
-		public Node getFirst() {
-			return node1;
-		}
-		
-		public Node getSecond() {
-			return node2;
-		}
-		
-		/**
-		 * Checks if the the two nodes in both pairs are identical to each other.
-		 */
-		public boolean equals(Object o) {
-			if (o == null)
-				return false;
-			Pair other = (Pair) o;
-			return (node1 == other.node1 && node2 == other.node2) || (node1 == other.node2 && node2 == other.node1);
-		}
-		
-		public int hashCode() {
-			int code1 = node1 == null ? 1 : node1.hashCode();
-			int code2 = node2 == null ? 1 : node2.hashCode();
-			return code1 * code2;
-		}
-		
-	}
 	
 	// The JPanel containing this node's visual appearance
 	private NodePanel nodePanel;
@@ -159,6 +105,16 @@ public class Node extends GraphComponent {
 	}
 	
 	/**
+	 * Copy constructor.
+	 * 
+	 * @param node The node (and its node panel) to copy.
+	 */
+	public Node(Node node) {
+		super(node.getContext());
+		nodePanel = new NodePanel(node.getNodePanel(), this);
+	}
+	
+	/**
 	 * Get the node panel on which this node is drawn.
 	 * 
 	 * @return The corresponding node panel.
@@ -167,19 +123,31 @@ public class Node extends GraphComponent {
 		return nodePanel;
 	}
 	
-	public void addEdge(Edge l) {
-		edges.add(l);
+	/**
+	 * Add an edge one of whose endpoints is this node.
+	 * 
+	 * @param e The edge to add.
+	 */
+	public void addEdge(Edge e) {
+		edges.add(e);
 	}
 	
+	/**
+	 * Get the set of edges sharing this node as an endpoint.
+	 * 
+	 * @return The set of neighboring edges.
+	 */
 	public HashSet<Edge> getEdges() {
 		return edges;
 	}
 	
+	@Override
 	public String toString() {
 		Point coords = nodePanel.getCoords();
 		return String.format("Node[x=%d,y=%d,r=%d,text=%s,id=%d]", coords.x, coords.y, nodePanel.getRadius(), nodePanel.getText() == null ? "" : nodePanel.getText(), getID());
 	}
 	
+	@Override
 	public String toStorageString() {
 		Point coords = nodePanel.getCoords();
 		return String.format("N:%d,%d,%d,%d,%s,%d,%d,%d", getID(), coords.x, coords.y, nodePanel.getRadius(),

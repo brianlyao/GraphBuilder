@@ -16,6 +16,15 @@ public abstract class ReversibleAction extends SimpleAction {
 		super(ctxt);
 	}
 	
+	/**
+	 * Copy constructor.
+	 *
+	 * @param action The reversible action to copy.
+	 */
+	public ReversibleAction(ReversibleAction action) {
+		super(action.getContext());
+	}
+	
 	/** Abstract method for undoing this particular action. */
 	public abstract void undo();
 	

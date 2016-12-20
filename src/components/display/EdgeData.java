@@ -10,14 +10,24 @@ public abstract class EdgeData {
 	private String text; // Text to display next to the edge
 	
 	/**
+	 * Copy constructor.
+	 * 
+	 * @param ed The edge data object to copy.
+	 */
+	public EdgeData(EdgeData ed) {
+		this(new Color(ed.color.getRGB()), ed.weight, new String(ed.text));
+	}
+	
+	/**
 	 * Create a new edge data object
 	 * 
 	 * @param c The edge's visual color.
 	 * @param w The edge's visual weight (thickness).
 	 */
-	public EdgeData(Color c, int w) {
+	public EdgeData(Color c, int w, String txt) {
 		color = c;
 		weight = w;
+		text = txt;
 	}
 	
 	/**

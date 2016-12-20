@@ -1,10 +1,16 @@
-package actions;
+package actions.edit;
 
 import java.awt.event.ActionEvent;
 
+import actions.ReversibleAction;
+import actions.SimpleAction;
 import context.GraphBuilderContext;
 
-/** The generic action for undoing the most recent (reversible) action. */
+/**
+ * The generic action for undoing the most recent (reversible) action.
+ * 
+ * @author Brian
+ */
 public class Undo extends SimpleAction {
 	
 	private static final long serialVersionUID = -776076209662033767L;

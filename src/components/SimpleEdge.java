@@ -3,11 +3,21 @@ package components;
 import java.awt.Color;
 
 import components.display.SimpleEdgeData;
-
 import context.GraphBuilderContext;
 
 /** An edge whose endpoints are two distinct nodes. */
 public class SimpleEdge extends Edge {
+	
+	/**
+	 * Copy constructor. New endpoints are required, as shallow copies cannot be maintained.
+	 * 
+	 * @param se        The simple edge to copy.
+	 * @param firstEnd  The new first endpoint of this edge.
+	 * @param secondEnd The new second endpoint of this edge.
+	 */
+	public SimpleEdge(SimpleEdge se, Node firstEnd, Node secondEnd) {
+		super(firstEnd, secondEnd, new SimpleEdgeData(se.getData()), se.isDirected(), se.getContext(), se.getContext().getNextIDAndInc());
+	}
 	
 	/**
 	 * @param n1       The first node endpoint.
@@ -18,8 +28,8 @@ public class SimpleEdge extends Edge {
 	 * @param ctxt     The context (graph) this edge exists in.
 	 * 
 	 */
-	public SimpleEdge(Node n1, Node n2, Color c, int w, boolean directed, GraphBuilderContext ctxt, int id) {
-		super(n1, n2, new SimpleEdgeData(c, w), directed, ctxt, id);
+	public SimpleEdge(Node n1, Node n2, Color c, int w, String txt, boolean directed, GraphBuilderContext ctxt, int id) {
+		super(n1, n2, new SimpleEdgeData(c, w, txt), directed, ctxt, id);
 	}
 	
 	/**

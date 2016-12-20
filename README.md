@@ -1,12 +1,20 @@
-# GraphBuilder 0.1.4
+# GraphBuilder 0.1.5
 
 GraphBuilder will be an open-source piece of software which allows users to visually construct [graphs](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) on a "editor" panel.
 
-Currently, GraphBuilder is written in Java 7+ (developed in Eclipse).
+Currently, GraphBuilder is written in Java 8+ (developed in Eclipse). Please note that GraphBuilder is still in its very early stages!
 
-Please note that GraphBuilder is still in its very early stages!
+# License
 
-## Goals
+GraphBuilder is licensed under the GNU General Public License v3.0. See LICENSE for details.
+
+# External Dependencies
+
+GraphBuilder relies on the following external libraries:
+
+- [JavaTuples 1.2](http://www.javatuples.org), a library containing implementations of tuples in Java.
+
+# Goals
 
 Ultimately, users will be able to load and save their graphs, run algorithms on them, and export them as images.
 
@@ -18,9 +26,17 @@ An overview of the packages and what they contain.
 
 This package contains implementations of actions. Each action is a procedure the user can carry out in the editor. Some actions are reversible, which allows them to be undone. These actions are all implemented using the javax.swing.AbstractAction abstract class, since key bindings require a javax.swing.Action. The actual "action" performed is specified in the overridden `actionPerformed` method. For reversible actions, there is a corresponding `undo` method which should reverse the changes made by `actionPerformed`.
 
+### actions.edit
+
+This subpackage contains actions pertaining to the procedures in the edit menu.
+
 ### actions.file
 
 This subpackage contains actions specific for file actions (such as those which would be found under the "File" menu).
+
+### clipboard
+
+This package contains the clipboard, which is used to keep track of copied graph components.
 
 ### components
 
@@ -37,6 +53,10 @@ This package contains a single context class which will contain data important f
 ### io
 
 This package contains utility classes for saving graphs to files and loading graphs from files.
+
+### logger
+
+This package contains a basic implementation of a logger, which writes lines to a file.
 
 ### keybindings
 

@@ -13,8 +13,15 @@ import components.SelfEdge;
 import components.SimpleEdge;
 import context.GraphBuilderContext;
 
-/** A utility class for loading graphs from files. */
+/**
+ * A utility class for loading graphs from files.
+ * 
+ * @author Brian
+ */
 public class FileLoader {
+	
+	private static final int NUM_NODE_FIELDS = 8;
+	private static final int NUM_EDGE_FIELDS = 7;
 	
 	/**
 	 * Load the specified file into the gui specified by the context before the load.
@@ -73,7 +80,7 @@ public class FileLoader {
 	 * @return The parsed Node object.
 	 */
 	private static Node readNode(GraphBuilderContext context, String nodeStr) {
-		String[] vals = nodeStr.substring(2).split(","); // 2 is the length of "N:"
+		String[] vals = nodeStr.substring(2).split(",", NUM_NODE_FIELDS); // 2 is the length of "N:"
 		int id = Integer.parseInt(vals[0]);
 		int x = Integer.parseInt(vals[1]);
 		int y = Integer.parseInt(vals[2]);
@@ -94,27 +101,28 @@ public class FileLoader {
 	 * @return The parsed Edge object.
 	 */
 	private static Edge readEdge(GraphBuilderContext context, String edgeStr) {
-		String[] vals = edgeStr.substring(2).split(","); // 2 is the length of "E:"
+		String[] vals = edgeStr.substring(2).split(",", NUM_EDGE_FIELDS); // 2 is the length of "E:"
 		int id = Integer.parseInt(vals[0]);
 		int idnode1 = Integer.parseInt(vals[1]);
 		int idnode2 = Integer.parseInt(vals[2]);
 		Color color = new Color(Integer.parseInt(vals[3]));
 		int weight = Integer.parseInt(vals[4]);
 		boolean directed = Integer.parseInt(vals[5]) == 1;
+		String text = vals[6];
 		
 		// Get the endpoints of the edge
 		Node node1 = (Node) context.getIdMap().get(idnode1);
 		if (idnode1 == idnode2) {
 			// Restoring self edge
 			double offsetAngle = Double.parseDouble(vals[6]); // Extra field
-			Edge newSelfEdge = new SelfEdge(node1, color, weight, offsetAngle, directed, context, id);
+			Edge newSelfEdge = new SelfEdge(node1, color, weight, text, offsetAngle, directed, context, id);
 			newSelfEdge.setID(id);
 			return newSelfEdge;
 		}
 		Node node2 = (Node) context.getIdMap().get(idnode2);
 		
 		// Restoring simple edge
-		Edge newSimpleEdge = new SimpleEdge(node1, node2, color, weight, directed, context, id);
+		Edge newSimpleEdge = new SimpleEdge(node1, node2, color, weight, text, directed, context, id);
 		newSimpleEdge.setID(id);
 		return newSimpleEdge;
 	}
