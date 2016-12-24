@@ -3,6 +3,7 @@ package components;
 import java.awt.Color;
 import java.awt.Point;
 import java.util.HashSet;
+import java.util.Set;
 
 import components.display.NodePanel;
 import context.GraphBuilderContext;
@@ -13,7 +14,9 @@ public class Node extends GraphComponent {
 	// The JPanel containing this node's visual appearance
 	private NodePanel nodePanel;
 	
-	private HashSet<Edge> edges;
+	private HashSet<Edge> undirectedEdges;
+	private HashSet<Edge> outgoingDirectedEdges;
+	private HashSet<Edge> incomingDirectedEdges;
 	
 	/**
 	 * Creates a node whose panel is at the top left corner with a default radius.
@@ -100,6 +103,10 @@ public class Node extends GraphComponent {
 		super(ctxt, id);
 		nodePanel = new NodePanel(x, y, r, txt, c, lc, tc, ctxt.getGUI().getEditor(), this);
 		
+		undirectedEdges = new HashSet<>();
+		outgoingDirectedEdges = new HashSet<>();
+		incomingDirectedEdges = new HashSet<>();
+		
 		// This component should be deselected on creation
 		setSelected(false);
 	}
@@ -124,21 +131,101 @@ public class Node extends GraphComponent {
 	}
 	
 	/**
-	 * Add an edge one of whose endpoints is this node.
+	 * Add an edge containing this node as an endpoint to this node's data.
 	 * 
 	 * @param e The edge to add.
 	 */
 	public void addEdge(Edge e) {
-		edges.add(e);
+		if (!e.isDirected()) {
+			undirectedEdges.add(e);
+		} else {
+			if (e.getEndpoints().getFirst() == this) {
+				outgoingDirectedEdges.add(e);
+			} else if (e.getEndpoints().getSecond() == this){
+				incomingDirectedEdges.add(e);
+			}
+		}
 	}
 	
 	/**
-	 * Get the set of edges sharing this node as an endpoint.
+	 * Remove an edge containing this node as an endpoint to this node's data.
 	 * 
-	 * @return The set of neighboring edges.
+	 * @param e The edge to remove.
 	 */
-	public HashSet<Edge> getEdges() {
-		return edges;
+	public void removeEdge(Edge e) {
+		if (!e.isDirected()) {
+			undirectedEdges.remove(e);
+		} else {
+			if (e.getEndpoints().getFirst() == this) {
+				outgoingDirectedEdges.remove(e);
+			} else if (e.getEndpoints().getSecond() == this){
+				incomingDirectedEdges.remove(e);
+			}
+		} 
+	}
+	
+	/**
+	 * Get the set of undirected edges sharing this node as an endpoint.
+	 * 
+	 * @return The set of connected undirected edges.
+	 */
+	public Set<Edge> getUndirectedEdges() {
+		return undirectedEdges;
+	}
+	
+	/**
+	 * Get the set of directed edges leaving this node.
+	 * 
+	 * @return The set of outgoing directed edges.
+	 */
+	public Set<Edge> getOutgoingDirectedEdges() {
+		return outgoingDirectedEdges;
+	}
+	
+	/**
+	 * Get the set of directed edges entering this node.
+	 * 
+	 * @return The set of incoming directed edges.
+	 */
+	public Set<Edge> getIncomingDirectedEdges() {
+		return incomingDirectedEdges;
+	}
+	
+	/**
+	 * Get the set of nodes directly connected to this node via an edge. If we want, we
+	 * may choose to disregard neighbors linked only by a directed edge pointing toward
+	 * this node. 
+	 * 
+	 * @param followDirected true if we want to disregard neighbors with a directed edge
+	 *                       toward this node, false otherwise.
+	 * @return The set of neighbor nodes.
+	 */
+	public Set<Node> getNeighbors(boolean followDirected) {
+		Set<Node> neighbors = new HashSet<>();
+		for (Edge e : undirectedEdges) {
+			Node n = e.getOtherEndpoint(this);
+			if (!neighbors.contains(n)) {
+				neighbors.add(n);
+			}
+		}
+		
+		for (Edge e : outgoingDirectedEdges) {
+			Node n = e.getOtherEndpoint(this);
+			if (!neighbors.contains(n)) {
+				neighbors.add(n);
+			}
+		}
+		
+		if (!followDirected) {
+			for (Edge e : incomingDirectedEdges) {
+				Node n = e.getOtherEndpoint(this);
+				if (!neighbors.contains(n)) {
+					neighbors.add(n);
+				}
+			}
+		}
+		
+		return neighbors;
 	}
 	
 	@Override

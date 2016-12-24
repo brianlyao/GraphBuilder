@@ -24,6 +24,11 @@ import ui.tooloptions.NodeOptionsBar;
 import util.FileUtils;
 import context.GraphBuilderContext;
 
+/**
+ * The main GUI in which the program runs.
+ * 
+ * @author Brian
+ */
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;

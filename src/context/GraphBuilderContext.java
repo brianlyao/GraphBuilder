@@ -19,14 +19,19 @@ import structures.UnorderedNodePair;
 import ui.Editor;
 import ui.GUI;
 
-/** A collection of fields necessary to keep track of the program's state. */
+/**
+ * A collection of fields necessary to keep track of the program's state. Any time
+ * a new file is created or we open another file, we are switching the context.
+ * 
+ * @author Brian
+ */
 public class GraphBuilderContext {
 	
-	private GUI gui;
+	private GUI gui; // The GUI using this context
 	
 	private HashSet<Node> nodes; // The set of all nodes
 	private HashSet<Edge> edges; // The set of all edges
-	private HashMap<Integer, GraphComponent> idMap;
+	private HashMap<Integer, GraphComponent> idMap; // A mapping from id to graph component
 	private HashMap<UnorderedNodePair, ArrayList<Edge>> edgeMap; // A mapping from a pair of nodes to the edges between them
 	
 	private Stack<ReversibleAction> actionHistory; // A collection of the most recent reversible actions
@@ -49,17 +54,17 @@ public class GraphBuilderContext {
 		gui = g;
 		
 		// Initialize graph data structure
-		nodes = new HashSet<>(); //Set of all nodes in the editor
-		edges = new HashSet<>();
-		idMap = new HashMap<>();
-		edgeMap = new HashMap<>();
+		nodes = new HashSet<Node>(); //Set of all nodes in the editor
+		edges = new HashSet<Edge>();
+		idMap = new HashMap<Integer, GraphComponent>();
+		edgeMap = new HashMap<UnorderedNodePair, ArrayList<Edge>>();
 		
 		// Initialize empty clipboard
 		clipboard = new Clipboard(this);
 		
 		// Initialize action histories
-		actionHistory = new Stack<>();
-		undoHistory = new Stack<>();
+		actionHistory = new Stack<ReversibleAction>();
+		undoHistory = new Stack<ReversibleAction>();
 		actionIdOnLastSave = -1;
 		
 		// The idpool
@@ -170,10 +175,15 @@ public class GraphBuilderContext {
 		}
 		
 		// If the position index is out of bounds, just add it to the end
-		if (position < 0 || position > addTo.size())
+		if (position < 0 || position > addTo.size()) {
 			addTo.add(e);
-		else
+		} else {
 			addTo.add(position, e);
+		}
+		
+		// Add this edge to its endpoints' data
+		ends.getFirst().addEdge(e);
+		ends.getSecond().addEdge(e);
 	}
 	
 	/** 
@@ -192,6 +202,10 @@ public class GraphBuilderContext {
 			throw new IllegalArgumentException("The edge " + e + " is not in the graph, and cannot be removed.");
 		int index = removeFrom.indexOf(e);
 		removeFrom.remove(e);
+		
+		// Remove this edge from its endpoints' data
+		ends.getFirst().removeEdge(e);
+		ends.getSecond().removeEdge(e);
 		
 		// Remove the edge from selections
 		this.getGUI().getEditor().removeSelection(e);

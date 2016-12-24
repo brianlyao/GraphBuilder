@@ -29,7 +29,7 @@ public abstract class Edge extends GraphComponent {
 	 */
 	public Edge(Node n1, Node n2, EdgeData data, boolean directed, GraphBuilderContext ctxt, int id) {
 		super(ctxt, id);
-		this.endpoints = new OrderedPair<>(n1, n2);
+		this.endpoints = new OrderedPair<Node>(n1, n2);
 		this.data = data;
 		this.directed = directed;
 	}
@@ -69,6 +69,23 @@ public abstract class Edge extends GraphComponent {
 	 */
 	public OrderedPair<Node> getEndpoints() {
 		return endpoints;
+	}
+	
+	/**
+	 * Given a single endpoint of this edge, get the other endpoint node.
+	 * 
+	 * @param endpoint The provided endpoint of this edge.
+	 * @return The other endpoint of this edge.
+	 * @throws IllegalArgumentException if the provided endpoint is not an endpoint of this edge.
+	 */
+	public Node getOtherEndpoint(Node endpoint) {
+		if (!hasEndpoint(endpoint)) {
+			throw new IllegalArgumentException("This edge does not have this node as an endpoint: " + endpoint);
+		}
+		if (endpoints.getFirst() == endpoint) {
+			return endpoints.getSecond();
+		}
+		return endpoints.getFirst();
 	}
 	
 	@Override
