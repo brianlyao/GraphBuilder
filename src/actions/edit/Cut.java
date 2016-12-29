@@ -1,9 +1,9 @@
 package actions.edit;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
@@ -24,10 +24,10 @@ public class Cut extends ReversibleAction {
 
 	private static final long serialVersionUID = 4469871982980822405L;
 	
-	private HashSet<Node> deletedNodes;
-	private HashSet<Edge> deletedEdges;
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> originalEdgeMap;
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> deletedEdgeMap;
+	private Set<Node> deletedNodes;
+	private Set<Edge> deletedEdges;
+	private Map<UnorderedNodePair, List<Edge>> originalEdgeMap;
+	private Map<UnorderedNodePair, List<Edge>> deletedEdgeMap;
 	
 	private boolean full;
 	
@@ -43,8 +43,8 @@ public class Cut extends ReversibleAction {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		// Copy selections to clipboard
-		Pair<HashSet<Node>, HashMap<UnorderedNodePair, ArrayList<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
-		HashMap<UnorderedNodePair, ArrayList<Edge>> edges;
+		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
+		Map<UnorderedNodePair, List<Edge>> edges;
 		if (full) {
 			edges = ClipboardUtils.getSubEdgeMap(this.getContext(), pair.getValue0());
 		} else {
@@ -54,8 +54,8 @@ public class Cut extends ReversibleAction {
 		this.getContext().getGUI().getMainMenuBar().updateWithCopy();
 		
 		// Delete selections
-		Quartet<HashSet<Node>, HashSet<Edge>, HashMap<UnorderedNodePair, ArrayList<Edge>>,
-				HashMap<UnorderedNodePair, ArrayList<Edge>>> quartet = ClipboardUtils.deleteSelections(this.getContext());
+		Quartet<Set<Node>, Set<Edge>, Map<UnorderedNodePair, List<Edge>>,
+				Map<UnorderedNodePair, List<Edge>>> quartet = ClipboardUtils.deleteSelections(this.getContext());
 		deletedNodes = quartet.getValue0();
 		deletedEdges = quartet.getValue1();
 		originalEdgeMap = quartet.getValue2();
@@ -67,6 +67,7 @@ public class Cut extends ReversibleAction {
 	@Override
 	public void undo() {
 		ClipboardUtils.undoDeleteComponents(this.getContext(), deletedNodes, deletedEdges, originalEdgeMap, deletedEdgeMap);
+		this.getContext().getGUI().getEditor().repaint();
 	}
 	
 }

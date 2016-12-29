@@ -1,9 +1,9 @@
 package actions.edit;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.javatuples.Pair;
 
@@ -36,8 +36,8 @@ public class Copy extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Pair<HashSet<Node>, HashMap<UnorderedNodePair, ArrayList<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
-		HashMap<UnorderedNodePair, ArrayList<Edge>> edges;
+		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
+		Map<UnorderedNodePair, List<Edge>> edges;
 		if (full) {
 			edges = ClipboardUtils.getSubEdgeMap(this.getContext(), pair.getValue0());
 		} else {

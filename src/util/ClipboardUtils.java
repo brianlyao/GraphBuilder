@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
@@ -34,14 +36,16 @@ public class ClipboardUtils {
 	 * @param ctxt The context (whose selections) we are copying.
 	 * @return A pair containing the set of copied nodes and the map (from pairs of nodes to lists of edges).
 	 */
-	public static Pair<HashSet<Node>, HashMap<UnorderedNodePair, ArrayList<Edge>>> separateSelections(GraphBuilderContext ctxt) {
-		HashSet<Node> copiedNodes = new HashSet<>();
-		HashMap<UnorderedNodePair, ArrayList<Edge>> copiedEdges = new HashMap<>();
+	public static Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> separateSelections(GraphBuilderContext ctxt) {
+		Set<Node> copiedNodes = new HashSet<>();
+		Map<UnorderedNodePair, List<Edge>> copiedEdges = new HashMap<>();
 		
 		// Determine the set of selected nodes
-		for (GraphComponent gc : ctxt.getGUI().getEditor().getSelections())
-			if (gc instanceof Node)
+		for (GraphComponent gc : ctxt.getGUI().getEditor().getSelections()) {
+			if (gc instanceof Node) {
 				copiedNodes.add((Node) gc);
+			}
+		}
 		
 		// Determine the set of selected edges. Each edge must have both endpoints in the set of
 		// copied nodes
@@ -51,8 +55,9 @@ public class ClipboardUtils {
 				if (gc instanceof Edge) {
 					Edge tempEdge = (Edge) gc;
 					OrderedPair<Node> tempep = tempEdge.getEndpoints();
-					if (copiedNodes.contains(tempep.getFirst()) && copiedNodes.contains(tempep.getSecond()))
+					if (copiedNodes.contains(tempep.getFirst()) && copiedNodes.contains(tempep.getSecond())) {
 						totalEdges.add(tempEdge); 
+					}
 				}
 			}
 		}
@@ -63,9 +68,11 @@ public class ClipboardUtils {
 			// If this pair has not yet been added to the copied edges, add it
 			if (copiedEdges.get(tempPair) == null) {
 				ArrayList<Edge> newEdgeList = new ArrayList<>();
-				for (Edge inThisPair : ctxt.getEdgeMap().get(tempPair))
-					if (totalEdges.contains(inThisPair))
+				for (Edge inThisPair : ctxt.getEdgeMap().get(tempPair)) {
+					if (totalEdges.contains(inThisPair)) {
 						newEdgeList.add(inThisPair);
+					}	
+				}
 				copiedEdges.put(tempPair, newEdgeList);
 			}
 		}
@@ -73,7 +80,7 @@ public class ClipboardUtils {
 		// Update the menu bar
 		ctxt.getGUI().getMainMenuBar().updateWithCopy();
 		
-		return new Pair<HashSet<Node>, HashMap<UnorderedNodePair, ArrayList<Edge>>>(copiedNodes, copiedEdges);
+		return new Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>>(copiedNodes, copiedEdges);
 	}
 	
 	/**
@@ -84,24 +91,26 @@ public class ClipboardUtils {
 	 *         which were removed individually, and a map of edges that were removed as a result of
 	 *         nodes being removed.
 	 */
-	public static Quartet<HashSet<Node>, HashSet<Edge>, HashMap<UnorderedNodePair, ArrayList<Edge>>,
-			HashMap<UnorderedNodePair, ArrayList<Edge>>> deleteSelections(GraphBuilderContext ctxt) {
+	public static Quartet<Set<Node>, Set<Edge>, Map<UnorderedNodePair, List<Edge>>,
+			Map<UnorderedNodePair, List<Edge>>> deleteSelections(GraphBuilderContext ctxt) {
 		Editor editor = ctxt.getGUI().getEditor();
 		HashSet<GraphComponent> selections = editor.getSelections();
 		
-		HashSet<Node> deletedNodes = new HashSet<>();
-		HashSet<Edge> deletedEdges = new HashSet<>();
-		HashMap<UnorderedNodePair, ArrayList<Edge>> originalEdgeMap = new HashMap<>();
-		HashMap<UnorderedNodePair, ArrayList<Edge>> deletedEdgeMap = new HashMap<>();
+		Set<Node> deletedNodes = new HashSet<>();
+		Set<Edge> deletedEdges = new HashSet<>();
+		Map<UnorderedNodePair, List<Edge>> originalEdgeMap = new HashMap<>();
+		Map<UnorderedNodePair, List<Edge>> deletedEdgeMap = new HashMap<>();
 		
 		// Get the selected nodes
-		for (GraphComponent gc : selections)
-			if (gc instanceof Node)
+		for (GraphComponent gc : selections) {
+			if (gc instanceof Node) {
 				deletedNodes.add((Node) gc);
+			}
+		}
 		
 		// Delete the selected nodes
 		for (Node n : deletedNodes) {
-			HashMap<UnorderedNodePair, ArrayList<Edge>> removedFromNode = ctxt.removeNode(n);
+			Map<UnorderedNodePair, List<Edge>> removedFromNode = ctxt.removeNode(n);
 			deletedEdgeMap.putAll(removedFromNode);
 		}
 		
@@ -116,8 +125,7 @@ public class ClipboardUtils {
 					deletedEdges.add(tempEdge);
 					
 					// Fill the edge map of deleted edges
-					ArrayList<Edge> originalEdges = new ArrayList<>();
-					originalEdges.addAll(ctxt.getEdgeMap().get(tempPair));
+					ArrayList<Edge> originalEdges = new ArrayList<>(ctxt.getEdgeMap().get(tempPair));
 					originalEdgeMap.put(tempPair, originalEdges);
 				}	
 			}
@@ -128,8 +136,8 @@ public class ClipboardUtils {
 			ctxt.removeEdge(e);
 		}
 		
-		return new Quartet<HashSet<Node>, HashSet<Edge>, HashMap<UnorderedNodePair, ArrayList<Edge>>,
-				HashMap<UnorderedNodePair, ArrayList<Edge>>>(deletedNodes, deletedEdges, originalEdgeMap, deletedEdgeMap);
+		return new Quartet<Set<Node>, Set<Edge>, Map<UnorderedNodePair, List<Edge>>,
+				Map<UnorderedNodePair, List<Edge>>>(deletedNodes, deletedEdges, originalEdgeMap, deletedEdgeMap);
 	}
 	
 	/**
@@ -143,7 +151,7 @@ public class ClipboardUtils {
 	 * @param deletedEdgeMap  Map of node pairs to edges; contains the edges removed as a result of
 	 *                        either endpoint of each edge being removed.
 	 */
-	public static void undoDeleteComponents(GraphBuilderContext ctxt, HashSet<Node> deletedNodes, HashSet<Edge> deletedEdges, HashMap<UnorderedNodePair, ArrayList<Edge>> originalEdgeMap, HashMap<UnorderedNodePair, ArrayList<Edge>> deletedEdgeMap) {
+	public static void undoDeleteComponents(GraphBuilderContext ctxt, Set<Node> deletedNodes, Set<Edge> deletedEdges, Map<UnorderedNodePair, List<Edge>> originalEdgeMap, Map<UnorderedNodePair, List<Edge>> deletedEdgeMap) {
 		Editor editor = ctxt.getGUI().getEditor();
 		
 		// Re-add the deleted nodes
@@ -156,19 +164,20 @@ public class ClipboardUtils {
 		
 		// Add all edges deleted as a result of the nodes being removed
 		ctxt.getEdgeMap().putAll(deletedEdgeMap);
-		for (ArrayList<Edge> edgeList : deletedEdgeMap.values()) {
-			ctxt.getEdges().addAll(edgeList);
-		}
 		
 		// Add all edges deleted individually
-		for (Map.Entry<UnorderedNodePair, ArrayList<Edge>> ogEntry : originalEdgeMap.entrySet()) {
-			ArrayList<Edge> ogEdgeList = ctxt.getEdgeMap().get(ogEntry.getKey());
-			ogEdgeList.clear();
-			ogEdgeList.addAll(ogEntry.getValue());
+		for (Map.Entry<UnorderedNodePair, List<Edge>> ogEntry : originalEdgeMap.entrySet()) {
+			List<Edge> currentEdgeList = ctxt.getEdgeMap().get(ogEntry.getKey());
+			if (currentEdgeList == null) {
+				currentEdgeList = new ArrayList<Edge>();
+			} else {
+				currentEdgeList.clear();
+			}
+			currentEdgeList.addAll(ogEntry.getValue());
+			ctxt.getEdgeMap().put(ogEntry.getKey(), currentEdgeList);
 		}
 		
 		//Re-select individually deleted edges
-		ctxt.getEdges().addAll(deletedEdges);
 		editor.addSelections(deletedEdges);
 	}
 	
@@ -180,10 +189,10 @@ public class ClipboardUtils {
 	 * @param nodes A set of nodes.
 	 * @return The map of edges.
 	 */
-	public static HashMap<UnorderedNodePair, ArrayList<Edge>> getSubEdgeMap(GraphBuilderContext ctxt, HashSet<Node> nodes) {
-		HashMap<UnorderedNodePair, ArrayList<Edge>> edgeMap = ctxt.getEdgeMap();
-		HashMap<UnorderedNodePair, ArrayList<Edge>> subEdgeMap = new HashMap<>();
-		for (Map.Entry<UnorderedNodePair, ArrayList<Edge>> emEntry : edgeMap.entrySet()) {
+	public static Map<UnorderedNodePair, List<Edge>> getSubEdgeMap(GraphBuilderContext ctxt, Set<Node> nodes) {
+		Map<UnorderedNodePair, List<Edge>> edgeMap = ctxt.getEdgeMap();
+		Map<UnorderedNodePair, List<Edge>> subEdgeMap = new HashMap<>();
+		for (Map.Entry<UnorderedNodePair, List<Edge>> emEntry : edgeMap.entrySet()) {
 			UnorderedNodePair pairKey = emEntry.getKey();
 			if (nodes.contains(pairKey.getFirst()) && nodes.contains(pairKey.getSecond())) {
 				subEdgeMap.put(pairKey, emEntry.getValue());
@@ -199,11 +208,11 @@ public class ClipboardUtils {
 	 * @return A triplet of: the set of new nodes, a mapping from the old nodes to their new copies,
 	 *         and a point signifying the bottom right corner of the bounding box of the old nodes.
 	 */
-	public static Triplet<HashSet<Node>, HashMap<Node, Node>, Point> copyNodes(Collection<Node> oldNodes) {
+	public static Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes(Collection<Node> oldNodes) {
 		int maxX = 0;
 		int maxY = 0;
-		HashSet<Node> newNodes = new HashSet<>();
-		HashMap<Node, Node> oldToNew = new HashMap<>();
+		Set<Node> newNodes = new HashSet<>();
+		Map<Node, Node> oldToNew = new HashMap<>();
 		for (Node n : oldNodes) {
 			Node newNode = new Node(n);
 			newNodes.add(newNode);
@@ -213,7 +222,7 @@ public class ClipboardUtils {
 			maxY = Math.max(maxY, n.getNodePanel().getYCoord() + 2 * n.getNodePanel().getRadius());
 		}
 		
-		return new Triplet<HashSet<Node>, HashMap<Node, Node>, Point>(newNodes, oldToNew, new Point(maxX, maxY));
+		return new Triplet<Set<Node>, Map<Node, Node>, Point>(newNodes, oldToNew, new Point(maxX, maxY));
 	}
 
 	/**
@@ -223,9 +232,9 @@ public class ClipboardUtils {
 	 * @param oldToNew The mapping from old nodes to their new copies (as returned by copyNodes).
 	 * @return The new copied edges.
 	 */
-	public static HashMap<UnorderedNodePair, ArrayList<Edge>> copyEdges(HashMap<UnorderedNodePair, ArrayList<Edge>> oldEdges, HashMap<Node, Node> oldToNew) {
-		HashMap<UnorderedNodePair, ArrayList<Edge>> newEdges = new HashMap<>();
-		for (Map.Entry<UnorderedNodePair, ArrayList<Edge>> emEntry : oldEdges.entrySet()) {
+	public static Map<UnorderedNodePair, List<Edge>> copyEdges(Map<UnorderedNodePair, List<Edge>> oldEdges, Map<Node, Node> oldToNew) {
+		Map<UnorderedNodePair, List<Edge>> newEdges = new HashMap<>();
+		for (Map.Entry<UnorderedNodePair, List<Edge>> emEntry : oldEdges.entrySet()) {
 			UnorderedNodePair oldPair = emEntry.getKey();
 			ArrayList<Edge> forThisPair = new ArrayList<>();
 			
@@ -243,7 +252,15 @@ public class ClipboardUtils {
 				}
 			}
 			
-			UnorderedNodePair newPair = new UnorderedNodePair(oldToNew.get(oldPair.getFirst()), oldToNew.get(oldPair.getSecond()));
+			// Add new edges to new node's data
+			Node newEnd1 = oldToNew.get(oldPair.getFirst());
+			Node newEnd2 = oldToNew.get(oldPair.getSecond());
+			for (Edge newEdge : forThisPair) {
+				newEnd1.addEdge(newEdge);
+				newEnd2.addEdge(newEdge);
+			}
+			
+			UnorderedNodePair newPair = new UnorderedNodePair(newEnd1, newEnd2);
 			newEdges.put(newPair, forThisPair);
 		}
 		return newEdges;

@@ -1,23 +1,27 @@
 package ui;
 
+import graph.Graph;
+import graph.GraphConstraint;
+
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import preferences.Preferences;
+import components.Node;
+
 import keybindings.KeyboardShortcutActions;
 import logger.Logger;
 import structures.OrderedPair;
 import tool.Tool;
 import ui.dialogs.GridSettingsDialog;
+import ui.dialogs.NewGraphDialog;
 import ui.menus.MenuBar;
 import ui.tooloptions.EdgeOptionsBar;
 import ui.tooloptions.NodeOptionsBar;
@@ -32,19 +36,18 @@ import context.GraphBuilderContext;
 public class GUI extends JFrame {
 	
 	private static final long serialVersionUID = -8275121379599770074L;
-	private static final String VERSION = "0.1.5";
+	private static final String VERSION = "0.1.6";
 	
 	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
 	
 	private static final String DEFAULT_FILENAME = "Untitled";
 	
-	private Logger logger; // Logger object for writing logs
-	
 	private MenuBar menuBar; // The menu bar
 	
 	private ToolBar toolBar; // The tool bar
 	
-	private GridSettingsDialog gridSettingsFrame;
+	private GridSettingsDialog gridSettingsDialog;
+	private NewGraphDialog newGraphDialog;
 	
 	//Tool option bars 
 	private NodeOptionsBar nodeOptions;
@@ -65,14 +68,8 @@ public class GUI extends JFrame {
 	
 	private GraphBuilderContext context; // The context for the entire program
 	
-	public GUI() {
-		super(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
-		
-		try {
-			logger = new Logger(new File((String) Preferences.LOG_FILE_PATH.getData()));
-		} catch (IOException e1) {
-			JOptionPane.showMessageDialog(this, "Unable to initialize logger. This means that any crashes/problems will not be logged! ", "Logger Initialization Failed", JOptionPane.WARNING_MESSAGE);
-		}
+	public GUI(GraphBuilderContext initialContext) {
+		super();
 		
 		try {
 			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -83,22 +80,24 @@ public class GUI extends JFrame {
 			}
 		} catch (Exception e) {
 			try {
-				logger.writeEntry(Logger.WARNING, "Nimbus look and feel not found; backing off to system look and feel."); 
+				Logger.writeEntry(Logger.WARNING, "Nimbus look and feel not found; backing off to system look and feel."); 
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			} catch (Exception e2) {
-				logger.writeEntry(Logger.WARNING, "Unable to identify system look and feel.");
+				Logger.writeEntry(Logger.WARNING, "Unable to identify system look and feel.");
 			}
 		}
 		
-		// Initialize the context (empty) for this GUI
-		context = new GraphBuilderContext(this);
+		// Set context
+		context = initialContext;
+		context.setGUI(this);
 		
 		// Initialize and set menu bar
 		menuBar = new MenuBar(this);
 		setJMenuBar(menuBar);
 		
-		// Initialize setting frames
-		gridSettingsFrame = new GridSettingsDialog(this);
+		// Initialize dialogs
+		gridSettingsDialog = new GridSettingsDialog(this);
+		newGraphDialog = new NewGraphDialog(this);
 		
 		// Initialize toolbar
 		toolBar = new ToolBar(context);
@@ -113,16 +112,15 @@ public class GUI extends JFrame {
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Graph Builder Files", "gbf"));
 		
-		//Initialize and fill out the options panel
+		// Initialize and fill out the options panel
 		toolOptions = new JPanel();
 		toolOptions.setLayout(new FlowLayout(FlowLayout.LEADING));
 		nodeOptions = new NodeOptionsBar(this);
 		edgeOptions = new EdgeOptionsBar(this);
 		
-		//Set JFrame properties
+		// Set JFrame properties
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setSize(1024, 768);
-		setVisible(true);
 		setLayout(new GridBagLayout());
 		
 		// Perform a certain procedure when the window is closed (with the X button in the top right)
@@ -130,12 +128,12 @@ public class GUI extends JFrame {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				FileUtils.exitProcedure(context);
+				FileUtils.exitProcedure(GUI.this.context);
 			}
 			
 		});
 		
-		//Manage the layout constraints
+		// Manage the layout constraints
 		GridBagConstraints tbargbc = new GridBagConstraints();
 		GridBagConstraints toptgbc = new GridBagConstraints();
 		GridBagConstraints editorgbc = new GridBagConstraints();
@@ -206,7 +204,24 @@ public class GUI extends JFrame {
 		revalidate();
 		
 		// By default, start with the Select tool
-		this.updateTool(Tool.SELECT);
+		updateTool(Tool.SELECT);
+		updateByConstraint();
+		
+		// Add all nodes to the editor panel
+		for (Node n : context.getNodes()) {
+			editor.add(n.getNodePanel());
+		}
+		
+		// Update GUI title
+		if (context.existsOnDisk()) {
+			setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(context.getCurrentlyLoadedFile()));
+		} else {
+			setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
+		}
+		context.setAsSaved();
+		
+		// Show GUI
+		setVisible(true);
 	}
 	
 	/** 
@@ -248,28 +263,6 @@ public class GUI extends JFrame {
 		toolOptions.revalidate();
 	}
 	
-//	public void displayProperties(GraphComponent g){
-//		String type = "";
-//		JPanel panel = new JPanel();
-//		if(g instanceof Circle){
-//			type = "Circle";
-//			generalNodeLocation.setText("Location: %d, %d");
-//			generalNodeRadius.setText("Radius: %d");
-//			generalNodeEdges.setText("Number of Edges: %d");
-//			generalNodeEdgesAll.setText("See Edges");
-//			generalNodeIndegree.setText("Indegree: %d");
-//			generalNodeOutdegree.setText("Outdegree: %d");
-//			panel.add(propertiesCirclePane, BorderLayout.CENTER);;
-//		}
-//		generalSelection.setText(type);
-//		generalSelectionID.setText(String.valueOf(g.getID()));
-//		JFrame props = new JFrame(String.format("%s Properties: \"%d\"", type, g.getID()));
-//		int result = JOptionPane.showConfirmDialog(props, panel);
-//		if(result == JOptionPane.OK_OPTION){
-//			//TODO
-//		}
-//	}
-	
 	/**
 	 * Get the editor panel on this GUI.
 	 * 
@@ -289,12 +282,26 @@ public class GUI extends JFrame {
 	}
 	
 	/**
+	 * Make changes to certain parts of the GUI according to the current
+	 * set of constraints in the context graph.
+	 */
+	public void updateByConstraint() {
+		Graph currentGraph = context.getGraph();
+		Map<Tool, JButton> toolToButton = toolBar.getToolButtons();
+		toolToButton.get(Tool.DIRECTED_EDGE).setEnabled(currentGraph.hasConstraint(GraphConstraint.DIRECTED));
+		toolToButton.get(Tool.EDGE).setEnabled(currentGraph.hasConstraint(GraphConstraint.UNDIRECTED));
+	}
+	
+	/**
 	 * Updates the context of this interface to the specified context.
 	 * 
 	 * @param newContext The context to replace the existing one.
 	 */
 	public void updateContext(GraphBuilderContext newContext) {
+		Logger.writeEntry(Logger.INFO, String.format("Switching context to %s.", newContext.getCurrentlyLoadedFile()));
 		context = newContext;
+		context.setGUI(this);
+		updateByConstraint();
 		KeyboardShortcutActions.initialize(this); // Re-initialize key bindings with correct context
 		this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
 	}
@@ -314,7 +321,16 @@ public class GUI extends JFrame {
 	 * @return The grid settings dialog.
 	 */
 	public GridSettingsDialog getGridSettingsDialog() {
-		return gridSettingsFrame;
+		return gridSettingsDialog;
+	}
+	
+	/**
+	 * Get the "new file" dialog.
+	 * 
+	 * @return The new file dialog.
+	 */
+	public NewGraphDialog getNewGraphDialog() {
+		return newGraphDialog;
 	}
 	
 	/**

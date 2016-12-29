@@ -1,5 +1,8 @@
 package components.display;
 
+import graph.Graph;
+import graph.GraphConstraint;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -14,9 +17,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.JPanel;
@@ -27,6 +30,7 @@ import components.GraphComponent;
 import components.Node;
 import components.SelfEdge;
 import components.SimpleEdge;
+import context.GraphBuilderContext;
 import preferences.Preferences;
 import actions.MoveNodesAction;
 import actions.PlaceEdgeAction;
@@ -51,7 +55,8 @@ public class NodePanel extends JPanel {
 	private Node node;
 	
 	// The editor in which this node is displayed
-	private Editor editor;
+//	private Editor editor;
+	private GraphBuilderContext context;
 	
 	private int x; // Location on editor panel
 	private int y;
@@ -71,7 +76,7 @@ public class NodePanel extends JPanel {
 	 * @param np The node panel to copy.
 	 */
 	public NodePanel(NodePanel np, Node newNode) {
-		this(np.x, np.y, np.radius, new String(np.text), new Color(np.fillColor.getRGB()), new Color(np.borderColor.getRGB()), new Color(np.textColor.getRGB()), np.editor, newNode);
+		this(np.x, np.y, np.radius, new String(np.text), new Color(np.fillColor.getRGB()), new Color(np.borderColor.getRGB()), new Color(np.textColor.getRGB()), np.context, newNode);
 	}
 	
 	/**
@@ -86,9 +91,9 @@ public class NodePanel extends JPanel {
 	 * @param lc   The border color of the circle.
 	 * @param tc   The color of the circle's text.
 	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
+	 * @param n    The node this panel belongs to.
 	 */
-	public NodePanel(int x, int y, int r, String txt, Color c, Color lc, Color tc, Editor ed, Node n) {
+	public NodePanel(int x, int y, int r, String txt, Color c, Color lc, Color tc, GraphBuilderContext ctxt, Node n) {
 		this.x = x;
 		this.y = y;
 		radius = r;
@@ -96,7 +101,7 @@ public class NodePanel extends JPanel {
 		fillColor = c;
 		borderColor = lc;
 		textColor = tc;
-		editor = ed;
+		context = ctxt;
 		node = n;
 		
 		hovering = false;
@@ -125,6 +130,7 @@ public class NodePanel extends JPanel {
 				boolean contains = sinkPanel.containsPoint(clickPoint);
 				
 				// Display the right click menu if the node is right clicked
+				Editor editor = context.getGUI().getEditor();
 				if (contains && SwingUtilities.isLeftMouseButton(e)) {
 					Tool current = editor.getGUI().getCurrentTool();
 					if (current == Tool.SELECT) {
@@ -167,7 +173,7 @@ public class NodePanel extends JPanel {
 							Edge newEdge;
 							
 							// Check if the edge should be a self-edge
-							if(sink == source) {
+							if (sink == source) {
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
 								newEdge = new SelfEdge(sink, currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, angle, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
 							} else {
@@ -175,13 +181,18 @@ public class NodePanel extends JPanel {
 							}
 							
 							// Compute the position of this edge (only matters if it is a simple edge)
-							ArrayList<Edge> pairEdges = editor.getContext().getEdgeMap().get(new UnorderedNodePair(sink, source)); 
+							List<Edge> pairEdges = editor.getContext().getEdgeMap().get(new UnorderedNodePair(sink, source)); 
 							int edgePosition = getEdgePosition(sinkPanel, sourcePanel, e.getPoint(), pairEdges);
 							
-							// Add the new edge between the chosen nodes
-							PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);
-							placeAction.actionPerformed(null);
-							editor.getContext().pushReversibleAction(placeAction, true, false);
+							// Add the new edge between the chosen nodes if no constraints are violated
+							Graph currentGraph = editor.getContext().getGraph();
+							boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.LOOPS_ALLOWED) && newEdge instanceof SelfEdge;
+							boolean violatesSimple = currentGraph.hasConstraint(GraphConstraint.SIMPLE) && pairEdges != null;
+							if (!violatesLoops && !violatesSimple) {
+								PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);
+								placeAction.actionPerformed(null);
+								editor.getContext().pushReversibleAction(placeAction, true, false);
+							}
 							
 							// Reset base point, now that the edge has been placed
 							editor.setEdgeBasePoint(null); 
@@ -199,6 +210,7 @@ public class NodePanel extends JPanel {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// A mapping from the moved panels to their original position (before the move)
+				Editor editor = context.getGUI().getEditor();
 				HashMap<NodePanel, OrderedPair<Point>> movementMap = new HashMap<>();
 				Point originalPoint;
 				Point currentPoint;
@@ -225,8 +237,9 @@ public class NodePanel extends JPanel {
 			
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				if(containsPoint(e.getPoint()))
+				if (containsPoint(e.getPoint())) {
 					hovering = true;
+				}
 			}
 			
 			@Override
@@ -234,7 +247,8 @@ public class NodePanel extends JPanel {
 				hovering = false;
 				
 				// Remove any existing preview edge object
-				editor.setPreviewEdge(null, -1, false);
+				Editor editor = context.getGUI().getEditor();
+				editor.clearPreviewEdge();
 				editor.repaint();
 			}
 			
@@ -245,6 +259,7 @@ public class NodePanel extends JPanel {
 			
 			@Override
 			public void mouseDragged(MouseEvent e) {
+				Editor editor = context.getGUI().getEditor();
 				if (editor.getGUI().getCurrentTool() == Tool.SELECT && containsPoint(clickPoint) && SwingUtilities.isLeftMouseButton(e)) {
 					// If the panel is dragged using left click and the select tool
 					NodePanel thisPanel = NodePanel.this;
@@ -295,7 +310,8 @@ public class NodePanel extends JPanel {
 			
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				if(containsPoint(e.getPoint())) {
+				Editor editor = context.getGUI().getEditor();
+				if (containsPoint(e.getPoint())) {
 					hovering = true;
 					
 					// Draw preview edges correctly
@@ -303,13 +319,13 @@ public class NodePanel extends JPanel {
 						NodePanel ebpPanel = editor.getEdgeBasePoint().getNodePanel();
 						Tool ctool = editor.getGUI().getCurrentTool();
 						
-						if((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebpPanel != null) {
+						if ((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebpPanel != null) {
 							Color previewColor = (Color) Preferences.EDGE_PREVIEW_COLOR.getData();
 							int weight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
 							boolean directed = ctool == Tool.DIRECTED_EDGE;
-							if(ebpPanel != NodePanel.this) {
+							if (ebpPanel != NodePanel.this) {
 								// Compute the preview for a simple edge
-								ArrayList<Edge> existingEdges = editor.getContext().getEdgeMap().get(new UnorderedNodePair(ebpPanel.node, node));
+								List<Edge> existingEdges = editor.getContext().getEdgeMap().get(new UnorderedNodePair(ebpPanel.node, node));
 								
 								// Get the position of this edge within the existing edges
 								int edgePosition = getEdgePosition(NodePanel.this, ebpPanel, e.getPoint(), existingEdges);
@@ -352,10 +368,10 @@ public class NodePanel extends JPanel {
 	 * @param numExistingEdges The number of edges which already exist between to and from.
 	 * @return The integer index of the edge's newly determined position.
 	 */
-	private static int getEdgePosition(NodePanel to, NodePanel from, Point mouseEvent, ArrayList<Edge> existingEdges) {
+	private static int getEdgePosition(NodePanel to, NodePanel from, Point mouseEvent, List<Edge> existingEdges) {
 		int edgePosition = 0;
 		int numExistingEdges = existingEdges == null ? 0 : existingEdges.size();
-		if(numExistingEdges > 0) {
+		if (numExistingEdges > 0) {
 			// If there are already edges between the two nodes
 			Point fromCenter = from.getCenter();
 			Point toCenter = to.getCenter();
@@ -370,32 +386,36 @@ public class NodePanel extends JPanel {
 			
 			// Check if the mouse is to the "right" of the vector pointing to the base point
 			// Compute the cross product's magnitude; if it is negative, it is to the "right"
-			if(unitAwayX * unitToMouseY - unitAwayY * unitToMouseX < 0)
+			if (unitAwayX * unitToMouseY - unitAwayY * unitToMouseX < 0) {
 				angleFromCenters *= -1;
+			}
 			
 			// Compute the angle over which the edges are spread
 			double spreadAngle = (double) Preferences.EDGE_SPREAD_ANGLE.getData();
 			double boundAngle = (spreadAngle * (numExistingEdges - 1)) / 2.0;
-			if(angleFromCenters > boundAngle)
+			if (angleFromCenters > boundAngle) {
 				edgePosition = numExistingEdges;
-			else if(angleFromCenters < -boundAngle)
+			} else if(angleFromCenters < -boundAngle) {
 				edgePosition = 0;
-			else
+			} else {
 				edgePosition = (int) ((angleFromCenters + boundAngle) / spreadAngle) + 1;
+			}
 			
 			// Indices are one-way; we might have to use the "opposite index" depending
 			// on the direction the edge is being drawn from
 			Edge first = existingEdges.get(0);
-			if(numExistingEdges == 1 && to != from && first instanceof SimpleEdge) {
-				if(to == first.getEndpoints().getSecond().getNodePanel())
+			if (numExistingEdges == 1 && to != from && first instanceof SimpleEdge) {
+				if (to == first.getEndpoints().getSecond().getNodePanel()) {
 					edgePosition = numExistingEdges - edgePosition;
-			} else if(to != from && first instanceof SimpleEdge) {
+				}
+			} else if (to != from && first instanceof SimpleEdge) {
 				Point2D.Double control = ((SimpleEdge) existingEdges.get(0)).getData().getBezierPoints()[1];
 				double centerToControlDist = Point.distance(control.x, control.y, toCenter.x, toCenter.y);
 				double centerToControlX = (control.x - toCenter.x) / centerToControlDist;
 				double centerToControlY = (control.y - toCenter.y) / centerToControlDist;
-				if(unitAwayX * centerToControlY - unitAwayY * centerToControlX > 0)
+				if (unitAwayX * centerToControlY - unitAwayY * centerToControlX > 0) {
 					edgePosition = numExistingEdges - edgePosition;
+				}
 			}
 		}
 		return edgePosition;
@@ -515,6 +535,27 @@ public class NodePanel extends JPanel {
 	}
 	
 	/**
+	 * Set the coordinates of the panel's center.
+	 * 
+	 * @param newCenter The new center point.
+	 */
+	public void setCenter(Point newCenter) {
+		x = newCenter.x - radius;
+		y = newCenter.y - radius;
+	}
+	
+	/**
+	 * Set the coordinates of the panel's center.
+	 * 
+	 * @param cx The x-coordinate of the new center.
+	 * @param cy The y-coordinate of the new center.
+	 */
+	public void setCenter(int cx, int cy) {
+		x = cx - radius;
+		y = cy - radius;
+	}
+	
+	/**
 	 * Get the x-coordinate of the panel's lower right corner.
 	 * 
 	 * @return The integer x-coordinate.
@@ -602,6 +643,7 @@ public class NodePanel extends JPanel {
 			g2d.draw(bounds);
 		} else if (hovering) {
 			// Draw various "hover" visual effects
+			Editor editor = context.getGUI().getEditor();
 			Tool current = editor.getGUI().getCurrentTool();
 			if (current == Tool.EDGE){
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));

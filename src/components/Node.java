@@ -19,74 +19,6 @@ public class Node extends GraphComponent {
 	private HashSet<Edge> incomingDirectedEdges;
 	
 	/**
-	 * Creates a node whose panel is at the top left corner with a default radius.
-	 * 
-	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
-	 */
-	public Node(GraphBuilderContext ctxt, int id){
-		this(0, 0, NodePanel.DEFAULT_RADIUS, ctxt, id);
-	}
-	
-	/** 
-	 * Creates a node with the specified visual location and radius. 
-	 * 
-	 * @param x    The x-coordinate of the circle's top left corner.
-	 * @param y    The y-coordinate of the circle's top left corner.
-	 * @param r    The radius of the circle in pixels.
-	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
-	 */
-	public Node(int x, int y, int r, GraphBuilderContext ctxt, int id) {
-		this(x, y, r, null, ctxt, id);
-	}
-	
-	/** 
-	 * Creates a node with the specified visual location, radius, and color. 
-	 * 
-	 * @param x    The x-coordinate of the circle's top left corner.
-	 * @param y    The y-coordinate of the circle's top left corner.
-	 * @param r    The radius of the circle in pixels. 
-	 * @param c    The fill color of the circle.
-	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
-	 */
-	public Node(int x, int y, int r, Color c, GraphBuilderContext ctxt, int id) {
-		this(x, y, r, null, c, null, null, ctxt, id);
-	}
-
-	/** 
-	 * Creates a node with the specified visual location, radius, color, and border color. 
-	 * 
-	 * @param x    The x-coordinate of the circle's top left corner.
-	 * @param y    The y-coordinate of the circle's top left corner.
-	 * @param r    The radius of the circle in pixels. 
-	 * @param c    The fill color of the circle.
-	 * @param lc   The border color of the circle.
-	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
-	 */
-	public Node(int x, int y, int r, Color c, Color lc, GraphBuilderContext ctxt, int id) {
-		this(x, y, r, null, c, lc, null, ctxt, id);
-	}
-	
-	/**
-	 * Creates a node with the specified visual location, radius, text, color, and text color. 
-	 * 
-	 * @param x    The x-coordinate of the circle's top left corner.
-	 * @param y    The y-coordinate of the circle's top left corner.
-	 * @param r    The radius of the circle in pixels.
-	 * @param txt  The text displayed on the circle.
-	 * @param c    The fill color of the circle.
-	 * @param tc   The color of the circle's text.
-	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
-	 */
-	public Node(int x, int y, int r, String txt, Color c, Color tc, GraphBuilderContext ctxt, int id) {
-		this(x, y, r, txt, c, null, tc, ctxt, id);
-	}
-	
-	/**
 	 * Creates a node with the specified visual location, radius, text, color, border color, and text color.
 	 * 
 	 * @param x    The x-coordinate of the circle's top left corner.
@@ -101,24 +33,28 @@ public class Node extends GraphComponent {
 	 */
 	public Node(int x, int y, int r, String txt, Color c, Color lc, Color tc, GraphBuilderContext ctxt, int id) {
 		super(ctxt, id);
-		nodePanel = new NodePanel(x, y, r, txt, c, lc, tc, ctxt.getGUI().getEditor(), this);
+		nodePanel = new NodePanel(x, y, r, txt, c, lc, tc, ctxt, this);
 		
-		undirectedEdges = new HashSet<>();
-		outgoingDirectedEdges = new HashSet<>();
-		incomingDirectedEdges = new HashSet<>();
+		undirectedEdges = new HashSet<Edge>();
+		outgoingDirectedEdges = new HashSet<Edge>();
+		incomingDirectedEdges = new HashSet<Edge>();
 		
-		// This component should be deselected on creation
+		// This component should be de-selected on creation
 		setSelected(false);
 	}
 	
 	/**
 	 * Copy constructor.
 	 * 
-	 * @param node The node (and its node panel) to copy.
+	 * @param node The node to copy.
 	 */
 	public Node(Node node) {
 		super(node.getContext());
 		nodePanel = new NodePanel(node.getNodePanel(), this);
+		
+		undirectedEdges = new HashSet<Edge>();
+		outgoingDirectedEdges = new HashSet<Edge>();
+		incomingDirectedEdges = new HashSet<Edge>();
 	}
 	
 	/**

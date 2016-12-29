@@ -26,9 +26,11 @@ import util.ImageUtils;
 
 import javax.swing.GroupLayout.Alignment;
 
-/** A dialog displaying settings for the grid display/snap. 
- *  
- *  Built with the Window Builder plugin for Eclipse. 
+/**
+ * A dialog displaying settings for the grid display/snap. 
+ * Built with the Window Builder plugin for Eclipse. 
+ * 
+ * @author Brian
  */
 public class GridSettingsDialog extends JDialog {
 
@@ -263,18 +265,38 @@ public class GridSettingsDialog extends JDialog {
 		setVisible(false);
 	}
 	
+	/**
+	 * Get the currently set grid level.
+	 * 
+	 * @return The integer grid level.
+	 */
 	public int getGridLevel() {
 		return gridLevel;
 	}
 	
+	/**
+	 * Get the current snap-to-grid choice.
+	 * 
+	 * @return Whether snap to grid is enabled.
+	 */
 	public boolean getSnapToGrid() {
 		return snapToGrid;
 	}
 	
+	/**
+	 * Get whether the grid is displayed.
+	 * 
+	 * @return Whether the grid is displayed.
+	 */
 	public boolean getShowGrid() {
 		return showGrid;
 	}
 	
+	/**
+	 * Get the color the grid is drawn in.
+	 * 
+	 * @return The color the grid is drawn in.
+	 */
 	public Color getGridColor() {
 		return gridColor;
 	}

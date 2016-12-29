@@ -1,4 +1,4 @@
-# GraphBuilder 0.1.5
+# GraphBuilder 0.1.6
 
 GraphBuilder will be an open-source piece of software which allows users to visually construct [graphs](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) on a "editor" panel.
 
@@ -34,6 +34,10 @@ This subpackage contains actions pertaining to the procedures in the edit menu.
 
 This subpackage contains actions specific for file actions (such as those which would be found under the "File" menu).
 
+### algorithms
+
+This package will eventually contain graph-related the algorithms which the user can execute on the graph.
+
 ### clipboard
 
 This package contains the clipboard, which is used to keep track of copied graph components.
@@ -50,6 +54,10 @@ This package contains data required for each component's visual display on the e
 
 This package contains a single context class which will contain data important for just about every part of the program, held in one central class. This data includes the set of nodes and edges of the graph currently being built, and the history of (reversible) actions the user has performed.
 
+### graph
+
+This package contains an implementation of a basic graph along with a graph "factory" for generating certain types of graphs and graph constraints.
+
 ### io
 
 This package contains utility classes for saving graphs to files and loading graphs from files.
@@ -61,6 +69,10 @@ This package contains a basic implementation of a logger, which writes lines to 
 ### keybindings
 
 This package currently contains code for keyboard shortcuts and a hard-coded mapping of keyboard shortcuts and corresponding actions. These key bindings are bound to the root pane of GraphBuilder's main window frame.
+
+### main
+
+Contains just the high-level main class.
 
 ### math
 

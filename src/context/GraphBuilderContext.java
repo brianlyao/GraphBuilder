@@ -1,12 +1,14 @@
 package context;
 
+import graph.Graph;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import clipboard.Clipboard;
@@ -29,10 +31,9 @@ public class GraphBuilderContext {
 	
 	private GUI gui; // The GUI using this context
 	
-	private HashSet<Node> nodes; // The set of all nodes
-	private HashSet<Edge> edges; // The set of all edges
+	private Graph graph;
+	
 	private HashMap<Integer, GraphComponent> idMap; // A mapping from id to graph component
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> edgeMap; // A mapping from a pair of nodes to the edges between them
 	
 	private Stack<ReversibleAction> actionHistory; // A collection of the most recent reversible actions
 	private Stack<ReversibleAction> undoHistory; // A collection of the most recent undos
@@ -48,16 +49,13 @@ public class GraphBuilderContext {
 	private int idPool;
 	
 	/**
-	 * @param g The GUI corresponding to this context.
+	 * @param graphConstraints The constraints on the graph this context manages.
 	 */
-	public GraphBuilderContext(GUI g) {
-		gui = g;
-		
+	public GraphBuilderContext(int graphConstraints) {
 		// Initialize graph data structure
-		nodes = new HashSet<Node>(); //Set of all nodes in the editor
-		edges = new HashSet<Edge>();
+		graph = new Graph(graphConstraints);
+		
 		idMap = new HashMap<Integer, GraphComponent>();
-		edgeMap = new HashMap<UnorderedNodePair, ArrayList<Edge>>();
 		
 		// Initialize empty clipboard
 		clipboard = new Clipboard(this);
@@ -72,15 +70,25 @@ public class GraphBuilderContext {
 	}
 	
 	/**
+	 * Set the GUI object providing an interface for this context.
+	 * 
+	 * @param g The GUI for this context.
+	 */
+	public void setGUI(GUI g) {
+		gui = g;
+	}
+	
+	/**
 	 * Remove the specified graph component.
 	 * 
 	 * @param gc The component to remove.
 	 */
 	public void remove(GraphComponent gc) {
-		if (gc instanceof Node)
+		if (gc instanceof Node) {
 			removeNode((Node) gc); 
-		else if(gc instanceof Edge)
-			removeEdge((Edge) gc); 
+		} else if (gc instanceof Edge) {
+			removeEdge((Edge) gc);
+		}
 	}
 	
 	/**
@@ -100,12 +108,15 @@ public class GraphBuilderContext {
 	 * @param n The node to add to the graph.
 	 */
 	public void addNode(Node n) {
-		Editor editor = gui.getEditor();
-		nodes.add(n);
-		editor.add(n.getNodePanel());
-//		editor.setComponentZOrder(n.getNodePanel(), n.getID());
-		editor.repaint();
-		editor.revalidate();
+		graph.addNode(n);
+		
+		// Add to the editor panel
+		if (gui != null) {
+			Editor editor = gui.getEditor();
+			editor.add(n.getNodePanel());
+			editor.repaint();
+			editor.revalidate();
+		}
 	}
 	
 	/**
@@ -114,43 +125,30 @@ public class GraphBuilderContext {
 	 * @param n The node to remove.
 	 * @return The map of edges that was removed as a result of this node's removal.
 	 */
-	public HashMap<UnorderedNodePair, ArrayList<Edge>> removeNode(Node n) {
-		// Remove the node from the set of all nodes in this context
-		nodes.remove(n);
+	public Map<UnorderedNodePair, List<Edge>> removeNode(Node n) {
+		// Remove the node from the set of all nodes in this context		
+		Map<UnorderedNodePair, List<Edge>> removedSubEdgeMap = graph.removeNode(n);
 		
-		// Revalidate the editor panel
-		Editor editor = gui.getEditor();
-		editor.remove(n.getNodePanel());
-		editor.repaint();
-		editor.revalidate();
-		
-		Iterator<Map.Entry<UnorderedNodePair, ArrayList<Edge>>> edgeMapIterator = edgeMap.entrySet().iterator();
-		Iterator<Edge> lineit = edges.iterator();
-		
-		// Remove all edges neighboring the removed node
-		while (lineit.hasNext())
-			if (lineit.next().hasEndpoint(n))
-				lineit.remove();
-		
-		// Keep track of which edges are removed, and return it
-		HashMap<UnorderedNodePair, ArrayList<Edge>> removedSubEdgeMap = new HashMap<>();
-		Map.Entry<UnorderedNodePair, ArrayList<Edge>> temp;
-		while (edgeMapIterator.hasNext()) {
-			temp = edgeMapIterator.next();
-			if (temp.getKey().hasNode(n)) {
-				removedSubEdgeMap.put(temp.getKey(), temp.getValue());
-				edgeMapIterator.remove();
-				editor.removeSelections(temp.getValue());
+		if (gui != null) {
+			Editor editor = gui.getEditor();
+			
+			// If this node was the "base point" for an edge, reset the base point
+			if (editor.getEdgeBasePoint() == n) {
+				editor.setEdgeBasePoint(null);
 			}
+			
+			// Remove this node and removed edges from selections
+			editor.removeSelection(n);
+			for (List<Edge> removedEdgeList : removedSubEdgeMap.values()) {
+				editor.removeSelections(removedEdgeList);
+			}
+			this.getGUI().getMainMenuBar().updateWithSelection();
+			
+			// Revalidate the editor panel after removing the panel
+			editor.remove(n.getNodePanel());
+			editor.repaint();
+			editor.revalidate();
 		}
-		
-		// If this node was the "base point" for an edge, reset the base point
-		if (editor.getEdgeBasePoint() == n)
-			editor.setEdgeBasePoint(null);
-		
-		// Remove this node from selections
-		editor.removeSelection(n);
-		this.getGUI().getMainMenuBar().updateWithSelection();
 		
 		return removedSubEdgeMap;
 	}
@@ -162,15 +160,14 @@ public class GraphBuilderContext {
 	 * @param position The position (from the left) of the edge relative to other edges sharing e's endpoints.
 	 */
 	public void addEdge(Edge e, int position) {
-		edges.add(e);
-		
 		OrderedPair<Node> ends = e.getEndpoints();
 		UnorderedNodePair endsp = new UnorderedNodePair(ends.getFirst(), ends.getSecond());
 		
 		// Find the list of edges to add this one to, or create it if it doesn't exist
-		ArrayList<Edge> addTo = edgeMap.get(endsp);
+		Map<UnorderedNodePair, List<Edge>> edgeMap = graph.getEdges();
+		List<Edge> addTo = edgeMap.get(endsp);
 		if (addTo == null) {
-			edgeMap.put(endsp, new ArrayList<Edge>());
+			graph.getEdges().put(endsp, new ArrayList<Edge>());
 			addTo = edgeMap.get(endsp);
 		}
 		
@@ -192,20 +189,13 @@ public class GraphBuilderContext {
 	 * @param e The edge we want to add to add to the graph.
 	 * @return The position of the edge before it was removed.
 	 */
-	public int removeEdge(Edge e) {
-		edges.remove(e);
-		
-		OrderedPair<Node> ends = e.getEndpoints();
-		UnorderedNodePair endsp = new UnorderedNodePair(ends.getFirst(), ends.getSecond());
-		ArrayList<Edge> removeFrom = edgeMap.get(endsp);
-		if (removeFrom == null)
-			throw new IllegalArgumentException("The edge " + e + " is not in the graph, and cannot be removed.");
-		int index = removeFrom.indexOf(e);
-		removeFrom.remove(e);
+	public int removeEdge(Edge e) {		
+		int index = graph.removeEdge(e);
 		
 		// Remove this edge from its endpoints' data
-		ends.getFirst().removeEdge(e);
-		ends.getSecond().removeEdge(e);
+		OrderedPair<Node> endpoints = e.getEndpoints();
+		endpoints.getFirst().removeEdge(e);
+		endpoints.getSecond().removeEdge(e);
 		
 		// Remove the edge from selections
 		this.getGUI().getEditor().removeSelection(e);
@@ -248,10 +238,11 @@ public class GraphBuilderContext {
 	 * Updates the "saved" state of the current graph.
 	 */
 	public void updateSaveState() { 
-		if ((actionHistory.isEmpty() && actionIdOnLastSave < 0) || actionHistory.peek().actionId() == actionIdOnLastSave)
+		if ((actionHistory.isEmpty() && actionIdOnLastSave < 0) || actionHistory.peek().actionId() == actionIdOnLastSave) {
 			setAsSaved();
-		else
+		} else {
 			setAsUnsaved();
+		}
 		gui.getMainMenuBar().setUndoEnabled(!actionHistory.isEmpty());
 		gui.getMainMenuBar().setRedoEnabled(!undoHistory.isEmpty());
 	}
@@ -322,19 +313,19 @@ public class GraphBuilderContext {
 	/**
 	 * Get the set of all nodes in the graph.
 	 * 
-	 * @return A HashSet of all nodes in the graph.
+	 * @return A set of all nodes in the graph.
 	 */
-	public HashSet<Node> getNodes() {
-		return nodes;
+	public Set<Node> getNodes() {
+		return graph.getNodes();
 	}
 	
 	/**
 	 * Get the set of all edges in the graph.
 	 * 
-	 * @return A HashSet of all edges in the graph.
+	 * @return A set of all edges in the graph.
 	 */
-	public HashSet<Edge> getEdges() {
-		return edges;
+	public Set<Edge> getEdgeSet() {
+		return graph.edgeSet();
 	}
 	
 	/**
@@ -342,7 +333,7 @@ public class GraphBuilderContext {
 	 * 
 	 * @return The ID map.
 	 */
-	public HashMap<Integer, GraphComponent> getIdMap() {
+	public Map<Integer, GraphComponent> getIdMap() {
 		return idMap;
 	}
 	
@@ -351,10 +342,19 @@ public class GraphBuilderContext {
 	 * 
 	 * @return The edge map.
 	 */
-	public HashMap<UnorderedNodePair, ArrayList<Edge>> getEdgeMap() {
-		return edgeMap;
+	public Map<UnorderedNodePair, List<Edge>> getEdgeMap() {
+		return graph.getEdges();
 	}
 
+	/**
+	 * Get the graph in this context.
+	 * 
+	 * @return The Graph object with the graph of this context.
+	 */
+	public Graph getGraph() {
+		return graph;
+	}
+	
 	/**
 	 * Get the file which is currently loaded in this context.
 	 * 
@@ -396,8 +396,9 @@ public class GraphBuilderContext {
 	 */
 	public void setAsSaved() {
 		unsaved = false;
-		if (gui.getTitle().endsWith("*"))
+		if (gui != null && gui.getTitle().endsWith("*")) {
 			gui.setTitle(gui.getTitle().substring(0, gui.getTitle().length() - 1));
+		}
 	}
 	
 	/**

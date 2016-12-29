@@ -1,8 +1,10 @@
 package clipboard;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import structures.UnorderedNodePair;
 import components.Edge;
@@ -20,8 +22,8 @@ public class Clipboard {
 	private GraphBuilderContext context;
 	private boolean isEmpty;
 	
-	private HashSet<Node> copiedNodes;
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> copiedEdges;
+	private Set<Node> copiedNodes;
+	private Map<UnorderedNodePair, List<Edge>> copiedEdges;
 	
 	private int numTimesPasted;
 	
@@ -29,8 +31,8 @@ public class Clipboard {
 	 * @param ctxt The context this clipboard belongs to.
 	 */
 	public Clipboard(GraphBuilderContext ctxt) {
-		copiedNodes = new HashSet<>();
-		copiedEdges = new HashMap<>();
+		copiedNodes = new HashSet<Node>();
+		copiedEdges = new HashMap<UnorderedNodePair, List<Edge>>();
 		context = ctxt;
 		isEmpty = true;
 	}
@@ -40,7 +42,7 @@ public class Clipboard {
 	 * 
 	 * @return The copied nodes.
 	 */
-	public HashSet<Node> getNodes() {
+	public Set<Node> getNodes() {
 		return copiedNodes;
 	}
 	
@@ -49,7 +51,7 @@ public class Clipboard {
 	 * 
 	 * @return The copied edges.
 	 */
-	public HashMap<UnorderedNodePair, ArrayList<Edge>> getEdges() {
+	public Map<UnorderedNodePair, List<Edge>> getEdges() {
 		return copiedEdges;
 	}
 	
@@ -59,9 +61,11 @@ public class Clipboard {
 	 * @param copiedNodes The copied nodes.
 	 * @param copiedEdges The copied edges.
 	 */
-	public void setContents(HashSet<Node> copiedNodes, HashMap<UnorderedNodePair, ArrayList<Edge>> copiedEdges) {
-		if (copiedNodes == null || copiedEdges == null || copiedNodes.isEmpty())
+	public void setContents(Set<Node> copiedNodes, Map<UnorderedNodePair, List<Edge>> copiedEdges) {
+		if (copiedNodes == null || copiedEdges == null || copiedNodes.isEmpty()) {
 			return;
+		}
+		
 		this.copiedNodes.clear();
 		this.copiedEdges.clear();
 		this.copiedNodes.addAll(copiedNodes);
@@ -102,10 +106,11 @@ public class Clipboard {
 	 * @param increment true if we want to add 1, false if we want to subtract 1.
 	 */
 	public void updateTimesPasted(boolean increment) {
-		if (increment)
+		if (increment) {
 			numTimesPasted++;
-		else
+		} else {
 			numTimesPasted--;
+		}
 	}
 	
 	/**

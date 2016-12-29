@@ -8,16 +8,35 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import main.GraphBuilderMain;
 import ui.GUI;
 import context.GraphBuilderContext;
 
 /**
- * A utility class with procedures related to file IO.
+ * A utility class with procedures related to file IO, save state, and interface elements
+ * which ensure that the user is notified of potentially lost changes.
  * 
  * @author Brian
  */
 public class FileUtils {
 
+	/**
+	 * Checks if the contents in the given context are up to date with what
+	 * is currently on disk. If not, a dialog will appear, prompting the user
+	 * to either save or discard the changes.
+	 * 
+	 * @param context The current context.
+	 */
+	public static void checkUnsaved(GraphBuilderContext context) {
+		GUI gui = context.getGUI();
+		if (context.isUnsaved()) {
+			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them before opening another file?", "Open: Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
+			if (resp == JOptionPane.YES_OPTION) {
+				saveFileProcedure(context);
+			}
+		}
+	}
+	
 	/**
 	 * Perform the procedure for opening a file.
 	 * 
@@ -27,18 +46,13 @@ public class FileUtils {
 		GUI gui = context.getGUI();
 		JFileChooser fc = gui.getFileChooser();
 		
-		if (context.isUnsaved()) {
-			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them before opening another file?", "Open: Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
-			if (resp == JOptionPane.YES_OPTION)
-				saveFileProcedure(context);
-			else if (resp == JOptionPane.CANCEL_OPTION)
-				return;
-		}
+		checkUnsaved(context);
 		
 		int response = fc.showOpenDialog(gui);
 		if (response == JFileChooser.APPROVE_OPTION) {
 			File toOpen = fc.getSelectedFile();
-			FileLoader.loadGraph(context, toOpen);
+			GraphBuilderContext newContext = FileLoader.loadGraph(toOpen);
+			gui.updateContext(newContext);
 		}
 	}
 	
@@ -83,12 +97,10 @@ public class FileUtils {
 			if (resp == JOptionPane.YES_OPTION) {
 				saveFileProcedure(context);
 			} else if (resp == JOptionPane.NO_OPTION) {
-				System.gc();
-				System.exit(0);
+				GraphBuilderMain.exit();
 			}
 		} else {
-			System.gc();
-			System.exit(0);
+			GraphBuilderMain.exit();
 		}
 	}
 	

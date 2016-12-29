@@ -7,6 +7,10 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
+
+import logger.Logger;
+import util.ExceptionUtils;
 import components.Edge;
 import components.Node;
 import components.SelfEdge;
@@ -24,19 +28,19 @@ public class FileLoader {
 	private static final int NUM_EDGE_FIELDS = 7;
 	
 	/**
-	 * Load the specified file into the gui specified by the context before the load.
+	 * Load the specified file into a context object.
 	 * 
-	 * @param oldContext The context in place before the load.
 	 * @param graphFile  The file containing the graph we want to load.
+	 * @return The new context object containing the graph in the file.
 	 */
-	public static void loadGraph(GraphBuilderContext oldContext, File graphFile) {
-		GraphBuilderContext loadedContext = new GraphBuilderContext(oldContext.getGUI());
-		
+	public static GraphBuilderContext loadGraph(File graphFile) {	
 		// Read the file, parse the graph's components, and add them to our context
 		try {
 			BufferedReader fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(graphFile)));
 			
 			int idPool = Integer.parseInt(fileReader.readLine());
+			int constraints = Integer.parseInt(fileReader.readLine());
+			GraphBuilderContext loadedContext = new GraphBuilderContext(constraints);
 			
 			ArrayList<String> nodeStrs = new ArrayList<>();
 			ArrayList<String> edgeStrs = new ArrayList<>();
@@ -44,32 +48,38 @@ public class FileLoader {
 			// Read the file line by line (each line contains one component)
 			String line;
 			while ((line = fileReader.readLine()) != null) {
-				if (line.startsWith("N:"))
+				if (line.startsWith("N:")) {
 					nodeStrs.add(line);
-				else if (line.startsWith("E:"))
+				} else if (line.startsWith("E:")) {
 					edgeStrs.add(line);
+				}
 			}
+			fileReader.close();
 			
 			// First parse all nodes and add them to the context
-			for (String nodeStr : nodeStrs)
+			for (String nodeStr : nodeStrs) {
 				loadedContext.addNode(readNode(loadedContext, nodeStr));
+			}
 			
 			// Then parse and add all edges so they can refer to the nodes
-			for (String edgeStr : edgeStrs)
+			for (String edgeStr : edgeStrs) {
 				loadedContext.addEdge(readEdge(loadedContext, edgeStr), -1);
+			}
 			
 			// Set the ID pool afterward, to start where it left off
 			loadedContext.setNextID(idPool);
 			
-			fileReader.close();
+			// Replace the old context with the one we just loaded
+			loadedContext.setCurrentlyLoadedFile(graphFile);
+			loadedContext.setAsSaved();
+			
+			return loadedContext;
 		} catch (Exception e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "GraphBuilder was unable to open the selected file. Make sure it is a valid GraphBuilder file. For more details on this exact error, check the log.", "Unable to Open File", JOptionPane.ERROR_MESSAGE);
+			Logger.writeEntry(Logger.ERROR, ExceptionUtils.exceptionToString(e));
 		}
 		
-		// Replace the old context with the one we just loaded
-		loadedContext.setCurrentlyLoadedFile(graphFile);
-		loadedContext.setAsSaved();
-		loadedContext.getGUI().updateContext(loadedContext);
+		return null;
 	}
 	
 	/**

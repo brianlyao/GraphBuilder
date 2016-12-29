@@ -1,7 +1,19 @@
 package ui;
 
-import java.awt.*;
-import java.awt.event.*;
+import graph.Graph;
+import graph.GraphConstraint;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
@@ -10,18 +22,27 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 
-import actions.PlaceNodeAction;
+import math.Complex;
 import preferences.Preferences;
 import structures.OrderedPair;
 import structures.UnorderedNodePair;
 import tool.Tool;
 import ui.menus.EditorRightClickMenu;
 import util.CoordinateUtils;
-import math.Complex;
-import components.*;
+import actions.PlaceNodeAction;
+import components.Edge;
+import components.GraphComponent;
+import components.Node;
+import components.SelfEdge;
+import components.SimpleEdge;
 import components.display.NodePanel;
 import components.display.SelfEdgeData;
 import context.GraphBuilderContext;
@@ -148,7 +169,7 @@ public class Editor extends JPanel {
 			@Override
 			public void mouseDragged(MouseEvent evt) {
 				Tool current = gui.getCurrentTool();
-				if (current == Tool.PAN){
+				if (current == Tool.PAN) {
 					Point currentPoint = evt.getPoint();
 					int changeX = currentPoint.x - lastMousePoint.x;
 					int changeY = currentPoint.y - lastMousePoint.y;
@@ -180,12 +201,12 @@ public class Editor extends JPanel {
 					double minDistance = Double.MAX_VALUE;
 					
 					// Get the edgemap
-					HashMap<UnorderedNodePair, ArrayList<Edge>> em = gui.getContext().getEdgeMap();
+					Map<UnorderedNodePair, List<Edge>> em = gui.getContext().getEdgeMap();
 					
 					// Iterate through the edgemap
 					for (UnorderedNodePair endpoints : em.keySet()) {
 						// Get set of edges between first and second
-						ArrayList<Edge> betweenTwo = em.get(endpoints);
+						List<Edge> betweenTwo = em.get(endpoints);
 						
 						// Iterate through edges between the nodes "first" and "second"
 						// For each edge, find the closest distance from the current mouse position to the edge
@@ -217,8 +238,9 @@ public class Editor extends JPanel {
 											dists[i] = points[i].distance(clickd);
 										
 										// If the closest point on the line is NOT actually on the line segment
-										if (t < 0 || t > 1)
+										if (t < 0 || t > 1) {
 											dists[1] = Double.MAX_VALUE;
+										}
 										
 										// Determine the closest point among the candidates
 										int minind = 0;
@@ -230,7 +252,7 @@ public class Editor extends JPanel {
 											}
 										}
 										closest = new Point((int) points[minind].x, (int) points[minind].y);
-									} else if(c2.x == c1.x) {
+									} else if (c2.x == c1.x) {
 										// If the line happens to be vertical...
 										closest = new Point((int) c1.x, lastMousePoint.y);
 										dist = Math.abs(c1.x - clickd.x);
@@ -263,8 +285,9 @@ public class Editor extends JPanel {
 									Complex incbrt = null;
 									if (disc0.isZero()) {
 										incbrt = disc1;
-										if (disc1.getReal() < 0)
+										if (disc1.getReal() < 0) {
 											incbrt = incbrt.neg();
+										}
 									} else {
 										incbrt = disc1.add(disc1.pow(2).subtract(disc0.pow(3).scale(4)).sqrt()[0]).scale(0.5); 
 									}
@@ -277,9 +300,11 @@ public class Editor extends JPanel {
 									ArrayList<Point2D.Double> candidateClosestPoints = new ArrayList<Point2D.Double>();
 									
 									// Determine which roots are real; use these values of t to determine the candidate "closest" points
-									for (Complex rt : roots)
-										if (rt.isReal() && rt.getReal() >= 0 && rt.getReal() <= 1)
+									for (Complex rt : roots) {
+										if (rt.isReal() && rt.getReal() >= 0 && rt.getReal() <= 1) {
 											candidateClosestPoints.add(getBezierPoint(bcp, rt.getReal()));
+										}
+									}
 									
 									// Make sure to include the endpoints of the bezier curve
 									candidateClosestPoints.add(bcp[0]);
@@ -492,8 +517,9 @@ public class Editor extends JPanel {
 		
 		// Explicitly set the position of the nodes; this allows the pane to be scrollable while
 		// retaining the position of the circles relative to the top left corner of the editor panel
-		for (Node c : gui.getContext().getNodes())
+		for (Node c : gui.getContext().getNodes()) {
 			c.getNodePanel().setLocation(c.getNodePanel().getCoords());
+		}
 		
 		// Set anti-aliasing on for smoother appearance
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -503,42 +529,52 @@ public class Editor extends JPanel {
 			int level = gui.getGridSettingsDialog().getGridLevel();
 			g2d.setStroke(new BasicStroke(1));
 			g2d.setColor(gui.getGridSettingsDialog().getGridColor());
-			for (int xi = level ; xi < this.getWidth() ; xi += level)
+			for (int xi = level ; xi < this.getWidth() ; xi += level) {
 				g2d.drawLine(xi, 0, xi, this.getHeight());
-			for (int yi = level ; yi < this.getHeight() ; yi += level)
+			}
+			for (int yi = level ; yi < this.getHeight() ; yi += level) {
 				g2d.drawLine(0, yi, this.getWidth(), yi);
+			}
 		}
 		
 		// Draw all edges by iterating through pairs of nodes
-		HashMap<UnorderedNodePair, ArrayList<Edge>> edgeMap = gui.getContext().getEdgeMap();
+		Map<UnorderedNodePair, List<Edge>> edgeMap = gui.getContext().getEdgeMap();
 		
 		// Check if the preview edge's endpoint pair exists in the edge map
 		// If not, then we need to draw it separately
+		Graph currentGraph = this.getContext().getGraph();
+		boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.LOOPS_ALLOWED) && previewEdge instanceof SelfEdge;
 		if (previewEdge != null) {
 			UnorderedNodePair previewPair = new UnorderedNodePair(previewEdge);
-			if (!edgeMap.keySet().contains(previewPair)) {
-				ArrayList<Edge> previewList = new ArrayList<>();
-				previewList.add(previewEdge);
-				drawEdgesBetweenNodePair(g2d, previewPair, previewList, previewEdge);
+			if (!edgeMap.containsKey(previewPair)) {
+				if (!violatesLoops) {
+					List<Edge> previewList = new ArrayList<>();
+					previewList.add(previewEdge);
+					drawEdgesBetweenNodePair(g2d, previewPair, previewList, previewEdge == null);
+				}
 			}
 		}
 		
 		// Iterate through the pairs of nodes in the edge map, and draw the edges between them
 		// If there is a preview edge, we "add" it (not directly) to the list of existing edges
 		// before we draw the list of edges
-		ArrayList<Edge> pairEdges, toDrawEdges;
+		List<Edge> pairEdges, toDrawEdges;
 		for (UnorderedNodePair pair : edgeMap.keySet()) {
 			pairEdges = edgeMap.get(pair);
 			if (previewEdge != null && pair.equals(new UnorderedNodePair(previewEdge))) {
-				toDrawEdges = new ArrayList<>();
-				for(Edge e : pairEdges)
-					toDrawEdges.add(e);
-				int newIndex = previewEdgeIndex < 0 || previewEdgeIndex > pairEdges.size() ? pairEdges.size() : previewEdgeIndex;
-				toDrawEdges.add(newIndex, previewEdge);
+				// Check if drawing preview edge would violate a constraint
+				boolean violatesSimple = currentGraph.hasConstraint(GraphConstraint.SIMPLE) && currentGraph.getEdges().containsKey(pair);
+				if (!violatesLoops && !violatesSimple) {
+					toDrawEdges = new ArrayList<>(pairEdges);
+					int newIndex = previewEdgeIndex < 0 || previewEdgeIndex > pairEdges.size() ? pairEdges.size() : previewEdgeIndex;
+					toDrawEdges.add(newIndex, previewEdge);
+				} else {
+					toDrawEdges = pairEdges;
+				}
 			} else {
 				toDrawEdges = pairEdges;
 			}
-			drawEdgesBetweenNodePair(g2d, pair, toDrawEdges, previewEdge);
+			drawEdgesBetweenNodePair(g2d, pair, toDrawEdges, previewEdge == null);
 		}
 		
 		g2d.setStroke(new BasicStroke());
@@ -618,7 +654,7 @@ public class Editor extends JPanel {
 	 * @param edges    The list of edges we need to draw between c1 and c2.
 	 * @param preview  The preview edge object.
 	 * */
-	private static void drawEdgesBetweenNodePair(Graphics2D g2d, UnorderedNodePair nodePair, ArrayList<Edge> edges, Edge preview) {
+	private static void drawEdgesBetweenNodePair(Graphics2D g2d, UnorderedNodePair nodePair, List<Edge> edges, boolean noPreview) {
 		// Draw edges between nodes c1 and c2; if edges.size() > 1, draw them as quadratic bezier curves
 		double angle = (Double) Preferences.EDGE_SPREAD_ANGLE.getData();
 		double lowerAngle = (1 - edges.size()) * angle / 2.0;
@@ -680,8 +716,9 @@ public class Editor extends JPanel {
 				// The edge is either a line or bezier curve; either way, they get drawn the same way
 				OrderedPair<Node> ends = e.getEndpoints();
 				double initAngle = lowerAngle + count * angle;
-				if (ends.getFirst() != n1)
+				if (ends.getFirst() != n1) {
 					initAngle = -initAngle;
+				}
 				Point p1 = ends.getSecond().getNodePanel().getCenter();
 				Point p2 = ends.getFirst().getNodePanel().getCenter();
 				
@@ -709,8 +746,9 @@ public class Editor extends JPanel {
 					g2d.drawLine((int) linep2X, (int) linep2Y, (int) linep1X, (int) linep1Y);
 					
 					// Set the control point to a negative value to indicate it does not exist
-					if (preview == null)
+					if (noPreview) {
 						simpe.getData().setPoints(linep1X, linep1Y, -1, -1, linep2X, linep2Y);
+					}
 					
 					// If this edge is directed, draw the arrow
 					if (e.isDirected()) {
@@ -751,8 +789,9 @@ public class Editor extends JPanel {
 					g2d.draw(curve);
 					
 					// Only set the points if we are not also drawing a preview edge
-					if (preview == null)
+					if (noPreview) {
 						simpe.getData().setPoints(circ1X, circ1Y, controlX, controlY, circ2X, circ2Y);
+					}
 				}
 				count++;
 			}

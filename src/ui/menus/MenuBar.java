@@ -10,6 +10,7 @@ import javax.swing.JMenuItem;
 
 import components.GraphComponent;
 import components.Node;
+import context.GraphBuilderContext;
 import actions.edit.Copy;
 import actions.edit.PushCut;
 import actions.edit.PushDelete;
@@ -18,6 +19,7 @@ import actions.edit.PushPaste;
 import actions.edit.Redo;
 import actions.edit.Undo;
 import ui.GUI;
+import ui.dialogs.NewGraphDialog;
 import util.FileUtils;
 
 public class MenuBar extends JMenuBar {
@@ -56,15 +58,20 @@ public class MenuBar extends JMenuBar {
 		help = new JMenu("Help");
 		
 		// Fill "File" menu
-		JMenu newFile = new JMenu("New");
-		
-		// Fill the "New" submenu
-		JMenuItem newUndirected = new JMenuItem("Undirected Graph");
-		JMenuItem newDirected = new JMenuItem("Directed Graph");
-		JMenuItem newMixed = new JMenuItem("Mixed Graph");
-		newFile.add(newUndirected);
-		newFile.add(newDirected);
-		newFile.add(newMixed);
+		JMenuItem newFile = new JMenuItem("New");
+		newFile.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Integer constraints = NewGraphDialog.getConstraints(gui);
+				if (constraints != null) {
+					GraphBuilderContext newContext = new GraphBuilderContext(constraints.intValue());
+					FileUtils.checkUnsaved(gui.getContext());
+					gui.updateContext(newContext);
+				}
+			}
+			
+		});
 		
 		JMenuItem openFile = new JMenuItem("Open");
 		openFile.addActionListener(new ActionListener() {

@@ -1,6 +1,8 @@
 package logger;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.ZonedDateTime;
@@ -19,22 +21,39 @@ public class Logger {
 	public static final String WARNING = "WARNING";
 	public static final String ERROR = "ERROR";
 	
-	private File logFile;
-	private PrintWriter logWriter;
-	
+	private static File logFile;
+	private static PrintWriter logWriter;
+
 	/**
+	 * Set this logger to use 
+	 * 
 	 * @param logFile The path to the log file.
 	 * @throws IOException If the log file cannot be created.
 	 */
-	public Logger(File logFile) throws IOException {
-		this.logFile = logFile;
-		this.logFile.createNewFile();
-		logWriter = new PrintWriter(this.logFile);
+	public static void setLogFile(String logFile) throws IOException {
+		Logger.logFile = new File(logFile);
+		Logger.logFile.createNewFile();
+		FileWriter fwriter = new FileWriter(logFile, true);
+		BufferedWriter bwriter = new BufferedWriter(fwriter);
+		logWriter = new PrintWriter(bwriter);
 	}
 	
-	public void writeEntry(String status, String entry) {
+	/**
+	 * Write a single entry to the log file.
+	 * 
+	 * @param status The status level of the entry.
+	 * @param entry  The message which describes the entry.
+	 */
+	public static void writeEntry(String status, String entry) {
 		String dateTime = formatter.format(ZonedDateTime.now());
 		logWriter.write(dateTime + " : " + status + " : " + entry + '\n');
+	}
+	
+	/**
+	 * Flush the current log to disk.
+	 */
+	public static void flush() {
+		logWriter.flush();
 	}
 	
 }

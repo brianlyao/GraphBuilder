@@ -2,9 +2,10 @@ package actions.edit;
 
 import java.awt.Point;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
@@ -31,14 +32,14 @@ public class Duplicate extends ReversibleAction {
 	private static final int DUPLICATE_OFFSET_X = 30;
 	private static final int DUPLICATE_OFFSET_Y = 30;
 
-	private HashSet<Node> nodesToDuplicate;
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> edgesToDuplicate;
-	private HashSet<Node> duplicatedNodes;
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> duplicatedEdges;
+	private Set<Node> nodesToDuplicate;
+	private Map<UnorderedNodePair, List<Edge>> edgesToDuplicate;
+	private Set<Node> duplicatedNodes;
+	private Map<UnorderedNodePair, List<Edge>> duplicatedEdges;
 	
-	private HashMap<Node, Node> oldToNew;
+	private Map<Node, Node> oldToNew;
 	
-	private HashSet<GraphComponent> previousSelections;
+	private Set<GraphComponent> previousSelections;
 	
 	private int maxX;
 	private int maxY;
@@ -49,16 +50,16 @@ public class Duplicate extends ReversibleAction {
 	 */
 	public Duplicate(GraphBuilderContext ctxt, boolean full) {
 		super(ctxt);
-		Pair<HashSet<Node>, HashMap<UnorderedNodePair, ArrayList<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
+		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
 		nodesToDuplicate = pair.getValue0();
 		edgesToDuplicate = pair.getValue1();
 		
 		// Copy nodes and edges
-		Triplet<HashSet<Node>, HashMap<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
+		Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
 		oldToNew = copyNodes.getValue1();
 		duplicatedNodes = copyNodes.getValue0();
 		if (full) {
-			HashMap<UnorderedNodePair, ArrayList<Edge>> subEdgeMap = ClipboardUtils.getSubEdgeMap(this.getContext(), pair.getValue0());
+			Map<UnorderedNodePair, List<Edge>> subEdgeMap = ClipboardUtils.getSubEdgeMap(this.getContext(), pair.getValue0());
 			duplicatedEdges = ClipboardUtils.copyEdges(subEdgeMap, oldToNew);
 		} else {
 			duplicatedEdges = ClipboardUtils.copyEdges(edgesToDuplicate, oldToNew);
@@ -84,7 +85,7 @@ public class Duplicate extends ReversibleAction {
 		}
 		
 		// Deselect all currently selected
-		previousSelections = new HashSet<>(editor.getSelections());
+		previousSelections = new HashSet<GraphComponent>(editor.getSelections());
 		editor.removeAllSelections();
 		
 		// Add the new nodes and edges to the context
@@ -98,7 +99,7 @@ public class Duplicate extends ReversibleAction {
 		// Select new nodes
 		editor.addSelections(duplicatedNodes);
 		
-		for (ArrayList<Edge> edgeList : duplicatedEdges.values()) {
+		for (List<Edge> edgeList : duplicatedEdges.values()) {
 			for (int i = 0 ; i < edgeList.size() ; i++) {
 				this.getContext().addEdge(edgeList.get(i), i);
 			}

@@ -1,9 +1,10 @@
 package actions.edit;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.awt.Point;
 
 import org.javatuples.Triplet;
@@ -31,12 +32,12 @@ public class Paste extends ReversibleAction {
 	private static final int PASTE_OFFSET_X = 30;
 	private static final int PASTE_OFFSET_Y = 30;
 	
-	private HashSet<GraphComponent> previousSelections;
+	private Set<GraphComponent> previousSelections;
 	
-	private HashSet<Node> pastedNodes;
-	private HashMap<UnorderedNodePair, ArrayList<Edge>> pastedEdges;
+	private Set<Node> pastedNodes;
+	private Map<UnorderedNodePair, List<Edge>> pastedEdges;
 	
-	private HashMap<Node, Node> oldToNew;
+	private Map<Node, Node> oldToNew;
 	
 	private int maxX;
 	private int maxY;
@@ -58,7 +59,7 @@ public class Paste extends ReversibleAction {
 	public Paste(GraphBuilderContext ctxt) {
 		super(ctxt);
 		Clipboard currentClipboard = this.getContext().getClipboard();
-		Triplet<HashSet<Node>, HashMap<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(currentClipboard.getNodes());
+		Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(currentClipboard.getNodes());
 		pastedNodes = copyNodes.getValue0();
 		oldToNew = copyNodes.getValue1();
 		maxX = copyNodes.getValue2().x;
@@ -113,7 +114,7 @@ public class Paste extends ReversibleAction {
 		// Select pasted nodes
 		editor.addSelections(pastedNodes);
 		
-		for (ArrayList<Edge> edgeList : pastedEdges.values()) {
+		for (List<Edge> edgeList : pastedEdges.values()) {
 			for (int i = 0 ; i < edgeList.size() ; i++) {
 				this.getContext().addEdge(edgeList.get(i), i);
 			}
