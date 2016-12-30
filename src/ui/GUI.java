@@ -16,7 +16,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import components.Node;
 
-import keybindings.KeyboardShortcutActions;
+import keybindings.KeyActions;
 import logger.Logger;
 import structures.OrderedPair;
 import tool.Tool;
@@ -105,7 +105,7 @@ public class GUI extends JFrame {
 		toolBar.setRollover(true);
 		
 		// Initialize the key bindings and their actions
-		KeyboardShortcutActions.initialize(this);
+		KeyActions.initialize(this);
 		
 		// Initialize and customize the file chooser
 		fileChooser = new JFileChooser();
@@ -301,9 +301,16 @@ public class GUI extends JFrame {
 		Logger.writeEntry(Logger.INFO, String.format("Switching context to %s.", newContext.getCurrentlyLoadedFile()));
 		context = newContext;
 		context.setGUI(this);
+		editor.clearState();
 		updateByConstraint();
-		KeyboardShortcutActions.initialize(this); // Re-initialize key bindings with correct context
-		this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
+		KeyActions.initialize(this); // Re-initialize key bindings with correct context
+		menuBar.updateContext(newContext);
+		if (newContext.getCurrentlyLoadedFile() == null) {
+			this.setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
+		} else {
+			this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
+		}
+		context.setAsSaved();
 	}
 	
 	/**

@@ -8,7 +8,11 @@ import java.util.Set;
 import components.display.NodePanel;
 import context.GraphBuilderContext;
 
-/** An instance represents a node (visually represented by a circle) placed on the editor panel. */
+/**
+ * An instance represents a node component of a graph.
+ * 
+ * @author Brian
+ */
 public class Node extends GraphComponent {
 	
 	// The JPanel containing this node's visual appearance

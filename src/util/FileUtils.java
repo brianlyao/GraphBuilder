@@ -8,8 +8,11 @@ import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import components.Node;
+
 import main.GraphBuilderMain;
 import ui.GUI;
+import ui.dialogs.NewGraphDialog;
 import context.GraphBuilderContext;
 
 /**
@@ -38,6 +41,22 @@ public class FileUtils {
 	}
 	
 	/**
+	 * The procedure for creating a new file. This clears the editor and switches
+	 * to a newly created context for the new file.
+	 * 
+	 * @param context
+	 */
+	public static void newFileProcedure(GraphBuilderContext context) {
+		GUI gui = context.getGUI();
+		Integer constraints = NewGraphDialog.getConstraints(gui);
+		if (constraints != null) {
+			GraphBuilderContext newContext = new GraphBuilderContext(constraints.intValue());
+			FileUtils.checkUnsaved(gui.getContext());
+			gui.updateContext(newContext);
+		}
+	}
+	
+	/**
 	 * Perform the procedure for opening a file.
 	 * 
 	 * @param context The current context.
@@ -53,6 +72,11 @@ public class FileUtils {
 			File toOpen = fc.getSelectedFile();
 			GraphBuilderContext newContext = FileLoader.loadGraph(toOpen);
 			gui.updateContext(newContext);
+			for (Node n : newContext.getNodes()) {
+				gui.getEditor().add(n.getNodePanel());
+			}
+			gui.getEditor().repaint();
+			gui.getEditor().revalidate();
 		}
 	}
 	

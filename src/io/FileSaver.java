@@ -8,7 +8,11 @@ import components.Edge;
 import components.Node;
 import context.GraphBuilderContext;
 
-/** A utility class for saving graphs to files. */
+/**
+ * A utility class for saving graphs to files.
+ * 
+ * @author Brian
+ */
 public class FileSaver {
 	
 	private static final String EXTENSION = ".gbf";

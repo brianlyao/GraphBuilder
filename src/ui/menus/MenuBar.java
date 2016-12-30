@@ -4,10 +4,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
 
+import javax.swing.AbstractButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
+import keybindings.KeyActions;
 import components.GraphComponent;
 import components.Node;
 import context.GraphBuilderContext;
@@ -18,10 +20,18 @@ import actions.edit.PushDuplicate;
 import actions.edit.PushPaste;
 import actions.edit.Redo;
 import actions.edit.Undo;
+import actions.file.New;
+import actions.file.Open;
+import actions.file.Save;
+import actions.file.SaveAs;
 import ui.GUI;
-import ui.dialogs.NewGraphDialog;
 import util.FileUtils;
 
+/**
+ * The main menu bar which appears at the top of the GUI.
+ * 
+ * @author Brian
+ */
 public class MenuBar extends JMenuBar {
 	
 	private static final long serialVersionUID = -7109662156036502356L;
@@ -34,6 +44,12 @@ public class MenuBar extends JMenuBar {
 	private JMenu tools;
 	private JMenu help;
 	
+	private JMenuItem newFile;
+	private JMenuItem openFile;
+	private JMenuItem saveFile;
+	private JMenuItem saveAsFile;
+	private JMenuItem exit;
+	
 	private JMenuItem undo;
 	private JMenuItem redo;
 	private JMenuItem copy;
@@ -44,6 +60,8 @@ public class MenuBar extends JMenuBar {
 	private JMenuItem cut;
 	private JMenuItem cutFull;
 	private JMenuItem delete;
+	
+	private JMenuItem grid;
 	
 	public MenuBar(final GUI g) {
 		super();
@@ -58,60 +76,16 @@ public class MenuBar extends JMenuBar {
 		help = new JMenu("Help");
 		
 		// Fill "File" menu
-		JMenuItem newFile = new JMenuItem("New");
-		newFile.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Integer constraints = NewGraphDialog.getConstraints(gui);
-				if (constraints != null) {
-					GraphBuilderContext newContext = new GraphBuilderContext(constraints.intValue());
-					FileUtils.checkUnsaved(gui.getContext());
-					gui.updateContext(newContext);
-				}
-			}
-			
-		});
-		
-		JMenuItem openFile = new JMenuItem("Open");
-		openFile.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				FileUtils.openFileProcedure(g.getContext());
-			}
-			
-		});
-		
-		JMenuItem saveFile = new JMenuItem("Save");
-		saveFile.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				FileUtils.saveFileProcedure(g.getContext());
-			}
-			
-		});
-		
-		JMenuItem saveAsFile = new JMenuItem("Save As");
-		saveAsFile.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				FileUtils.saveAsFileProcedure(g.getContext());
-			}
-			
-		});
-		
-		JMenuItem exit = new JMenuItem("Exit");
-		exit.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				FileUtils.exitProcedure(g.getContext());
-			}
-			
-		});
+		newFile = new JMenuItem("New");
+		newFile.setAccelerator(KeyActions.NEW);
+		openFile = new JMenuItem("Open");
+		openFile.setAccelerator(KeyActions.OPEN);
+		saveFile = new JMenuItem("Save");
+		saveFile.setAccelerator(KeyActions.SAVE);
+		saveAsFile = new JMenuItem("Save As");
+		saveAsFile.setAccelerator(KeyActions.SAVE_AS);
+		exit = new JMenuItem("Exit");
+		exit.setAccelerator(KeyActions.EXIT);
 			
 		file.add(newFile);
 		file.add(openFile);
@@ -120,117 +94,35 @@ public class MenuBar extends JMenuBar {
 		file.add(exit);
 		
 		undo = new JMenuItem("Undo");
+		undo.setAccelerator(KeyActions.UNDO);
 		undo.setEnabled(false);
-		undo.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new Undo(gui.getContext()).actionPerformed(null);
-			}
-			
-		});
-		
 		redo = new JMenuItem("Redo");
+		redo.setAccelerator(KeyActions.REDO);
 		redo.setEnabled(false);
-		redo.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new Redo(gui.getContext()).actionPerformed(null);
-			}
-			
-		});
-		
 		copy = new JMenuItem("Copy");
+		copy.setAccelerator(KeyActions.COPY);
 		copy.setEnabled(false);
-		copy.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new Copy(gui.getContext(), false).actionPerformed(null);
-			}
-			
-		});
-		
 		copyFull = new JMenuItem("Copy full subgraph");
+		copyFull.setAccelerator(KeyActions.COPY_FULL);
 		copyFull.setEnabled(false);
-		copyFull.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new Copy(gui.getContext(), true).actionPerformed(null);
-			}
-			
-		});
-		
 		duplicate = new JMenuItem("Duplicate");
+		duplicate.setAccelerator(KeyActions.DUPLICATE);
 		duplicate.setEnabled(false);
-		duplicate.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new PushDuplicate(gui.getContext(), false).actionPerformed(null);
-			}
-			
-		});
-		
 		duplicateFull = new JMenuItem("Duplicate full subgraph");
+		duplicateFull.setAccelerator(KeyActions.DUPLICATE_FULL);
 		duplicateFull.setEnabled(false);
-		duplicateFull.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new PushDuplicate(gui.getContext(), true).actionPerformed(null);
-			}
-			
-		});
-		
 		paste = new JMenuItem("Paste");
+		paste.setAccelerator(KeyActions.PASTE);
 		paste.setEnabled(false);
-		paste.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new PushPaste(gui.getContext()).actionPerformed(null);
-			}
-			
-		});
-		
 		cut = new JMenuItem("Cut");
+		cut.setAccelerator(KeyActions.CUT);
 		cut.setEnabled(false);
-		cut.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new PushCut(gui.getContext(), false).actionPerformed(null);
-			}
-			
-		});
-		
 		cutFull = new JMenuItem("Cut full subgraph");
+		cutFull.setAccelerator(KeyActions.CUT_FULL);
 		cutFull.setEnabled(false);
-		cutFull.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new PushCut(gui.getContext(), true).actionPerformed(null);
-			}
-			
-		});
-		
 		delete = new JMenuItem("Delete");
+		delete.setAccelerator(KeyActions.BACKSPACE);
 		delete.setEnabled(false);
-		delete.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				new PushDelete(gui.getContext()).actionPerformed(null);
-			}
-			
-		});
-		
-		duplicate = new JMenuItem("Duplicate");
-		duplicate.setEnabled(false);
 		
 		edit.add(undo);
 		edit.add(redo);
@@ -245,7 +137,7 @@ public class MenuBar extends JMenuBar {
 		edit.add(delete);
 		
 		// Fill the view menu
-		JMenuItem grid = new JMenuItem("Grid");
+		grid = new JMenuItem("Grid");
 		grid.addActionListener(new ActionListener() {
 			
 			@Override
@@ -262,6 +154,9 @@ public class MenuBar extends JMenuBar {
 		add(view);
 		add(tools);
 		add(help);
+		
+		// Add action listeners
+		updateContext(gui.getContext());
 	}
 	
 	/**
@@ -280,6 +175,43 @@ public class MenuBar extends JMenuBar {
 	 */
 	public void setRedoEnabled(boolean enabled) {
 		redo.setEnabled(enabled);
+	}
+	
+	/**
+	 * Update the actions associated with menu items to occur in the specified context.
+	 * 
+	 * @param newContext The new context to "switch" to.
+	 */
+	public void updateContext(GraphBuilderContext newContext) {
+		removeAllActionListeners(new AbstractButton[] {
+			newFile, openFile, saveFile, saveAsFile, exit, undo, redo, copy, copyFull, duplicate,
+			duplicateFull, paste, cut, cutFull, delete, duplicate, duplicateFull
+		});
+		
+		newFile.addActionListener(new New(gui.getContext()));
+		openFile.addActionListener(new Open(gui.getContext()));
+		saveFile.addActionListener(new Save(gui.getContext()));
+		saveAsFile.addActionListener(new SaveAs(gui.getContext()));
+		exit.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileUtils.exitProcedure(gui.getContext());
+			}
+			
+		});
+		undo.addActionListener(new Undo(gui.getContext()));
+		redo.addActionListener(new Redo(gui.getContext()));
+		copy.addActionListener(new Copy(gui.getContext(), false));
+		copyFull.addActionListener(new Copy(gui.getContext(), true));
+		duplicate.addActionListener(new PushDuplicate(gui.getContext(), false));
+		duplicateFull.addActionListener(new PushDuplicate(gui.getContext(), true));
+		paste.addActionListener(new PushPaste(gui.getContext()));
+		cut.addActionListener(new PushCut(gui.getContext(), false));
+		cutFull.addActionListener(new PushCut(gui.getContext(), true));
+		delete.addActionListener(new PushDelete(gui.getContext()));
+		duplicate.addActionListener(new PushDuplicate(gui.getContext(), false));
+		duplicateFull.addActionListener(new PushDuplicate(gui.getContext(), true));
 	}
 	
 	/**
@@ -310,6 +242,19 @@ public class MenuBar extends JMenuBar {
 	 */
 	public void updateWithCopy() {
 		paste.setEnabled(!gui.getContext().getClipboard().isEmpty());
+	}
+	
+	/**
+	 * Remove all action listeners from the list of buttons.
+	 * 
+	 * @param buttons The list of buttons to remove action listeners from.
+	 */
+	private static void removeAllActionListeners(AbstractButton[] buttons) {
+		for (AbstractButton button : buttons) {
+			for (ActionListener listener : button.getActionListeners()) {
+				button.removeActionListener(listener);
+			}
+		}
 	}
 	
 }

@@ -6,7 +6,11 @@ import components.display.SelfEdgeData;
 
 import context.GraphBuilderContext;
 
-/** An edge whose endpoints are the same node. */
+/**
+ * An edge whose endpoints are the same node.
+ * 
+ * @author Brian
+ */
 public class SelfEdge extends Edge {
 	
 	/**

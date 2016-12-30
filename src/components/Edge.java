@@ -4,7 +4,11 @@ import structures.OrderedPair;
 import components.display.EdgeData;
 import context.GraphBuilderContext;
 
-/** An instance is an edge of the graph. Visually represented by a line, quadratic bezier curve, or loop. */
+/**
+ * An instance represents an edge component of a graph.
+ * 
+ * @author Brian
+ */
 public abstract class Edge extends GraphComponent {
 	
 	public static final String DEFAULT_TEXT = "";

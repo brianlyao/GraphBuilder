@@ -3,7 +3,11 @@ package components.display;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-/** An instance contains the data for drawing a simple edge on the editor panel. */
+/**
+ * An instance contains the data for drawing a simple edge on the editor panel.
+ * 
+ * @author Brian
+ */
 public class SimpleEdgeData extends EdgeData {
 	
 	// The edge is a quadratic bezier curve OR a linear bezier (in the latter case, control is null)

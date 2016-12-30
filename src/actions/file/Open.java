@@ -6,7 +6,11 @@ import actions.SimpleAction;
 import util.FileUtils;
 import context.GraphBuilderContext;
 
-/** The action of opening a graph from a file. */
+/**
+ * The action of opening a graph from a file.
+ * 
+ * @author Brian
+ */
 public class Open extends SimpleAction {
 	
 	private static final long serialVersionUID = -2252107475208776493L;
@@ -20,7 +24,7 @@ public class Open extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		FileUtils.openFileProcedure(getContext());
+		FileUtils.openFileProcedure(this.getContext());
 	}
 	
 }

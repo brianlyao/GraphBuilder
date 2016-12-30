@@ -5,7 +5,11 @@ import java.awt.Color;
 import components.display.SimpleEdgeData;
 import context.GraphBuilderContext;
 
-/** An edge whose endpoints are two distinct nodes. */
+/**
+ * An edge whose endpoints are two distinct nodes.
+ * 
+ * @author Brian
+ */
 public class SimpleEdge extends Edge {
 	
 	/**

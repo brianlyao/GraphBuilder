@@ -3,7 +3,11 @@ package components.display;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
-/** An instance contains the data for drawing a self-edge on the editor panel. */
+/**
+ * An instance contains the data for drawing a self-edge on the editor panel.
+ * 
+ * @author Brian
+ */
 public class SelfEdgeData extends EdgeData {
 	
 	// A self-edge is drawn as a circular arc

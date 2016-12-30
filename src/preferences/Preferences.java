@@ -1,7 +1,12 @@
 package preferences;
 import java.awt.Color;
 
-/** A class for holding user preferences. Currently, these are hard-coded, but eventually they will be moved to a file. */
+/**
+ * An enum for holding user preferences. Currently, these are hard-coded, but eventually
+ * they will be moved to a configuration file.
+ * 
+ * @author Brian
+ */
 public enum Preferences {
 	
 	LOG_FILE_PATH("log.txt"),

@@ -2,7 +2,11 @@ package components;
 
 import context.GraphBuilderContext;
 
-/** Abstract class for a component of the graph. */
+/**
+ * An abstract class for a component of the graph.
+ * 
+ * @author Brian
+ */
 public abstract class GraphComponent {
 	
 	private int id; // The unique id of this component

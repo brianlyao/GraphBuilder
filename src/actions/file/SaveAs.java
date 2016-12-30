@@ -6,7 +6,12 @@ import actions.SimpleAction;
 import util.FileUtils;
 import context.GraphBuilderContext;
 
-/** The action of "saving as" a graph to a file. */
+/**
+ * The action of saving a graph into a new file, whether it already exists
+ * on disk or not.
+ * 
+ * @author Brian
+ */
 public class SaveAs extends SimpleAction {
 
 	private static final long serialVersionUID = -3695898506602800383L;

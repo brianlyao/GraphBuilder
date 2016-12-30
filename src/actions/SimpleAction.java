@@ -4,7 +4,11 @@ import javax.swing.AbstractAction;
 
 import context.GraphBuilderContext;
 
-/** An instance is an action which can be performed by the user. */
+/**
+ * An abstract class for any action which can be performed by the user.
+ * 
+ * @author Brian
+ */
 public abstract class SimpleAction extends AbstractAction {
 	
 	private static final long serialVersionUID = 2049389041008055018L;

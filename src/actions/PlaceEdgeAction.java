@@ -5,7 +5,11 @@ import java.awt.event.ActionEvent;
 import components.Edge;
 import context.GraphBuilderContext;
 
-/** An instance represents the action of placing a new node on the editor panel. */
+/**
+ * An instance represents the action of placing a new node on the editor panel.
+ * 
+ * @author Brian
+ */
 public class PlaceEdgeAction extends ReversibleAction {
 
 	private static final long serialVersionUID = -8798668276389320870L;

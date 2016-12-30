@@ -1,6 +1,10 @@
 package math;
 
-/** An instance is a single complex number a + bi. */
+/**
+ * An instance is a single complex number a + bi.
+ * 
+ * @author Brian
+ */
 public class Complex {
 	
 	private static final double E = 1e-10; // Epsilon value for floating point errors

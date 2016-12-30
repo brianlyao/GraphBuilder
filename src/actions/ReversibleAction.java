@@ -2,7 +2,11 @@ package actions;
 
 import context.GraphBuilderContext;
 
-/** A reversible form of an action, such as placing a node or drawing an edge. */
+/**
+ *  An abstract class for a reversible (undo-able) action, such as placing a node or drawing an edge.
+ * 
+ * @author Brian
+ */
 public abstract class ReversibleAction extends SimpleAction {
 	
 	private static final long serialVersionUID = 7518755420430185279L;

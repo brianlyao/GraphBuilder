@@ -5,7 +5,11 @@ import java.awt.event.ActionEvent;
 import tool.Tool;
 import context.GraphBuilderContext;
 
-/** An instance represents the procedure of switching to a Tool. */
+/**
+ * An instance represents the procedure of switching to a particular Tool.
+ * 
+ * @author Brian
+ */
 public class SwitchToolAction extends SimpleAction {
 	
 	private static final long serialVersionUID = 2609975848674806840L;

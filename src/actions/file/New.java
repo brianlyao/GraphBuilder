@@ -2,29 +2,29 @@ package actions.file;
 
 import java.awt.event.ActionEvent;
 
-import actions.SimpleAction;
 import util.FileUtils;
 import context.GraphBuilderContext;
+import actions.SimpleAction;
 
 /**
- * The action of saving a graph to a file.
+ * The action of creating a new graph.
  * 
  * @author Brian
  */
-public class Save extends SimpleAction {
-	
-	private static final long serialVersionUID = -5650934166905149191L;
+public class New extends SimpleAction {
+
+	private static final long serialVersionUID = 4771301213349828140L;
 
 	/**
 	 * @param ctxt The context in which this action occurs.
 	 */
-	public Save(GraphBuilderContext ctxt) {
+	public New(GraphBuilderContext ctxt) {
 		super(ctxt);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		FileUtils.saveFileProcedure(this.getContext());
+		FileUtils.newFileProcedure(this.getContext());
 	}
-
+	
 }

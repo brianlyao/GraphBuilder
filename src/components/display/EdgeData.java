@@ -2,7 +2,11 @@ package components.display;
 
 import java.awt.Color;
 
-/** Abstract class for an edge's data. */
+/**
+ * Abstract class for an edge's data.
+ * 
+ * @author Brian
+ */
 public abstract class EdgeData {
 	
 	private Color color; // Edge color

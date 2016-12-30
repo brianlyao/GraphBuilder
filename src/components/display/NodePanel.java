@@ -41,6 +41,11 @@ import ui.Editor;
 import ui.menus.NodeRightClickMenu;
 import util.CoordinateUtils;
 
+/**
+ * The visual panel which represents a node on the editor panel.
+ * 
+ * @author Brian
+ */
 public class NodePanel extends JPanel {
 	
 	private static final long serialVersionUID = 2475149319858394032L;
@@ -55,7 +60,6 @@ public class NodePanel extends JPanel {
 	private Node node;
 	
 	// The editor in which this node is displayed
-//	private Editor editor;
 	private GraphBuilderContext context;
 	
 	private int x; // Location on editor panel
@@ -600,6 +604,11 @@ public class NodePanel extends JPanel {
 		return new Point(x + radius, y + radius);
 	}
 	
+	/**
+	 * Get the text displayed on this node panel.
+	 * 
+	 * @return The text on this panel.
+	 */
 	public String getText() {
 		return text;
 	}

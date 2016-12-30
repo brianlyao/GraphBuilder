@@ -359,6 +359,17 @@ public class Editor extends JPanel {
 	}
 	
 	/**
+	 * Clears all state held by the editor, like the set of selections, the nodes
+	 * currently displayed, the preview edge, etc.
+	 */
+	public void clearState() {
+		selected.clear();
+		nodePanelPosition.clear();
+		this.removeAll();
+		clearPreviewEdge();
+	}
+	
+	/**
 	 * Get the GUI this editor is on.
 	 * 
 	 * @return The GUI instance this editor is on.
