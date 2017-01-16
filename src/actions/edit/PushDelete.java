@@ -23,7 +23,7 @@ public class PushDelete extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (!this.getContext().getGUI().getEditor().getSelections().isEmpty()) {
+		if (!this.getContext().getGUI().getEditor().selectionsEmpty()) {
 			Delete deleteAction = new Delete(this.getContext());
 			deleteAction.actionPerformed(null);
 			this.getContext().pushReversibleAction(deleteAction, true, false);

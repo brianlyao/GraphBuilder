@@ -16,7 +16,6 @@ import util.ClipboardUtils;
 import util.CoordinateUtils;
 import clipboard.Clipboard;
 import components.Edge;
-import components.GraphComponent;
 import components.Node;
 import context.GraphBuilderContext;
 
@@ -32,7 +31,8 @@ public class Paste extends ReversibleAction {
 	private static final int PASTE_OFFSET_X = 30;
 	private static final int PASTE_OFFSET_Y = 30;
 	
-	private Set<GraphComponent> previousSelections;
+	private Set<Node> previousSelectedNodes;
+	private Set<Edge> previousSelectedEdges;
 	
 	private Set<Node> pastedNodes;
 	private Map<UnorderedNodePair, List<Edge>> pastedEdges;
@@ -100,7 +100,8 @@ public class Paste extends ReversibleAction {
 		pastePoint.y += diffY;
 		
 		// Deselect all currently selected
-		previousSelections = new HashSet<>(editor.getSelections());
+		previousSelectedNodes = new HashSet<Node>(editor.getSelections().getKey());
+		previousSelectedEdges = new HashSet<Edge>(editor.getSelectedEdges());
 		editor.removeAllSelections();
 		
 		// Add the new nodes and edges to the context
@@ -146,9 +147,8 @@ public class Paste extends ReversibleAction {
 		// Reselect old selections
 		Editor editor = this.getContext().getGUI().getEditor();
 		editor.removeAllSelections();
-		for (GraphComponent gc : previousSelections) {
-			editor.addSelection(gc);
-		}
+		editor.addSelections(previousSelectedNodes);
+		editor.addSelections(previousSelectedEdges);
 		
 		editor.repaint();
 	}

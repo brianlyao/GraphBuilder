@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import structures.UnorderedNodePair;
+import util.StructureUtils;
 import components.Edge;
 import components.Node;
 import context.GraphBuilderContext;
@@ -69,7 +70,7 @@ public class Clipboard {
 		this.copiedNodes.clear();
 		this.copiedEdges.clear();
 		this.copiedNodes.addAll(copiedNodes);
-		this.copiedEdges.putAll(copiedEdges);
+		this.copiedEdges.putAll(StructureUtils.shallowCopy(copiedEdges));
 		isEmpty = false;
 		numTimesPasted = 0;
 	}

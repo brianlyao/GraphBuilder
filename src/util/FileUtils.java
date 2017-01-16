@@ -33,7 +33,7 @@ public class FileUtils {
 	public static void checkUnsaved(GraphBuilderContext context) {
 		GUI gui = context.getGUI();
 		if (context.isUnsaved()) {
-			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them before opening another file?", "Open: Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
+			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them first?", "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
 			if (resp == JOptionPane.YES_OPTION) {
 				saveFileProcedure(context);
 			}

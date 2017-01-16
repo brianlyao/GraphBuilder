@@ -27,7 +27,7 @@ public class PushDuplicate extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (!this.getContext().getGUI().getEditor().getSelections().isEmpty()) {
+		if (!this.getContext().getGUI().getEditor().selectionsEmpty()) {
 			Duplicate duplicateAction = new Duplicate(this.getContext(), full);
 			duplicateAction.actionPerformed(null);
 			this.getContext().pushReversibleAction(duplicateAction, true, false);

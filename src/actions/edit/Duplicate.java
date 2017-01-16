@@ -7,14 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 import structures.UnorderedNodePair;
 import ui.Editor;
 import util.ClipboardUtils;
 import components.Edge;
-import components.GraphComponent;
 import components.Node;
 import context.GraphBuilderContext;
 import actions.ReversibleAction;
@@ -39,7 +37,9 @@ public class Duplicate extends ReversibleAction {
 	
 	private Map<Node, Node> oldToNew;
 	
-	private Set<GraphComponent> previousSelections;
+//	private Set<GraphComponent> previousSelections;
+	private Set<Node> previousSelectedNodes;
+	private Set<Edge> previousSelectedEdges;
 	
 	private int maxX;
 	private int maxY;
@@ -50,16 +50,16 @@ public class Duplicate extends ReversibleAction {
 	 */
 	public Duplicate(GraphBuilderContext ctxt, boolean full) {
 		super(ctxt);
-		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
-		nodesToDuplicate = pair.getValue0();
-		edgesToDuplicate = pair.getValue1();
+		Editor editor = this.getContext().getGUI().getEditor();
+		nodesToDuplicate = editor.getSelections().getKey();
+		edgesToDuplicate = editor.getSelections().getValue();
 		
 		// Copy nodes and edges
 		Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
 		oldToNew = copyNodes.getValue1();
 		duplicatedNodes = copyNodes.getValue0();
 		if (full) {
-			Map<UnorderedNodePair, List<Edge>> subEdgeMap = ClipboardUtils.getSubEdgeMap(this.getContext(), pair.getValue0());
+			Map<UnorderedNodePair, List<Edge>> subEdgeMap = ClipboardUtils.getSubEdgeMap(this.getContext(), nodesToDuplicate);
 			duplicatedEdges = ClipboardUtils.copyEdges(subEdgeMap, oldToNew);
 		} else {
 			duplicatedEdges = ClipboardUtils.copyEdges(edgesToDuplicate, oldToNew);
@@ -85,7 +85,8 @@ public class Duplicate extends ReversibleAction {
 		}
 		
 		// Deselect all currently selected
-		previousSelections = new HashSet<GraphComponent>(editor.getSelections());
+		previousSelectedNodes = new HashSet<Node>(editor.getSelections().getKey());
+		previousSelectedEdges = new HashSet<Edge>(editor.getSelectedEdges());
 		editor.removeAllSelections();
 		
 		// Add the new nodes and edges to the context
@@ -121,9 +122,8 @@ public class Duplicate extends ReversibleAction {
 		// Reselect old selections
 		Editor editor = this.getContext().getGUI().getEditor();
 		editor.removeAllSelections();
-		for (GraphComponent gc : previousSelections) {
-			editor.addSelection(gc);
-		}
+		editor.addSelections(previousSelectedNodes);
+		editor.addSelections(previousSelectedEdges);
 		
 		editor.repaint();
 	}

@@ -9,17 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import org.javatuples.Triplet;
 
 import components.Edge;
-import components.GraphComponent;
 import components.Node;
 import components.SelfEdge;
 import components.SimpleEdge;
 import context.GraphBuilderContext;
-import structures.OrderedPair;
 import structures.UnorderedNodePair;
 import ui.Editor;
 
@@ -29,59 +26,6 @@ import ui.Editor;
  * @author Brian
  */
 public class ClipboardUtils {
-
-	/**
-	 * Separates the current selections into nodes and edges.
-	 * 
-	 * @param ctxt The context (whose selections) we are copying.
-	 * @return A pair containing the set of copied nodes and the map (from pairs of nodes to lists of edges).
-	 */
-	public static Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> separateSelections(GraphBuilderContext ctxt) {
-		Set<Node> copiedNodes = new HashSet<>();
-		Map<UnorderedNodePair, List<Edge>> copiedEdges = new HashMap<>();
-		
-		// Determine the set of selected nodes
-		for (GraphComponent gc : ctxt.getGUI().getEditor().getSelections()) {
-			if (gc instanceof Node) {
-				copiedNodes.add((Node) gc);
-			}
-		}
-		
-		// Determine the set of selected edges. Each edge must have both endpoints in the set of
-		// copied nodes
-		HashSet<Edge> totalEdges = new HashSet<>();
-		if (!copiedNodes.isEmpty()) {
-			for (GraphComponent gc : ctxt.getGUI().getEditor().getSelections()) {
-				if (gc instanceof Edge) {
-					Edge tempEdge = (Edge) gc;
-					OrderedPair<Node> tempep = tempEdge.getEndpoints();
-					if (copiedNodes.contains(tempep.getFirst()) && copiedNodes.contains(tempep.getSecond())) {
-						totalEdges.add(tempEdge); 
-					}
-				}
-			}
-		}
-		
-		// Sort the edges into a node-pair to edge mapping
-		for (Edge e : totalEdges) {
-			UnorderedNodePair tempPair = new UnorderedNodePair(e);
-			// If this pair has not yet been added to the copied edges, add it
-			if (copiedEdges.get(tempPair) == null) {
-				ArrayList<Edge> newEdgeList = new ArrayList<>();
-				for (Edge inThisPair : ctxt.getEdgeMap().get(tempPair)) {
-					if (totalEdges.contains(inThisPair)) {
-						newEdgeList.add(inThisPair);
-					}	
-				}
-				copiedEdges.put(tempPair, newEdgeList);
-			}
-		}
-		
-		// Update the menu bar
-		ctxt.getGUI().getMainMenuBar().updateWithCopy();
-		
-		return new Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>>(copiedNodes, copiedEdges);
-	}
 	
 	/**
 	 * Delete the selected graph components, and return the necessary data for undoing the deletion.
@@ -94,7 +38,6 @@ public class ClipboardUtils {
 	public static Quartet<Set<Node>, Set<Edge>, Map<UnorderedNodePair, List<Edge>>,
 			Map<UnorderedNodePair, List<Edge>>> deleteSelections(GraphBuilderContext ctxt) {
 		Editor editor = ctxt.getGUI().getEditor();
-		HashSet<GraphComponent> selections = editor.getSelections();
 		
 		Set<Node> deletedNodes = new HashSet<>();
 		Set<Edge> deletedEdges = new HashSet<>();
@@ -102,11 +45,7 @@ public class ClipboardUtils {
 		Map<UnorderedNodePair, List<Edge>> deletedEdgeMap = new HashMap<>();
 		
 		// Get the selected nodes
-		for (GraphComponent gc : selections) {
-			if (gc instanceof Node) {
-				deletedNodes.add((Node) gc);
-			}
-		}
+		deletedNodes.addAll(editor.getSelections().getKey());
 		
 		// Delete the selected nodes
 		for (Node n : deletedNodes) {
@@ -115,20 +54,16 @@ public class ClipboardUtils {
 		}
 		
 		// Get the selected edges
-		for (GraphComponent gc : selections) {
-			if (gc instanceof Edge) {
-				Edge tempEdge = (Edge) gc;
-				UnorderedNodePair tempPair = new UnorderedNodePair(tempEdge);
-				 
-				if (deletedEdgeMap.get(tempPair) == null) {
-					// If the edge we are deleting is not in the edge map, we delete it
-					deletedEdges.add(tempEdge);
-					
-					// Fill the edge map of deleted edges
-					ArrayList<Edge> originalEdges = new ArrayList<>(ctxt.getEdgeMap().get(tempPair));
-					originalEdgeMap.put(tempPair, originalEdges);
-				}	
-			}
+		for (Map.Entry<UnorderedNodePair, List<Edge>> edgeEntry : editor.getSelections().getValue().entrySet()) {
+			UnorderedNodePair tempPair = edgeEntry.getKey();
+			if (deletedEdgeMap.get(tempPair) == null) {
+				// If the edge we are deleting is not in the edge map of deleted edges, we delete it
+				deletedEdges.addAll(edgeEntry.getValue());
+				
+				// Fill the edge map of deleted edges
+				ArrayList<Edge> originalEdges = new ArrayList<>(ctxt.getEdgeMap().get(tempPair));
+				originalEdgeMap.put(tempPair, originalEdges);
+			}	
 		}
 		
 		// Delete the selected edges
@@ -177,7 +112,7 @@ public class ClipboardUtils {
 			ctxt.getEdgeMap().put(ogEntry.getKey(), currentEdgeList);
 		}
 		
-		//Re-select individually deleted edges
+		// Re-select individually deleted edges
 		editor.addSelections(deletedEdges);
 	}
 	

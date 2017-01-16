@@ -5,10 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.javatuples.Pair;
-
 import actions.SimpleAction;
 import structures.UnorderedNodePair;
+import ui.Editor;
 import util.ClipboardUtils;
 import components.Edge;
 import components.Node;
@@ -36,14 +35,15 @@ public class Copy extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> pair = ClipboardUtils.separateSelections(this.getContext());
+		Editor editor = this.getContext().getGUI().getEditor();
+		Set<Node> nodes = editor.getSelections().getKey();
 		Map<UnorderedNodePair, List<Edge>> edges;
 		if (full) {
-			edges = ClipboardUtils.getSubEdgeMap(this.getContext(), pair.getValue0());
+			edges = ClipboardUtils.getSubEdgeMap(this.getContext(), nodes);
 		} else {
-			edges = pair.getValue1();
+			edges = editor.getSelections().getValue();
 		}
-		this.getContext().getClipboard().setContents(pair.getValue0(), edges);
+		this.getContext().getClipboard().setContents(nodes, edges);
 		this.getContext().getGUI().getMainMenuBar().updateWithCopy();
 	}
 	

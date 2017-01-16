@@ -126,7 +126,7 @@ public class GraphBuilderContext {
 	 * @return The map of edges that was removed as a result of this node's removal.
 	 */
 	public Map<UnorderedNodePair, List<Edge>> removeNode(Node n) {
-		// Remove the node from the set of all nodes in this context		
+		// Remove the node from the set of all nodes in this context
 		Map<UnorderedNodePair, List<Edge>> removedSubEdgeMap = graph.removeNode(n);
 		
 		if (gui != null) {
@@ -189,7 +189,7 @@ public class GraphBuilderContext {
 	 * @param e The edge we want to add to add to the graph.
 	 * @return The position of the edge before it was removed.
 	 */
-	public int removeEdge(Edge e) {		
+	public int removeEdge(Edge e) {
 		int index = graph.removeEdge(e);
 		
 		// Remove this edge from its endpoints' data

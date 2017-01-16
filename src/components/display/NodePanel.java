@@ -18,7 +18,6 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import components.Edge;
-import components.GraphComponent;
 import components.Node;
 import components.SelfEdge;
 import components.SimpleEdge;
@@ -139,11 +137,10 @@ public class NodePanel extends JPanel {
 					Tool current = editor.getGUI().getCurrentTool();
 					if (current == Tool.SELECT) {
 						// If this node was clicked while the select tool is held
-						HashSet<GraphComponent> currentSelections = editor.getSelections();
 						if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK || (e.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
 							// If the user was holding down the control or shift keys, add or remove
 							// this node from the set of selections
-							if (currentSelections.contains(sink)) {
+							if (sink.getSelected()) {
 								editor.removeSelection(sink);
 								editor.removeNodePanelEntry(sinkPanel);
 							} else {
@@ -296,10 +293,10 @@ public class NodePanel extends JPanel {
 					// Iterate through all selected nodes, and move them the same amount, bypassing
 					// grid snap to maintain the structure
 					Node thisPanelNode = thisPanel.getNode();
-					for (GraphComponent selection : editor.getSelections()) {
-						if (selection != thisPanelNode && selection instanceof Node) {
+					for (Node selectedNode : editor.getSelections().getKey()) {
+						if (selectedNode != thisPanelNode) {
 							// Compute the new coordinates of the selected nodes, and update them
-							NodePanel selectionNodePanel = ((Node) selection).getNodePanel();
+							NodePanel selectionNodePanel = selectedNode.getNodePanel();
 							int selectionRadius = selectionNodePanel.getRadius();
 							Point newSelectionPoint = new Point(selectionNodePanel.getXCoord() + changeX, selectionNodePanel.getYCoord() + changeY);
 							CoordinateUtils.enforceBoundaries(newSelectionPoint, 0, editor.getWidth() - 2 * selectionRadius, 0, editor.getHeight() - 2 * selectionRadius);

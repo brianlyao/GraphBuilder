@@ -2,7 +2,11 @@ package ui.menus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javafx.util.Pair;
 
 import javax.swing.AbstractButton;
 import javax.swing.JMenu;
@@ -10,7 +14,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import keybindings.KeyActions;
-import components.GraphComponent;
+import components.Edge;
 import components.Node;
 import context.GraphBuilderContext;
 import actions.edit.Copy;
@@ -24,6 +28,8 @@ import actions.file.New;
 import actions.file.Open;
 import actions.file.Save;
 import actions.file.SaveAs;
+import algorithms.Traversals;
+import structures.UnorderedNodePair;
 import ui.GUI;
 import util.FileUtils;
 
@@ -41,6 +47,7 @@ public class MenuBar extends JMenuBar {
 	private JMenu file;
 	private JMenu edit;
 	private JMenu view;
+	private JMenu graph;
 	private JMenu tools;
 	private JMenu help;
 	
@@ -63,15 +70,21 @@ public class MenuBar extends JMenuBar {
 	
 	private JMenuItem grid;
 	
+	private JMenuItem traverse;
+	private JMenuItem traverseUndirected;
+	private JMenuItem classify;
+	private JMenuItem generate;
+	
 	public MenuBar(final GUI g) {
 		super();
 		
 		gui = g;
 		
-		//Initialize and fill menu bar
+		// Initialize and fill menu bar
 		file = new JMenu("File");
 		edit = new JMenu("Edit");
 		view = new JMenu("View");
+		graph = new JMenu("Graph");
 		tools = new JMenu("Tools");
 		help = new JMenu("Help");
 		
@@ -93,6 +106,7 @@ public class MenuBar extends JMenuBar {
 		file.add(saveAsFile);
 		file.add(exit);
 		
+		// Fill "Edit" menu
 		undo = new JMenuItem("Undo");
 		undo.setAccelerator(KeyActions.UNDO);
 		undo.setEnabled(false);
@@ -136,7 +150,7 @@ public class MenuBar extends JMenuBar {
 		edit.add(cutFull);
 		edit.add(delete);
 		
-		// Fill the view menu
+		// Fill "View" menu
 		grid = new JMenuItem("Grid");
 		grid.addActionListener(new ActionListener() {
 			
@@ -149,9 +163,39 @@ public class MenuBar extends JMenuBar {
 		
 		view.add(grid);
 		
+		// Fill "Graph" menu
+		traverse = new JMenuItem("Traverse selected");
+		traverse.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getKey(), true);
+			}
+			
+		});
+		
+		traverseUndirected = new JMenuItem("Traverse selected ignoring direction");
+		traverseUndirected.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getKey(), false);
+			}
+			
+		});
+		
+		classify = new JMenuItem("Classify");
+		generate = new JMenuItem("Generate");
+		
+		graph.add(traverse);
+		graph.add(traverseUndirected);
+		graph.add(classify);
+		graph.add(generate);
+		
 		add(file);
 		add(edit);
 		add(view);
+		add(graph);
 		add(tools);
 		add(help);
 		
@@ -218,20 +262,14 @@ public class MenuBar extends JMenuBar {
 	 * Update the enabled/disabled state of menu items depending on empty/non-empty selection.
 	 */
 	public void updateWithSelection() {
-		HashSet<GraphComponent> selections = gui.getEditor().getSelections();
-		boolean somethingSelected = !selections.isEmpty();
+		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> selections = gui.getEditor().getSelections();
+		boolean somethingSelected = !selections.getKey().isEmpty() && !selections.getValue().isEmpty();
 		copy.setEnabled(somethingSelected);
 		cut.setEnabled(somethingSelected);
 		delete.setEnabled(somethingSelected);
 		duplicate.setEnabled(somethingSelected);
 		
-		boolean nodeSelected = false;
-		for (GraphComponent gc : gui.getEditor().getSelections()) {
-			if (gc instanceof Node) {
-				nodeSelected = true;
-				break;
-			}
-		}
+		boolean nodeSelected = !selections.getKey().isEmpty();
 		copyFull.setEnabled(nodeSelected);
 		duplicateFull.setEnabled(nodeSelected);
 		cutFull.setEnabled(nodeSelected);

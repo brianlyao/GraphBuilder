@@ -1,5 +1,6 @@
 package algorithms;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -48,6 +49,16 @@ public class Traversals {
 			visited.add(visiting);
 		}
 		
+		return visited;
+	}
+	
+	public static Set<Node> traverseConnectedComponents(Collection<Node> startingNodes, boolean followDirected) {
+		Set<Node> visited = new HashSet<>();
+		for (Node start : startingNodes) {
+			if (!visited.contains(start)) {
+				visited.addAll(breadthFirstSearch(start, followDirected));
+			}
+		}
 		return visited;
 	}
 	

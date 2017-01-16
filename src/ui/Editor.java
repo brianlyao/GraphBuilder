@@ -24,6 +24,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javafx.util.Pair;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -65,7 +68,9 @@ public class Editor extends JPanel {
 	
 	private Node edgeBasePoint; // The first node that's selected when drawing an edge
 	
-	private HashSet<GraphComponent> selected; // Set of selections
+//	private HashSet<GraphComponent> selected; // Set of selections
+	private Set<Node> selectedNodes;
+	private Map<UnorderedNodePair, List<Edge>> selectedEdges;
 	
 	private HashMap<NodePanel, Point> nodePanelPosition; // Map from panel to upper left corner position on editor
 	
@@ -82,8 +87,10 @@ public class Editor extends JPanel {
 		super();
 		gui = g;
 		lastMousePoint = new Point(0, 0);
-		selected = new HashSet<>();
-		nodePanelPosition = new HashMap<>();
+//		selected = new HashSet<>();
+		selectedNodes = new HashSet<Node>();
+		selectedEdges = new HashMap<UnorderedNodePair, List<Edge>>();
+		nodePanelPosition = new HashMap<NodePanel, Point>();
 		
 		// Initialize the panel with default settings...
 		setBackground(Color.WHITE);
@@ -145,8 +152,11 @@ public class Editor extends JPanel {
 				
 				if (currentTool == Tool.EDGE_SELECT && closestEdge != null && SwingUtilities.isLeftMouseButton(evt)) {
 					// Select the edge
-					selected.add(closestEdge);
-					closestEdge.setSelected(true);
+					if ((evt.getModifiers() & InputEvent.CTRL_MASK) != InputEvent.CTRL_MASK && (evt.getModifiers() & InputEvent.SHIFT_MASK) != InputEvent.SHIFT_MASK) {
+						// De-select all else if shift and control are not held
+						removeAllSelections();
+					}
+					addSelection(closestEdge);
 					gui.getMainMenuBar().updateWithSelection();
 					repaint(); // To draw the selected look
 				}
@@ -363,7 +373,8 @@ public class Editor extends JPanel {
 	 * currently displayed, the preview edge, etc.
 	 */
 	public void clearState() {
-		selected.clear();
+		selectedNodes.clear();
+		selectedEdges.clear();
 		nodePanelPosition.clear();
 		this.removeAll();
 		clearPreviewEdge();
@@ -442,8 +453,34 @@ public class Editor extends JPanel {
 	 * @param gc The selected component.
 	 */
 	public void addSelection(GraphComponent gc) {
-		selected.add(gc);
 		gc.setSelected(true);
+		if (gc instanceof Node) {
+			// Node case
+			selectedNodes.add((Node) gc);
+		} else {
+			// Edge case
+			Edge selectedEdge = (Edge) gc;
+			UnorderedNodePair key = new UnorderedNodePair(selectedEdge);
+			if (selectedEdges.containsKey(key)) {
+				// Insert this edge into the right position
+				List<Edge> totalList = this.getContext().getEdgeMap().get(key);
+				List<Edge> selectedList = selectedEdges.get(key);
+				int selectionIndex = 0;
+				for (Edge existingEdge : totalList) {
+					if (selectedEdge == existingEdge) {
+						selectedList.add(selectionIndex, selectedEdge);
+						break;
+					} else if (selectedList.contains(existingEdge)) {
+						selectionIndex++;
+					}
+				}
+			} else {
+				// Create new entry
+				List<Edge> newList = new ArrayList<>();
+				newList.add(selectedEdge);
+				selectedEdges.put(key, newList);
+			}
+		}
 	}
 	
 	/**
@@ -463,8 +500,22 @@ public class Editor extends JPanel {
 	 * @param gc The deselected component.
 	 */
 	public void removeSelection(GraphComponent gc) {
-		selected.remove(gc);
 		gc.setSelected(false);
+		if (gc instanceof Node) {
+			// Node case
+			selectedNodes.remove(gc);
+		} else {
+			// Edge case
+			Edge selectedEdge = (Edge) gc;
+			UnorderedNodePair key = new UnorderedNodePair(selectedEdge);
+			List<Edge> selectedList = selectedEdges.get(key);
+			if (selectedList != null) {
+				selectedList.remove(selectedEdge);
+				if (selectedList.isEmpty()) {
+					selectedEdges.remove(key);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -474,8 +525,7 @@ public class Editor extends JPanel {
 	 */
 	public void removeSelections(Collection<? extends GraphComponent> components) {
 		for (GraphComponent gc : components) {
-			selected.remove(gc);
-			gc.setSelected(false);
+			this.removeSelection(gc);
 		}
 	}
 	
@@ -483,13 +533,47 @@ public class Editor extends JPanel {
 	 * Clear all selections.
 	 */
 	public void removeAllSelections() {
-		Iterator<GraphComponent> selectedIterator = selected.iterator();
-		GraphComponent temp;
-		while (selectedIterator.hasNext()) {
-			temp = selectedIterator.next();
-			temp.setSelected(false);
-			selectedIterator.remove();
+		// De-select nodes
+		Iterator<Node> nodeIterator = selectedNodes.iterator();
+		Node tempNode;
+		while (nodeIterator.hasNext()) {
+			tempNode = nodeIterator.next();
+			tempNode.setSelected(false);
+			nodeIterator.remove();
 		}
+		
+		// De-select edges
+		Iterator<Map.Entry<UnorderedNodePair, List<Edge>>> edgeIterator = selectedEdges.entrySet().iterator();
+		Map.Entry<UnorderedNodePair, List<Edge>> tempEntry;
+		while (edgeIterator.hasNext()) {
+			tempEntry = edgeIterator.next();
+			for (Edge inList : tempEntry.getValue()) {
+				inList.setSelected(false);
+			}
+			edgeIterator.remove();
+		}
+	}
+	
+	/**
+	 * Check whether the selections are currently empty.
+	 * 
+	 * @return true iff no graph components are selected.
+	 */
+	public boolean selectionsEmpty() {
+		return selectedNodes.isEmpty() && selectedEdges.isEmpty();
+	}
+	
+	/**
+	 * Get the set of all selected edges.
+	 * 
+	 * @return The set of all selected edges.
+	 */
+	public Set<Edge> getSelectedEdges() {
+		Set<Edge> edgeSet = new HashSet<>();
+		for (List<Edge> edgeList : selectedEdges.values()) {
+			edgeSet.addAll(edgeList);
+		}
+		return edgeSet;
 	}
 	
 	/**
@@ -497,8 +581,8 @@ public class Editor extends JPanel {
 	 * 
 	 * @return The HashSet of selected components.
 	 */
-	public HashSet<GraphComponent> getSelections() {
-		return selected;
+	public Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> getSelections() {
+		return new Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>>(selectedNodes, selectedEdges);
 	}
 	
 	/**
@@ -636,10 +720,8 @@ public class Editor extends JPanel {
 		}
 		
 		// Draw the "selected" look on the selected edge
-		for (GraphComponent gc : selected) {
-			if (gc instanceof Edge) {		
-				// Graphically mark the edge as selected
-				Edge selectedEdge = (Edge) gc;
+		for (Map.Entry<UnorderedNodePair, List<Edge>> edgeEntry : selectedEdges.entrySet()) {
+			for (Edge selectedEdge : edgeEntry.getValue()) {
 				int side = (Integer) Preferences.EDGE_SELECT_SQUARE_SIZE.getData();
 				g2d.setColor((Color) Preferences.EDGE_SELECT_SQUARE_COLOR.getData());
 				if (selectedEdge instanceof SimpleEdge) {
@@ -648,10 +730,11 @@ public class Editor extends JPanel {
 					g2d.fillOval((int) (pts[0].x - side / 2.0), (int) (pts[0].y - side / 2.0), side, side);
 					g2d.fillOval((int) (pts[2].x - side / 2.0), (int) (pts[2].y - side / 2.0), side, side);
 					Point2D.Double mid;
-					if (pts[1] != null)
+					if (pts[1] != null) {
 						mid = getBezierPoint(pts, 0.5);
-					else
+					} else {
 						mid = new Point2D.Double((pts[0].x + pts[2].x) / 2.0, (pts[0].y + pts[2].y) / 2.0);
+					}
 					g2d.fillOval((int) (mid.x - side / 2.0), (int) (mid.y - side / 2.0), side, side);
 				}
 			}
