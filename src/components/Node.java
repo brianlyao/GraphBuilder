@@ -2,7 +2,9 @@ package components;
 
 import java.awt.Color;
 import java.awt.Point;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import components.display.NodePanel;
@@ -18,9 +20,9 @@ public class Node extends GraphComponent {
 	// The JPanel containing this node's visual appearance
 	private NodePanel nodePanel;
 	
-	private HashSet<Edge> undirectedEdges;
-	private HashSet<Edge> outgoingDirectedEdges;
-	private HashSet<Edge> incomingDirectedEdges;
+	private Map<Node, Set<Edge>> undirectedEdges;
+	private Map<Node, Set<Edge>> outgoingDirectedEdges;
+	private Map<Node, Set<Edge>> incomingDirectedEdges;
 	
 	/**
 	 * Creates a node with the specified visual location, radius, text, color, border color, and text color.
@@ -39,9 +41,9 @@ public class Node extends GraphComponent {
 		super(ctxt, id);
 		nodePanel = new NodePanel(x, y, r, txt, c, lc, tc, ctxt, this);
 		
-		undirectedEdges = new HashSet<Edge>();
-		outgoingDirectedEdges = new HashSet<Edge>();
-		incomingDirectedEdges = new HashSet<Edge>();
+		undirectedEdges = new HashMap<Node, Set<Edge>>();
+		outgoingDirectedEdges = new HashMap<Node, Set<Edge>>();
+		incomingDirectedEdges = new HashMap<Node, Set<Edge>>();
 		
 		// This component should be de-selected on creation
 		setSelected(false);
@@ -56,9 +58,9 @@ public class Node extends GraphComponent {
 		super(node.getContext());
 		nodePanel = new NodePanel(node.getNodePanel(), this);
 		
-		undirectedEdges = new HashSet<Edge>();
-		outgoingDirectedEdges = new HashSet<Edge>();
-		incomingDirectedEdges = new HashSet<Edge>();
+		undirectedEdges = new HashMap<Node, Set<Edge>>();
+		outgoingDirectedEdges = new HashMap<Node, Set<Edge>>();
+		incomingDirectedEdges = new HashMap<Node, Set<Edge>>();
 	}
 	
 	/**
@@ -76,13 +78,23 @@ public class Node extends GraphComponent {
 	 * @param e The edge to add.
 	 */
 	public void addEdge(Edge e) {
+		Node other = e.getOtherEndpoint(this);
 		if (!e.isDirected()) {
-			undirectedEdges.add(e);
+			if (!undirectedEdges.containsKey(other)) {
+				undirectedEdges.put(other, new HashSet<Edge>());
+			}
+			undirectedEdges.get(other).add(e);
 		} else {
 			if (e.getEndpoints().getFirst() == this) {
-				outgoingDirectedEdges.add(e);
-			} else if (e.getEndpoints().getSecond() == this){
-				incomingDirectedEdges.add(e);
+				if (!outgoingDirectedEdges.containsKey(other)) {
+					outgoingDirectedEdges.put(other, new HashSet<Edge>());
+				}
+				outgoingDirectedEdges.get(other).add(e);
+			} else if (e.getEndpoints().getSecond() == this) {
+				if (!incomingDirectedEdges.containsKey(other)) {
+					incomingDirectedEdges.put(other, new HashSet<Edge>());
+				}
+				incomingDirectedEdges.get(other).add(e);
 			}
 		}
 	}
@@ -105,29 +117,35 @@ public class Node extends GraphComponent {
 	}
 	
 	/**
-	 * Get the set of undirected edges sharing this node as an endpoint.
+	 * Get the map of undirected edges sharing this node as an endpoint.
+	 * The map's key is the endpoint of the edge which is not this node.
+	 * The value of the map is a set of edges.
 	 * 
 	 * @return The set of connected undirected edges.
 	 */
-	public Set<Edge> getUndirectedEdges() {
+	public Map<Node, Set<Edge>> getUndirectedEdges() {
 		return undirectedEdges;
 	}
 	
 	/**
-	 * Get the set of directed edges leaving this node.
+	 * Get the map of directed edges leaving this node.
+	 * The map's key is the endpoint of the edge which is not this node.
+	 * The value of the map is a set of edges.
 	 * 
 	 * @return The set of outgoing directed edges.
 	 */
-	public Set<Edge> getOutgoingDirectedEdges() {
+	public Map<Node, Set<Edge>> getOutgoingDirectedEdges() {
 		return outgoingDirectedEdges;
 	}
 	
 	/**
-	 * Get the set of directed edges entering this node.
+	 * Get the map of directed edges entering this node.
+	 * The map's key is the endpoint of the edge which is not this node.
+	 * The value of the map is a set of edges.
 	 * 
 	 * @return The set of incoming directed edges.
 	 */
-	public Set<Edge> getIncomingDirectedEdges() {
+	public Map<Node, Set<Edge>> getIncomingDirectedEdges() {
 		return incomingDirectedEdges;
 	}
 	
@@ -136,31 +154,37 @@ public class Node extends GraphComponent {
 	 * may choose to disregard neighbors linked only by a directed edge pointing toward
 	 * this node. 
 	 * 
-	 * @param followDirected true if we want to disregard neighbors with a directed edge
+	 * @param followDirected true if we want to disregard neighbors with only directed edges
 	 *                       toward this node, false otherwise.
 	 * @return The set of neighbor nodes.
 	 */
 	public Set<Node> getNeighbors(boolean followDirected) {
 		Set<Node> neighbors = new HashSet<>();
-		for (Edge e : undirectedEdges) {
-			Node n = e.getOtherEndpoint(this);
-			if (!neighbors.contains(n)) {
-				neighbors.add(n);
+		for (Set<Edge> edgeSet : undirectedEdges.values()) {
+			for (Edge e : edgeSet) {
+				Node n = e.getOtherEndpoint(this);
+				if (!neighbors.contains(n)) {
+					neighbors.add(n);
+				}
 			}
 		}
 		
-		for (Edge e : outgoingDirectedEdges) {
-			Node n = e.getOtherEndpoint(this);
-			if (!neighbors.contains(n)) {
-				neighbors.add(n);
+		for (Set<Edge> edgeSet : outgoingDirectedEdges.values()) {
+			for (Edge e : edgeSet) {
+				Node n = e.getOtherEndpoint(this);
+				if (!neighbors.contains(n)) {
+					neighbors.add(n);
+				}
 			}
 		}
 		
 		if (!followDirected) {
-			for (Edge e : incomingDirectedEdges) {
-				Node n = e.getOtherEndpoint(this);
-				if (!neighbors.contains(n)) {
-					neighbors.add(n);
+			for (Set<Edge> edgeSet : incomingDirectedEdges.values()) {
+				for (Edge e : edgeSet) {
+					Node n = e.getOtherEndpoint(this);
+					if (!neighbors.contains(n)) {
+						neighbors.add(n);
+					}
 				}
 			}
 		}

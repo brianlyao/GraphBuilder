@@ -11,6 +11,7 @@ import java.util.Set;
 import structures.UnorderedNodePair;
 import components.Edge;
 import components.Node;
+import components.WeightedEdge;
 
 /**
  * A class for a graph data structure.
@@ -41,6 +42,39 @@ public class Graph {
 	 */
 	public boolean hasConstraint(int constraint) {
 		return (constraints & constraint) == constraint;
+	}
+	
+	/**
+	 * Check if the graph contains the specified node.
+	 * 
+	 * @param node The node to check.
+	 * @return true iff this graph contains the specified node.
+	 */
+	public boolean containsNode(Node node) {
+		return nodes.contains(node);
+	}
+	
+	/**
+	 * Get the numeric weight for a particular edge. If the graph is
+	 * unweighted, give a weight of 1.0 by default.
+	 * 
+	 * @param edge The edge whose weight to return.
+	 * @return The numeric weight represented as a Double.
+	 */
+	@SuppressWarnings("unchecked")
+	public Double getWeight(Edge edge) {
+		if (this.hasConstraint(GraphConstraint.INTEGER_WEIGHTED)) {
+			WeightedEdge<Integer> intEdge = (WeightedEdge<Integer>) edge;
+			Integer intWeight = (Integer) intEdge.getWeight();
+			return intWeight.doubleValue();
+		} else if (this.hasConstraint(GraphConstraint.DOUBLE_WEIGHTED)) {
+			WeightedEdge<Double> doubleEdge = (WeightedEdge<Double>) edge;
+			Double doubleWeight = (Double) doubleEdge.getWeight();
+			return doubleWeight;
+		} else {
+			// Default case: weight of 1.0
+			return 1.0;
+		}
 	}
 	
 	/**
