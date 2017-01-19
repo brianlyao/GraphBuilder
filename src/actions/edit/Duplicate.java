@@ -51,8 +51,8 @@ public class Duplicate extends ReversibleAction {
 	public Duplicate(GraphBuilderContext ctxt, boolean full) {
 		super(ctxt);
 		Editor editor = this.getContext().getGUI().getEditor();
-		nodesToDuplicate = editor.getSelections().getKey();
-		edgesToDuplicate = editor.getSelections().getValue();
+		nodesToDuplicate = editor.getSelections().getValue0();
+		edgesToDuplicate = editor.getSelections().getValue1();
 		
 		// Copy nodes and edges
 		Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
@@ -85,7 +85,7 @@ public class Duplicate extends ReversibleAction {
 		}
 		
 		// Deselect all currently selected
-		previousSelectedNodes = new HashSet<Node>(editor.getSelections().getKey());
+		previousSelectedNodes = new HashSet<Node>(editor.getSelections().getValue0());
 		previousSelectedEdges = new HashSet<Edge>(editor.getSelectedEdges());
 		editor.removeAllSelections();
 		

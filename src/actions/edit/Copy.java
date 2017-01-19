@@ -36,12 +36,12 @@ public class Copy extends SimpleAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Editor editor = this.getContext().getGUI().getEditor();
-		Set<Node> nodes = editor.getSelections().getKey();
+		Set<Node> nodes = editor.getSelections().getValue0();
 		Map<UnorderedNodePair, List<Edge>> edges;
 		if (full) {
 			edges = ClipboardUtils.getSubEdgeMap(this.getContext(), nodes);
 		} else {
-			edges = editor.getSelections().getValue();
+			edges = editor.getSelections().getValue1();
 		}
 		this.getContext().getClipboard().setContents(nodes, edges);
 		this.getContext().getGUI().getMainMenuBar().updateWithCopy();

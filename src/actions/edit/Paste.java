@@ -100,7 +100,7 @@ public class Paste extends ReversibleAction {
 		pastePoint.y += diffY;
 		
 		// Deselect all currently selected
-		previousSelectedNodes = new HashSet<Node>(editor.getSelections().getKey());
+		previousSelectedNodes = new HashSet<Node>(editor.getSelections().getValue0());
 		previousSelectedEdges = new HashSet<Edge>(editor.getSelectedEdges());
 		editor.removeAllSelections();
 		

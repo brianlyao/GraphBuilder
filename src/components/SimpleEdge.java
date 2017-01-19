@@ -1,7 +1,5 @@
 package components;
 
-import java.awt.Color;
-
 import components.display.SimpleEdgeData;
 import context.GraphBuilderContext;
 
@@ -26,14 +24,13 @@ public class SimpleEdge extends Edge {
 	/**
 	 * @param n1       The first node endpoint.
 	 * @param n2       The second node endpoint.
-	 * @param c        The edge's color.
-	 * @param w        The edge's weight.
+	 * @param data     The display data associated with this edge.
 	 * @param directed Whether this edge is directed.
 	 * @param ctxt     The context (graph) this edge exists in.
 	 * 
 	 */
-	public SimpleEdge(Node n1, Node n2, Color c, int w, String txt, boolean directed, GraphBuilderContext ctxt, int id) {
-		super(n1, n2, new SimpleEdgeData(c, w, txt), directed, ctxt, id);
+	public SimpleEdge(Node n1, Node n2, SimpleEdgeData data, boolean directed, GraphBuilderContext ctxt, int id) {
+		super(n1, n2, data, directed, ctxt, id);
 	}
 	
 	/**

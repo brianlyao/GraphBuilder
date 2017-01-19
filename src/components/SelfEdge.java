@@ -1,7 +1,5 @@
 package components;
 
-import java.awt.Color;
-
 import components.display.SelfEdgeData;
 
 import context.GraphBuilderContext;
@@ -33,8 +31,8 @@ public class SelfEdge extends Edge {
 	 * @param directed Whether this edge is directed.
 	 * @param id       The id this node is assigned.
 	 */
-	public SelfEdge(Node node, Color c, int w, String txt, double offsetAngle, boolean directed, GraphBuilderContext ctxt, int id) {
-		super(node, node, new SelfEdgeData(c, w, txt, offsetAngle), directed, ctxt, id);
+	public SelfEdge(Node node, SelfEdgeData data, boolean directed, GraphBuilderContext ctxt, int id) {
+		super(node, node, data, directed, ctxt, id);
 	}
 	
 	/**

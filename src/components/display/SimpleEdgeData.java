@@ -33,9 +33,9 @@ public class SimpleEdgeData extends EdgeData {
 	/**
 	 * Instantiate a data object for a simple edge. Should only be invoked by the SimpleEdge constructor.
 	 * 
-	 * @param simpleEdge The simple edge this data describes.
-	 * @param c          The edge's visual color.
-	 * @param w          The edge's visual weight (thickness).
+	 * @param c   The edge's visual color.
+	 * @param w   The edge's visual weight (thickness).
+	 * @param txt The text associated with this edge.
 	 */
 	public SimpleEdgeData(Color c, int w, String txt) {
 		super(c, w, txt);
@@ -69,6 +69,5 @@ public class SimpleEdgeData extends EdgeData {
 	public Point2D.Double[] getBezierPoints() {
 		return new Point2D.Double[] {p1, control, p2};
 	}
-
 	
 }

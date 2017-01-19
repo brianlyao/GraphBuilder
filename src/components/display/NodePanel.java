@@ -73,12 +73,13 @@ public class NodePanel extends JPanel {
 	private boolean hovering; // True when the mouse is hovering over the circle
 	
 	/**
-	 * Copy constructor.
+	 * Copy constructor. By default, the panel is put into the
+	 * same context as the original.
 	 * 
 	 * @param np The node panel to copy.
 	 */
-	public NodePanel(NodePanel np, Node newNode) {
-		this(np.x, np.y, np.radius, new String(np.text), new Color(np.fillColor.getRGB()), new Color(np.borderColor.getRGB()), new Color(np.textColor.getRGB()), np.context, newNode);
+	public NodePanel(NodePanel np) {
+		this(np.x, np.y, np.radius, new String(np.text), new Color(np.fillColor.getRGB()), new Color(np.borderColor.getRGB()), new Color(np.textColor.getRGB()), np.context);
 	}
 	
 	/**
@@ -93,9 +94,8 @@ public class NodePanel extends JPanel {
 	 * @param lc   The border color of the circle.
 	 * @param tc   The color of the circle's text.
 	 * @param ctxt The context (graph) this node is a part of.
-	 * @param n    The node this panel belongs to.
 	 */
-	public NodePanel(int x, int y, int r, String txt, Color c, Color lc, Color tc, GraphBuilderContext ctxt, Node n) {
+	public NodePanel(int x, int y, int r, String txt, Color c, Color lc, Color tc, GraphBuilderContext ctxt) {
 		this.x = x;
 		this.y = y;
 		radius = r;
@@ -104,7 +104,6 @@ public class NodePanel extends JPanel {
 		borderColor = lc;
 		textColor = tc;
 		context = ctxt;
-		node = n;
 		
 		hovering = false;
 		
@@ -176,9 +175,11 @@ public class NodePanel extends JPanel {
 							// Check if the edge should be a self-edge
 							if (sink == source) {
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
-								newEdge = new SelfEdge(sink, currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, angle, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
+								SelfEdgeData selfEdgeData = new SelfEdgeData(currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, angle);
+								newEdge = new SelfEdge(sink, selfEdgeData, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
 							} else {
-								newEdge = new SimpleEdge(sink, source, currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
+								SimpleEdgeData simpleEdgeData = new SimpleEdgeData(currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT);
+								newEdge = new SimpleEdge(sink, source, simpleEdgeData, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
 							}
 							
 							// Compute the position of this edge (only matters if it is a simple edge)
@@ -293,7 +294,7 @@ public class NodePanel extends JPanel {
 					// Iterate through all selected nodes, and move them the same amount, bypassing
 					// grid snap to maintain the structure
 					Node thisPanelNode = thisPanel.getNode();
-					for (Node selectedNode : editor.getSelections().getKey()) {
+					for (Node selectedNode : editor.getSelections().getValue0()) {
 						if (selectedNode != thisPanelNode) {
 							// Compute the new coordinates of the selected nodes, and update them
 							NodePanel selectionNodePanel = selectedNode.getNodePanel();
@@ -315,7 +316,7 @@ public class NodePanel extends JPanel {
 				if (containsPoint(e.getPoint())) {
 					hovering = true;
 					
-					// Draw preview edges correctly
+					// Draw preview edges
 					if (editor.getEdgeBasePoint() != null) {
 						NodePanel ebpPanel = editor.getEdgeBasePoint().getNodePanel();
 						Tool ctool = editor.getGUI().getCurrentTool();
@@ -332,12 +333,14 @@ public class NodePanel extends JPanel {
 								int edgePosition = getEdgePosition(NodePanel.this, ebpPanel, e.getPoint(), existingEdges);
 								
 								// Create edge and set it as the preview
-								SimpleEdge preview = new SimpleEdge(node, ebpPanel.node, previewColor, weight, Edge.DEFAULT_TEXT, directed, editor.getContext(), -1);
+								SimpleEdgeData previewData = new SimpleEdgeData(previewColor, weight, Edge.DEFAULT_TEXT);
+								SimpleEdge preview = new SimpleEdge(node, ebpPanel.node, previewData, directed, editor.getContext(), -1);
 								editor.setPreviewEdge(preview, edgePosition, true);
 							} else {
 								// Compute the preview for a self edge
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
-								SelfEdge preview = new SelfEdge(node, previewColor, weight, Edge.DEFAULT_TEXT, angle,  directed, editor.getContext(), -1);
+								SelfEdgeData previewData = new SelfEdgeData(previewColor, weight, Edge.DEFAULT_TEXT, angle);
+								SelfEdge preview = new SelfEdge(node, previewData, directed, editor.getContext(), -1);
 								editor.setPreviewEdge(preview, -1, true);
 							}
 							editor.repaint(); // Repaint editor to update preview edge
@@ -353,6 +356,7 @@ public class NodePanel extends JPanel {
 					editor.setPreviewEdge(null, -1, false);
 					editor.repaint();
 				}
+				
 				repaint(); // Redraw things like bounding boxes
 			}
 			
@@ -396,7 +400,7 @@ public class NodePanel extends JPanel {
 			double boundAngle = (spreadAngle * (numExistingEdges - 1)) / 2.0;
 			if (angleFromCenters > boundAngle) {
 				edgePosition = numExistingEdges;
-			} else if(angleFromCenters < -boundAngle) {
+			} else if (angleFromCenters < -boundAngle) {
 				edgePosition = 0;
 			} else {
 				edgePosition = (int) ((angleFromCenters + boundAngle) / spreadAngle) + 1;
@@ -436,8 +440,9 @@ public class NodePanel extends JPanel {
 		double diffCenterX = (mouseEvent.x - n.radius) / distCenter;
 		double diffCenterY = (mouseEvent.y - n.radius) / distCenter;
 		double angle = Math.acos(diffCenterX * defaultX + diffCenterY * defaultY);
-		if(mouseEvent.y < n.radius)
+		if (mouseEvent.y < n.radius) {
 			angle *= -1;
+		}
 		return angle;
 	}
 	
@@ -458,6 +463,15 @@ public class NodePanel extends JPanel {
 	 */
 	public Node getNode() {
 		return node;
+	}
+	
+	/**
+	 * Set the node this panel is displaying.
+	 * 
+	 * @param n The node displayed on this panel.
+	 */
+	public void setNode(Node n) {
+		node = n;
 	}
 	
 	/** 
@@ -651,19 +665,21 @@ public class NodePanel extends JPanel {
 			// Draw various "hover" visual effects
 			Editor editor = context.getGUI().getEditor();
 			Tool current = editor.getGUI().getCurrentTool();
-			if (current == Tool.EDGE){
+			if (current == Tool.EDGE) {
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if(editor.getEdgeBasePoint() == null)
+				if(editor.getEdgeBasePoint() == null) {
 					g2d.setColor((Color) Preferences.LINE_START_COLOR.getData());
-				else
+				} else {
 					g2d.setColor((Color) Preferences.LINE_END_COLOR.getData());
+				}
 				g2d.draw(bounds);
 			} else if (current == Tool.DIRECTED_EDGE) {
 				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if(editor.getEdgeBasePoint() == null)
+				if(editor.getEdgeBasePoint() == null) {
 					g2d.setColor((Color) Preferences.ARROW_START_COLOR.getData());
-				else
+				} else {
 					g2d.setColor((Color) Preferences.ARROW_END_COLOR.getData());
+				}
 				g2d.draw(bounds);
 			}
 		}

@@ -15,6 +15,9 @@ import components.Edge;
 import components.Node;
 import components.SelfEdge;
 import components.SimpleEdge;
+import components.display.NodePanel;
+import components.display.SelfEdgeData;
+import components.display.SimpleEdgeData;
 import context.GraphBuilderContext;
 
 /**
@@ -99,7 +102,9 @@ public class FileLoader {
 		Color fillColor = new Color(Integer.parseInt(vals[5]));
 		Color borderColor = new Color(Integer.parseInt(vals[6]));
 		Color textColor = new Color(Integer.parseInt(vals[7]));
-		Node restored = new Node(x, y, radius, text, fillColor, borderColor, textColor, context, id);
+		
+		NodePanel panel = new NodePanel(x, y, radius, text, fillColor, borderColor, textColor, context);
+		Node restored = new Node(context, id, panel);
 		return restored;
 	}
 	
@@ -125,14 +130,16 @@ public class FileLoader {
 		if (idnode1 == idnode2) {
 			// Restoring self edge
 			double offsetAngle = Double.parseDouble(vals[6]); // Extra field
-			Edge newSelfEdge = new SelfEdge(node1, color, weight, text, offsetAngle, directed, context, id);
+			SelfEdgeData selfData = new SelfEdgeData(color, weight, text, offsetAngle);
+			Edge newSelfEdge = new SelfEdge(node1, selfData, directed, context, id);
 			newSelfEdge.setID(id);
 			return newSelfEdge;
 		}
 		Node node2 = (Node) context.getIdMap().get(idnode2);
 		
 		// Restoring simple edge
-		Edge newSimpleEdge = new SimpleEdge(node1, node2, color, weight, text, directed, context, id);
+		SimpleEdgeData simpleData = new SimpleEdgeData(color, weight, text);
+		Edge newSimpleEdge = new SimpleEdge(node1, node2, simpleData, directed, context, id);
 		newSimpleEdge.setID(id);
 		return newSimpleEdge;
 	}

@@ -35,7 +35,7 @@ public class NodeRightClickMenu {
 		copy.addActionListener(new Copy(ctxt, false));
 		
 		JMenuItem copyFull = new JMenuItem("Copy full subgraph");
-		boolean nodeIsSelected = !ctxt.getGUI().getEditor().getSelections().getKey().isEmpty();
+		boolean nodeIsSelected = !ctxt.getGUI().getEditor().getSelections().getValue0().isEmpty();
 		copyFull.setEnabled(nodeIsSelected);
 		copyFull.addActionListener(new Copy(ctxt, true));
 		

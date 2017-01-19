@@ -45,7 +45,7 @@ public class ClipboardUtils {
 		Map<UnorderedNodePair, List<Edge>> deletedEdgeMap = new HashMap<>();
 		
 		// Get the selected nodes
-		deletedNodes.addAll(editor.getSelections().getKey());
+		deletedNodes.addAll(editor.getSelections().getValue0());
 		
 		// Delete the selected nodes
 		for (Node n : deletedNodes) {
@@ -54,7 +54,7 @@ public class ClipboardUtils {
 		}
 		
 		// Get the selected edges
-		for (Map.Entry<UnorderedNodePair, List<Edge>> edgeEntry : editor.getSelections().getValue().entrySet()) {
+		for (Map.Entry<UnorderedNodePair, List<Edge>> edgeEntry : editor.getSelections().getValue1().entrySet()) {
 			UnorderedNodePair tempPair = edgeEntry.getKey();
 			if (deletedEdgeMap.get(tempPair) == null) {
 				// If the edge we are deleting is not in the edge map of deleted edges, we delete it

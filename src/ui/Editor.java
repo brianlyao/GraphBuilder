@@ -26,12 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javafx.util.Pair;
-
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+
+import org.javatuples.Pair;
 
 import math.Complex;
 import preferences.Preferences;
@@ -142,7 +142,8 @@ public class Editor extends JPanel {
 						placed = new Point(Math.max(0, lastMousePoint.x - currentRadius), Math.max(0, lastMousePoint.y - currentRadius));
 					}
 					// By default, the new node has no text
-					Node newNode = new Node(placed.x, placed.y, currentRadius, "", colors[0], colors[1], colors[2], gui.getContext(), gui.getContext().getNextIDAndInc());
+					NodePanel newPanel = new NodePanel(placed.x, placed.y, currentRadius, Node.DEFAULT_TEXT, colors[0], colors[1], colors[2], gui.getContext());
+					Node newNode = new Node(gui.getContext(), gui.getContext().getNextIDAndInc(), newPanel);
 					
 					// Perform the action for placing a node
 					PlaceNodeAction placeAction = new PlaceNodeAction(gui.getContext(), newNode);

@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javafx.util.Pair;
-
 import javax.swing.AbstractButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+
+import org.javatuples.Pair;
 
 import keybindings.KeyActions;
 import components.Edge;
@@ -169,7 +169,7 @@ public class MenuBar extends JMenuBar {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getKey(), true);
+				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getValue0(), true);
 			}
 			
 		});
@@ -179,7 +179,7 @@ public class MenuBar extends JMenuBar {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getKey(), false);
+				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getValue0(), false);
 			}
 			
 		});
@@ -263,13 +263,13 @@ public class MenuBar extends JMenuBar {
 	 */
 	public void updateWithSelection() {
 		Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> selections = gui.getEditor().getSelections();
-		boolean somethingSelected = !selections.getKey().isEmpty() && !selections.getValue().isEmpty();
+		boolean somethingSelected = !selections.getValue0().isEmpty() || !selections.getValue1().isEmpty();
 		copy.setEnabled(somethingSelected);
 		cut.setEnabled(somethingSelected);
 		delete.setEnabled(somethingSelected);
 		duplicate.setEnabled(somethingSelected);
 		
-		boolean nodeSelected = !selections.getKey().isEmpty();
+		boolean nodeSelected = !selections.getValue0().isEmpty();
 		copyFull.setEnabled(nodeSelected);
 		duplicateFull.setEnabled(nodeSelected);
 		cutFull.setEnabled(nodeSelected);

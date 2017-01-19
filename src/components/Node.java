@@ -1,6 +1,5 @@
 package components;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,6 +16,8 @@ import context.GraphBuilderContext;
  */
 public class Node extends GraphComponent {
 	
+	public static final String DEFAULT_TEXT = "";
+	
 	// The JPanel containing this node's visual appearance
 	private NodePanel nodePanel;
 	
@@ -25,27 +26,22 @@ public class Node extends GraphComponent {
 	private Map<Node, Set<Edge>> incomingDirectedEdges;
 	
 	/**
-	 * Creates a node with the specified visual location, radius, text, color, border color, and text color.
+	 * Creates a node within the given context, with the given id and panel
+	 * containing the node's visual appearance.
 	 * 
-	 * @param x    The x-coordinate of the circle's top left corner.
-	 * @param y    The y-coordinate of the circle's top left corner.
-	 * @param r    The radius of the circle in pixels.
-	 * @param txt  The text displayed on the circle.
-	 * @param c    The fill color of the circle.
-	 * @param lc   The border color of the circle.
-	 * @param tc   The color of the circle's text.
-	 * @param ctxt The context (graph) this node is a part of.
-	 * @param id   The id this node is assigned.
+	 * @param ctxt  The context this node belongs to.
+	 * @param id    The id assigned to this node.
+	 * @param panel The panel with the node's appearance on the Editor.
 	 */
-	public Node(int x, int y, int r, String txt, Color c, Color lc, Color tc, GraphBuilderContext ctxt, int id) {
+	public Node(GraphBuilderContext ctxt, int id, NodePanel panel) {
 		super(ctxt, id);
-		nodePanel = new NodePanel(x, y, r, txt, c, lc, tc, ctxt, this);
+		nodePanel = panel;
+		nodePanel.setNode(this);
 		
 		undirectedEdges = new HashMap<Node, Set<Edge>>();
 		outgoingDirectedEdges = new HashMap<Node, Set<Edge>>();
 		incomingDirectedEdges = new HashMap<Node, Set<Edge>>();
 		
-		// This component should be de-selected on creation
 		setSelected(false);
 	}
 	
@@ -55,12 +51,7 @@ public class Node extends GraphComponent {
 	 * @param node The node to copy.
 	 */
 	public Node(Node node) {
-		super(node.getContext());
-		nodePanel = new NodePanel(node.getNodePanel(), this);
-		
-		undirectedEdges = new HashMap<Node, Set<Edge>>();
-		outgoingDirectedEdges = new HashMap<Node, Set<Edge>>();
-		incomingDirectedEdges = new HashMap<Node, Set<Edge>>();
+		this(node.getContext(), node.getContext().getNextIDAndInc(), new NodePanel(node.nodePanel));
 	}
 	
 	/**
