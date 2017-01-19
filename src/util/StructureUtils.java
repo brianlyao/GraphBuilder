@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A class containing data structure-related utility methods.
@@ -24,6 +25,19 @@ public class StructureUtils {
 			newMap.put(entry.getKey(), new ArrayList<V>(entry.getValue()));
 		}
 		return newMap;
+	}
+	
+	/**
+	 * Return an arbitrary element from a set.
+	 * 
+	 * @param set The set to retrieve an element from.
+	 * @return An arbitrary element of the set.
+	 */
+	public static <E> E randomElement(Set<E> set) {
+		if (set.isEmpty()) {
+			return null;
+		}
+		return set.iterator().next();
 	}
 	
 }
