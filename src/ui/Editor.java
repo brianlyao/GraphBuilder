@@ -34,6 +34,7 @@ import javax.swing.SwingUtilities;
 import org.javatuples.Pair;
 
 import math.Complex;
+import math.CubicFormula;
 import preferences.Preferences;
 import structures.OrderedPair;
 import structures.UnorderedNodePair;
@@ -68,7 +69,6 @@ public class Editor extends JPanel {
 	
 	private Node edgeBasePoint; // The first node that's selected when drawing an edge
 	
-//	private HashSet<GraphComponent> selected; // Set of selections
 	private Set<Node> selectedNodes;
 	private Map<UnorderedNodePair, List<Edge>> selectedEdges;
 	
@@ -87,7 +87,7 @@ public class Editor extends JPanel {
 		super();
 		gui = g;
 		lastMousePoint = new Point(0, 0);
-//		selected = new HashSet<>();
+		
 		selectedNodes = new HashSet<Node>();
 		selectedEdges = new HashMap<UnorderedNodePair, List<Edge>>();
 		nodePanelPosition = new HashMap<NodePanel, Point>();
@@ -214,7 +214,7 @@ public class Editor extends JPanel {
 					// Get the edgemap
 					Map<UnorderedNodePair, List<Edge>> em = gui.getContext().getEdgeMap();
 					
-					// Iterate through the edgemap
+					// Iterate through the edges
 					for (UnorderedNodePair endpoints : em.keySet()) {
 						// Get set of edges between first and second
 						List<Edge> betweenTwo = em.get(endpoints);
@@ -245,8 +245,9 @@ public class Editor extends JPanel {
 									    // Only 3 candidates: both endpoints and the intersection of the edge and the line perpendicular to the edge which passes through the cursor
 										double[] dists = new double[3];
 										Point2D.Double[] points = {c1, new Point2D.Double(intersectx, intersecty), c2};
-										for (int i = 0 ; i < dists.length ; i++)
+										for (int i = 0 ; i < dists.length ; i++) {
 											dists[i] = points[i].distance(clickd);
+										}
 										
 										// If the closest point on the line is NOT actually on the line segment
 										if (t < 0 || t > 1) {
@@ -290,23 +291,8 @@ public class Editor extends JPanel {
 									double n4 = (c - a)*(a - x) + (d - b)*(b - y);
 									
 									// Compute the roots of the equation n1x^3 + n2x^2 + n3x + n4 = 0
-									Complex[] roots = new Complex[3];
-									Complex disc0 = new Complex(n2*n2 - 3*n1*n3);
-									Complex disc1 = new Complex(2*n2*n2*n2 - 9*n1*n2*n3 + 27*n1*n1*n4);
-									Complex incbrt = null;
-									if (disc0.isZero()) {
-										incbrt = disc1;
-										if (disc1.getReal() < 0) {
-											incbrt = incbrt.neg();
-										}
-									} else {
-										incbrt = disc1.add(disc1.pow(2).subtract(disc0.pow(3).scale(4)).sqrt()[0]).scale(0.5); 
-									}
-									Complex[] cbrts = incbrt.cbrt();
-									Complex B = new Complex(n2);
-									for (int i = 0 ; i < 3 ; i++)
-										roots[i] = B.add(cbrts[i]).add(disc0.divide(cbrts[i])).scale(-1 / (3 * n1));
-									
+									Complex[] roots = CubicFormula.getRoots(n1, n2, n3, n4);
+										
 									// Temporary holder of the points corresponding to the REAL roots of the cubic
 									ArrayList<Point2D.Double> candidateClosestPoints = new ArrayList<Point2D.Double>();
 									
@@ -415,10 +401,11 @@ public class Editor extends JPanel {
 	 * @param y The y coordinate of the new position.
  	 */
 	public void setLastMousePoint(int x, int y) {
-		if (lastMousePoint != null)
+		if (lastMousePoint != null) {
 			lastMousePoint.setLocation(x, y);
-		else
+		} else {
 			lastMousePoint = new Point(x, y);
+		}
 	}
 	
 	/**
@@ -578,9 +565,10 @@ public class Editor extends JPanel {
 	}
 	
 	/**
-	 * Get the set of all selected components.
+	 * Get the set of all selected components. The node and
+	 * edge selections are wrapped together as a Pair.
 	 * 
-	 * @return The HashSet of selected components.
+	 * @return The Pair, containing a set of selected nodes and map of selected edges.
 	 */
 	public Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>> getSelections() {
 		return new Pair<Set<Node>, Map<UnorderedNodePair, List<Edge>>>(selectedNodes, selectedEdges);
@@ -589,9 +577,10 @@ public class Editor extends JPanel {
 	/**
 	 * Set the editor's preview edge and the preview edge's position
 	 * 
-	 * @param edge     The edge object representing the preview edge.
-	 * @param position The position of the preview edge relative to the existing edges between the
-	 *                 the same endpoints the preview edge has.
+	 * @param edge        The edge object representing the preview edge.
+	 * @param position    The position of the preview edge relative to the existing edges between the
+	 *                    the same endpoints the preview edge has.
+	 * @param useThisEdge Set to true if we want to draw the preview edge in the first place.
 	 */
 	public void setPreviewEdge(Edge edge, int position, boolean useThisEdge) {
 		previewEdge = edge;
