@@ -24,6 +24,7 @@ public class Node extends GraphComponent {
 	private Map<Node, Set<Edge>> undirectedEdges;
 	private Map<Node, Set<Edge>> outgoingDirectedEdges;
 	private Map<Node, Set<Edge>> incomingDirectedEdges;
+	private Set<SelfEdge> selfEdges;
 	
 	/**
 	 * Creates a node within the given context, with the given id and panel
@@ -41,8 +42,7 @@ public class Node extends GraphComponent {
 		undirectedEdges = new HashMap<Node, Set<Edge>>();
 		outgoingDirectedEdges = new HashMap<Node, Set<Edge>>();
 		incomingDirectedEdges = new HashMap<Node, Set<Edge>>();
-		
-		setSelected(false);
+		selfEdges = new HashSet<>();
 	}
 	
 	/**
@@ -70,6 +70,13 @@ public class Node extends GraphComponent {
 	 */
 	public void addEdge(Edge e) {
 		Node other = e.getOtherEndpoint(this);
+		if (e instanceof SelfEdge && this == other) {
+			// Self edge case
+			selfEdges.add((SelfEdge) e);
+			return;
+		}
+		
+		// Handle simple edges
 		if (!e.isDirected()) {
 			if (!undirectedEdges.containsKey(other)) {
 				undirectedEdges.put(other, new HashSet<Edge>());
@@ -96,15 +103,56 @@ public class Node extends GraphComponent {
 	 * @param e The edge to remove.
 	 */
 	public void removeEdge(Edge e) {
+		Node other = e.getOtherEndpoint(this);
+		if (e instanceof SelfEdge && this == other) {
+			// Self edge case
+			selfEdges.remove(e);
+			return;
+		}
+		
+		// Handle simple edges
 		if (!e.isDirected()) {
-			undirectedEdges.remove(e);
+			Set<Edge> toNeighborUndirected = undirectedEdges.get(other); 
+			if (toNeighborUndirected == null || toNeighborUndirected.isEmpty()) {
+				undirectedEdges.remove(other);
+			} else {
+				if (toNeighborUndirected.isEmpty()) {
+					undirectedEdges.remove(other);
+				}
+			}
 		} else {
 			if (e.getEndpoints().getFirst() == this) {
-				outgoingDirectedEdges.remove(e);
-			} else if (e.getEndpoints().getSecond() == this){
-				incomingDirectedEdges.remove(e);
+				Set<Edge> toNeighbor = outgoingDirectedEdges.get(other); 
+				if (toNeighbor == null || toNeighbor.isEmpty()) {
+					outgoingDirectedEdges.remove(other);
+				} else {
+					toNeighbor.remove(e);
+					if (toNeighbor.isEmpty()) {
+						outgoingDirectedEdges.remove(other);
+					}
+				}
+			} else if (e.getEndpoints().getSecond() == this) {
+				Set<Edge> fromNeighbor = incomingDirectedEdges.get(other); 
+				if (fromNeighbor == null || fromNeighbor.isEmpty()) {
+					incomingDirectedEdges.remove(other);
+				} else {
+					fromNeighbor.remove(e);
+					if (fromNeighbor.isEmpty()) {
+						incomingDirectedEdges.remove(other);
+					}
+				}
 			}
 		} 
+	}
+	
+	/**
+	 * Get the set of ALL self edges with this node as both endpoints. This
+	 * includes both undirected and directed self edges.
+	 * 
+	 * @return The set of self edges with this node as both endpoints.
+	 */
+	public Set<SelfEdge> getSelfEdges() {
+		return selfEdges;
 	}
 	
 	/**
@@ -138,6 +186,39 @@ public class Node extends GraphComponent {
 	 */
 	public Map<Node, Set<Edge>> getIncomingDirectedEdges() {
 		return incomingDirectedEdges;
+	}
+	
+	/**
+	 * Get a map of the edges from this node to this neighbors. We may disregard
+	 * incoming directed edges if we want. The returned map will not contain any
+	 * self edges.
+	 * 
+	 * @param followDirected true iff we want to disregard incoming directed edges.
+	 * @return A map of edges from this node to its neighbors.
+	 */
+	public Map<Node, Set<Edge>> getNeighboringEdges(boolean followDirected) {
+		Map<Node, Set<Edge>> neighboring = new HashMap<>(undirectedEdges);
+		for (Map.Entry<Node, Set<Edge>> outEntry : outgoingDirectedEdges.entrySet()) {
+			Set<Edge> neighborValue = neighboring.get(outEntry.getKey());
+			if (neighborValue == null) {
+				neighboring.put(outEntry.getKey(), outEntry.getValue());
+			} else {
+				neighborValue.addAll(outEntry.getValue());
+			}
+		}
+		
+		if (!followDirected) {
+			for (Map.Entry<Node, Set<Edge>> inEntry : incomingDirectedEdges.entrySet()) {
+				Set<Edge> neighborValue = neighboring.get(inEntry.getKey());
+				if (neighborValue == null) {
+					neighboring.put(inEntry.getKey(), inEntry.getValue());
+				} else {
+					neighborValue.addAll(inEntry.getValue());
+				}
+			}
+		}
+		
+		return neighboring;
 	}
 	
 	/**

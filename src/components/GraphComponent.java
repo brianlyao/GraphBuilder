@@ -21,6 +21,7 @@ public abstract class GraphComponent {
 	public GraphComponent(GraphBuilderContext ctxt) {
 		id = ctxt.getNextIDAndInc();
 		ctxt.getIdMap().put(id, this);
+		selected = false;
 		
 //		this.priority = 0;
 		this.context = ctxt;
@@ -33,6 +34,7 @@ public abstract class GraphComponent {
 	public GraphComponent(GraphBuilderContext ctxt, int id) {
 		this.id = id;
 		ctxt.getIdMap().put(id, this);
+		selected = false;
 		
 //		this.priority = 0;
 		this.context = ctxt;

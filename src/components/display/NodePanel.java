@@ -48,6 +48,8 @@ public class NodePanel extends JPanel {
 	
 	private static final long serialVersionUID = 2475149319858394032L;
 	
+	public static final NodePanel PLACEHOLDER = new NodePanel(0, 0, 0, "", null, null, null, new GraphBuilderContext(0));
+	
 	// Constants for maintaining a smooth appearance
 	private static final int BORDER_THICKNESS = 2;
 	private static final int SELECTED_BORDER_THICKNESS = 1;

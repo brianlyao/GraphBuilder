@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import structures.OrderedPair;
 import structures.UnorderedNodePair;
 import components.Edge;
 import components.Node;
@@ -115,7 +116,7 @@ public class Graph {
 		UnorderedNodePair key = new UnorderedNodePair(e);
 		boolean simple = this.hasConstraint(GraphConstraint.SIMPLE);
 		boolean multigraph = this.hasConstraint(GraphConstraint.MULTIGRAPH);
-		if (!edges.containsKey(key)) {
+		if (edges.get(key) == null) {
 			// If the key is not already in the map
 			if (simple) { 
 				edges.put(key, Collections.singletonList(e));
@@ -124,7 +125,7 @@ public class Graph {
 			}
 		} else if (simple) {
 			// Simple graph restriction violated
-			return false;
+			throw new IllegalArgumentException("Cannot add edge if the graph is to remain simple.");
 		}
 		
 		if (multigraph) {
@@ -138,6 +139,11 @@ public class Graph {
 			edges.get(key).add(insertionIndex, e);
 		}
 		
+		// Add this edge to its endpoints' data
+		OrderedPair<Node> endpoints = e.getEndpoints();
+		endpoints.getFirst().addEdge(e);
+		endpoints.getSecond().addEdge(e);
+		
 		return true;
 	}
 	
@@ -150,10 +156,15 @@ public class Graph {
 	 *         graphs.
 	 */
 	public int removeEdge(Edge e) {
+		// Remove this edge from its endpoints' data
+		OrderedPair<Node> endpoints = e.getEndpoints();
+		endpoints.getFirst().removeEdge(e);
+		endpoints.getSecond().removeEdge(e);
+		
 		UnorderedNodePair key = new UnorderedNodePair(e);
-		if (edges.get(key) != null && edges.get(key).contains(e)) {
+		List<Edge> pairEdges = edges.get(key);
+		if (pairEdges != null && pairEdges.contains(e)) {
 			// If the edge e is in the graph...
-			List<Edge> pairEdges = edges.get(key);
 			if (pairEdges.size() == 1) {
 				// If there is only one edge to remove (includes simple graph case)
 				edges.remove(key);
@@ -164,7 +175,8 @@ public class Graph {
 				pairEdges.remove(removedIndex);
 				return removedIndex;
 			}
-		}
+		}	
+		
 		return -1;
 	}
 	
@@ -231,6 +243,30 @@ public class Graph {
 			}
 		}
 		return subgraph;
+	}
+	
+	/**
+	 * Return an adjacency list representation of this graph in the form of a
+	 * string. The format for each node is:
+	 * 
+	 * nodeid:neighbor0,neighbor1,neighbor2,...
+	 * 
+	 * where each value is an integer id. If there are no neighbors, there is
+	 * no semicolon.
+	 * 
+	 * @return The adjacency list for this graph.
+	 */
+	public String asAdjacencyList() {
+		String list = "";
+		for (Node n : nodes) {
+			String nodeString = n.getID() + ":";
+			for (Node neighbor : n.getNeighbors(true)) {
+				nodeString += neighbor.getID() + ",";
+			}
+			list += nodeString.substring(0, nodeString.length() - 1) + '\n';
+		}
+		return list;
+		
 	}
 	
 }

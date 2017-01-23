@@ -177,10 +177,6 @@ public class GraphBuilderContext {
 		} else {
 			addTo.add(position, e);
 		}
-		
-		// Add this edge to its endpoints' data
-		ends.getFirst().addEdge(e);
-		ends.getSecond().addEdge(e);
 	}
 	
 	/** 
@@ -191,11 +187,6 @@ public class GraphBuilderContext {
 	 */
 	public int removeEdge(Edge e) {
 		int index = graph.removeEdge(e);
-		
-		// Remove this edge from its endpoints' data
-		OrderedPair<Node> endpoints = e.getEndpoints();
-		endpoints.getFirst().removeEdge(e);
-		endpoints.getSecond().removeEdge(e);
 		
 		// Remove the edge from selections
 		this.getGUI().getEditor().removeSelection(e);
