@@ -69,25 +69,18 @@ public class CycleAlgorithms {
 
 		unvisited.remove(n);
 		visiting.add(n);
-		for (Map.Entry<Node, Set<Edge>> edgeEntry : n.getNeighboringEdges(false).entrySet()) {
-			Node neighbor = edgeEntry.getKey();
+		for (Node neighbor : n.getNeighbors(true)) {
 			if (!parents.containsKey(neighbor)) {
 				parents.put(neighbor, n);
 			}
 			
-			int undirected = 0;
-			int outgoing = 0;
-			int incoming = 0;
-			for (Edge adjEdge : edgeEntry.getValue()) {
-				if (!adjEdge.isDirected()) {
-					undirected++;
-				} else if (adjEdge.getEndpoints().getFirst() == n) {
-					outgoing++;
-				} else {
-					incoming++;
-				}
-			}
-			
+			Set<Edge> undirectedEdges = n.getUndirectedEdges().get(neighbor);
+			int undirected = undirectedEdges == null ? 0 : undirectedEdges.size();
+			Set<Edge> outgoingEdges = n.getOutgoingDirectedEdges().get(neighbor);
+			int outgoing = outgoingEdges == null ? 0 : outgoingEdges.size();
+			Set<Edge> incomingEdges = n.getIncomingDirectedEdges().get(neighbor);
+			int incoming = incomingEdges == null ? 0 : incomingEdges.size();
+
 			if (undirected > 1 || (undirected > 0 && (outgoing > 0 || incoming > 0)) || (outgoing > 0 && incoming > 0)) {
 				// Cycle between two nodes
 				if (DEBUG) {
