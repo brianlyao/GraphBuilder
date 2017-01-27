@@ -19,7 +19,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -57,7 +56,6 @@ public class NewGraphDialog extends JDialog {
 	private JPanel constraintPanel;
 	private JRadioButton simple;
 	private JRadioButton multigraph;
-	private JCheckBox allowLoops;
 	
 	private JPanel weightPanel;
 	private JRadioButton unweighted;
@@ -138,19 +136,8 @@ public class NewGraphDialog extends JDialog {
 		constraintGroup.add(simple);
 		constraintGroup.add(multigraph);
 		
-		allowLoops = new JCheckBox("Allow loop edges?");
-		allowLoops.addItemListener(new ItemListener() {
-			
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				constraints ^= GraphConstraint.LOOPS_ALLOWED;
-			}
-			
-		});
-		
 		constraintPanel.add(simple);
 		constraintPanel.add(multigraph);
-		constraintPanel.add(allowLoops);
 		
 		// Create the panel with edge type settings
 		edgePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -314,7 +301,6 @@ public class NewGraphDialog extends JDialog {
 		// Initialize with default settings
 		graphTypeComboBox.setSelectedIndex(0);
 		simple.setSelected(true);
-		allowLoops.setSelected(false);
 		onlyUndirected.setSelected(true);
 		unweighted.setSelected(true);
 		
@@ -402,7 +388,6 @@ public class NewGraphDialog extends JDialog {
 		} else {
 			dialog.onlyUndirected.setSelected(true);
 		}
-		dialog.allowLoops.setSelected(oldGraph.hasConstraint(GraphConstraint.LOOPS_ALLOWED));
 		if (oldGraph.hasConstraint(GraphConstraint.INTEGER_WEIGHTED)) {
 			dialog.intWeighted.setSelected(true);
 		} else if (oldGraph.hasConstraint(GraphConstraint.DOUBLE_WEIGHTED)) {
@@ -417,7 +402,7 @@ public class NewGraphDialog extends JDialog {
 		dialog.setVisible(false);
 		dialog.dispose();
 		if (option == OK_OPTION) {
-			// Check to see whether the current graph violates new constraints
+			// TODO: Check to see whether the current graph violates new constraints
 			return constraints;
 		} else {
 			return null;

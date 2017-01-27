@@ -190,7 +190,7 @@ public class NodePanel extends JPanel {
 							
 							// Add the new edge between the chosen nodes if no constraints are violated
 							Graph currentGraph = editor.getContext().getGraph();
-							boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.LOOPS_ALLOWED) && newEdge instanceof SelfEdge;
+							boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.MULTIGRAPH) && newEdge instanceof SelfEdge;
 							boolean violatesSimple = currentGraph.hasConstraint(GraphConstraint.SIMPLE) && pairEdges != null;
 							if (!violatesLoops && !violatesSimple) {
 								PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);

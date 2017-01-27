@@ -628,7 +628,7 @@ public class Editor extends JPanel {
 		// Check if the preview edge's endpoint pair exists in the edge map
 		// If not, then we need to draw it separately
 		Graph currentGraph = this.getContext().getGraph();
-		boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.LOOPS_ALLOWED) && previewEdge instanceof SelfEdge;
+		boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.MULTIGRAPH) && previewEdge instanceof SelfEdge;
 		if (previewEdge != null) {
 			UnorderedNodePair previewPair = new UnorderedNodePair(previewEdge);
 			if (!edgeMap.containsKey(previewPair)) {
