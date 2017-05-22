@@ -19,7 +19,7 @@ public abstract class GraphComponent {
 	 * @param ctxt The context in which this component is initialized.
 	 */
 	public GraphComponent(GraphBuilderContext ctxt) {
-		id = ctxt.getNextIDAndInc();
+		id = ctxt.getNextIdAndInc();
 		ctxt.getIdMap().put(id, this);
 		selected = false;
 		

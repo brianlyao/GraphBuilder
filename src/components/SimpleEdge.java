@@ -11,14 +11,14 @@ import context.GraphBuilderContext;
 public class SimpleEdge extends Edge {
 	
 	/**
-	 * Copy constructor. New endpoints are required, as shallow copies cannot be maintained.
+	 * Copy constructor. Requires the new endpoint nodes for the copied edge.
 	 * 
 	 * @param se        The simple edge to copy.
 	 * @param firstEnd  The new first endpoint of this edge.
 	 * @param secondEnd The new second endpoint of this edge.
 	 */
 	public SimpleEdge(SimpleEdge se, Node firstEnd, Node secondEnd) {
-		super(firstEnd, secondEnd, new SimpleEdgeData(se.getData()), se.isDirected(), se.getContext(), se.getContext().getNextIDAndInc());
+		super(firstEnd, secondEnd, se.getData() == null ? null : new SimpleEdgeData(se.getData()), se.isDirected(), se.getContext(), se.getContext().getNextIdAndInc());
 	}
 	
 	/**
@@ -27,7 +27,6 @@ public class SimpleEdge extends Edge {
 	 * @param data     The display data associated with this edge.
 	 * @param directed Whether this edge is directed.
 	 * @param ctxt     The context (graph) this edge exists in.
-	 * 
 	 */
 	public SimpleEdge(Node n1, Node n2, SimpleEdgeData data, boolean directed, GraphBuilderContext ctxt, int id) {
 		super(n1, n2, data, directed, ctxt, id);

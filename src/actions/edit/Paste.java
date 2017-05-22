@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.awt.Point;
 
-import org.javatuples.Triplet;
+import org.javatuples.Pair;
 
 import actions.ReversibleAction;
 import structures.UnorderedNodePair;
@@ -59,11 +59,12 @@ public class Paste extends ReversibleAction {
 	public Paste(GraphBuilderContext ctxt) {
 		super(ctxt);
 		Clipboard currentClipboard = this.getContext().getClipboard();
-		Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(currentClipboard.getNodes());
+		Pair<Set<Node>, Map<Node, Node>> copyNodes = ClipboardUtils.copyNodes(currentClipboard.getNodes());
 		pastedNodes = copyNodes.getValue0();
 		oldToNew = copyNodes.getValue1();
-		maxX = copyNodes.getValue2().x;
-		maxY = copyNodes.getValue2().y;
+		Point lowerLeft = ClipboardUtils.lowerLeftCorner(currentClipboard.getNodes());
+		maxX = lowerLeft.x;
+		maxY = lowerLeft.y;
 		originalCenterOfMass = CoordinateUtils.centerOfMass(currentClipboard.getNodes());
 		pastedEdges = ClipboardUtils.copyEdges(currentClipboard.getEdges(), oldToNew);
 	}

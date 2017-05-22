@@ -178,10 +178,10 @@ public class NodePanel extends JPanel {
 							if (sink == source) {
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
 								SelfEdgeData selfEdgeData = new SelfEdgeData(currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT, angle);
-								newEdge = new SelfEdge(sink, selfEdgeData, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
+								newEdge = new SelfEdge(sink, selfEdgeData, directed, editor.getContext(), editor.getContext().getNextIdAndInc());
 							} else {
 								SimpleEdgeData simpleEdgeData = new SimpleEdgeData(currentLineColor, currentLineWeight, Edge.DEFAULT_TEXT);
-								newEdge = new SimpleEdge(sink, source, simpleEdgeData, directed, editor.getContext(), editor.getContext().getNextIDAndInc());
+								newEdge = new SimpleEdge(sink, source, simpleEdgeData, directed, editor.getContext(), editor.getContext().getNextIdAndInc());
 							}
 							
 							// Compute the position of this edge (only matters if it is a simple edge)

@@ -143,7 +143,7 @@ public class Editor extends JPanel {
 					}
 					// By default, the new node has no text
 					NodePanel newPanel = new NodePanel(placed.x, placed.y, currentRadius, Node.DEFAULT_TEXT, colors[0], colors[1], colors[2], gui.getContext());
-					Node newNode = new Node(gui.getContext(), gui.getContext().getNextIDAndInc(), newPanel);
+					Node newNode = new Node(gui.getContext(), gui.getContext().getNextIdAndInc(), newPanel);
 					
 					// Perform the action for placing a node
 					PlaceNodeAction placeAction = new PlaceNodeAction(gui.getContext(), newNode);

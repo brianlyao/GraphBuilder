@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.javatuples.Triplet;
+import org.javatuples.Pair;
 
 import structures.UnorderedNodePair;
 import ui.Editor;
@@ -37,7 +37,6 @@ public class Duplicate extends ReversibleAction {
 	
 	private Map<Node, Node> oldToNew;
 	
-//	private Set<GraphComponent> previousSelections;
 	private Set<Node> previousSelectedNodes;
 	private Set<Edge> previousSelectedEdges;
 	
@@ -55,7 +54,7 @@ public class Duplicate extends ReversibleAction {
 		edgesToDuplicate = editor.getSelections().getValue1();
 		
 		// Copy nodes and edges
-		Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
+		Pair<Set<Node>, Map<Node, Node>> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
 		oldToNew = copyNodes.getValue1();
 		duplicatedNodes = copyNodes.getValue0();
 		if (full) {
@@ -65,8 +64,9 @@ public class Duplicate extends ReversibleAction {
 			duplicatedEdges = ClipboardUtils.copyEdges(edgesToDuplicate, oldToNew);
 		}
 		
-		maxX = copyNodes.getValue2().x;
-		maxY = copyNodes.getValue2().y;
+		Point lowerLeft = ClipboardUtils.lowerLeftCorner(nodesToDuplicate);
+		maxX = lowerLeft.x;
+		maxY = lowerLeft.y;
 	}
 
 	@Override

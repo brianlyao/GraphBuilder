@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.javatuples.Pair;
 import org.javatuples.Quartet;
-import org.javatuples.Triplet;
 
 import components.Edge;
 import components.Node;
@@ -137,27 +137,40 @@ public class ClipboardUtils {
 	}
 	
 	/**
+	 * Given a collection of nodes, find the lower left corner of the bounding
+	 * box containing the nodes' visual panels.
+	 * 
+	 * @param nodes The collection of nodes.
+	 * @return a Point representing the lower left corner of the bounding box.
+	 */
+	public static Point lowerLeftCorner(Collection<Node> nodes) {
+		int maxX = 0;
+		int maxY = 0;
+		for (Node n : nodes) {
+			maxX = Math.max(maxX, n.getNodePanel().getXCoord() + 2 * n.getNodePanel().getRadius());
+			maxY = Math.max(maxY, n.getNodePanel().getYCoord() + 2 * n.getNodePanel().getRadius());
+		}
+		
+		return new Point(maxX, maxY);
+	}
+	
+	/**
 	 * Create copies of the provided nodes.
 	 * 
 	 * @param oldNodes The nodes we want to make copies of.
-	 * @return A triplet of: the set of new nodes, a mapping from the old nodes to their new copies,
-	 *         and a point signifying the bottom right corner of the bounding box of the old nodes.
+	 * @return A pair of: the set of new nodes, and a mapping from the old nodes
+	 *         to their new copies.
 	 */
-	public static Triplet<Set<Node>, Map<Node, Node>, Point> copyNodes(Collection<Node> oldNodes) {
-		int maxX = 0;
-		int maxY = 0;
+	public static Pair<Set<Node>, Map<Node, Node>> copyNodes(Collection<Node> oldNodes) {
 		Set<Node> newNodes = new HashSet<>();
 		Map<Node, Node> oldToNew = new HashMap<>();
 		for (Node n : oldNodes) {
 			Node newNode = new Node(n);
 			newNodes.add(newNode);
 			oldToNew.put(n, newNode);
-			
-			maxX = Math.max(maxX, n.getNodePanel().getXCoord() + 2 * n.getNodePanel().getRadius());
-			maxY = Math.max(maxY, n.getNodePanel().getYCoord() + 2 * n.getNodePanel().getRadius());
 		}
 		
-		return new Triplet<Set<Node>, Map<Node, Node>, Point>(newNodes, oldToNew, new Point(maxX, maxY));
+		return new Pair<Set<Node>, Map<Node, Node>>(newNodes, oldToNew);
 	}
 
 	/**

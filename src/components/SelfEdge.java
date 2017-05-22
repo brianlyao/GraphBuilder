@@ -18,7 +18,7 @@ public class SelfEdge extends Edge {
 	 * @param newNode The new endpoint of this self-edge, since a "shallow" copy cannot be maintained.
 	 */
 	public SelfEdge(SelfEdge se, Node newNode) {
-		super(newNode, newNode, new SelfEdgeData(se.getData()), se.isDirected(), se.getContext(), se.getContext().getNextIDAndInc());
+		super(newNode, newNode, new SelfEdgeData(se.getData()), se.isDirected(), se.getContext(), se.getContext().getNextIdAndInc());
 	}
 	
 	/**

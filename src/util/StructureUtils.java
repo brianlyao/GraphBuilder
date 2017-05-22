@@ -33,7 +33,7 @@ public class StructureUtils {
 	 * @param set The set to retrieve an element from.
 	 * @return An arbitrary element of the set.
 	 */
-	public static <E> E randomElement(Set<E> set) {
+	public static <E> E arbitraryElement(Set<E> set) {
 		if (set.isEmpty()) {
 			return null;
 		}

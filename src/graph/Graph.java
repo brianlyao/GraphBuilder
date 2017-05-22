@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.javatuples.Pair;
+
 import structures.OrderedPair;
 import structures.UnorderedNodePair;
+import util.ClipboardUtils;
 import components.Edge;
 import components.Node;
 import components.WeightedEdge;
@@ -25,6 +28,20 @@ public class Graph {
 	
 	private Set<Node> nodes;
 	private Map<UnorderedNodePair, List<Edge>> edges;
+	
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param graph The graph to create a copy of.
+	 */
+	public Graph(Graph graph) {
+		constraints = graph.constraints;
+		
+		// Make copies of the components from the given graph
+		Pair<Set<Node>, Map<Node, Node>> copiedNodes = ClipboardUtils.copyNodes(graph.nodes);
+		nodes = copiedNodes.getValue0();
+		edges = ClipboardUtils.copyEdges(graph.edges, copiedNodes.getValue1());
+	}
 	
 	/**
 	 * Create an empty graph with the provided constraints.
@@ -53,6 +70,38 @@ public class Graph {
 	 */
 	public boolean containsNode(Node node) {
 		return nodes.contains(node);
+	}
+	
+	/**
+	 * Checks if the graph is empty. The graph is empty if it has no nodes.
+	 * 
+	 * @return true iff the graph is empty.
+	 */
+	public boolean isEmpty() {
+		return nodes.isEmpty();
+	}
+	
+	/**
+	 * Get the number of nodes in this graph.
+	 * 
+	 * @return The number of nodes in this graph.
+	 */
+	public int nodeCount() {
+		return nodes.size();
+	}
+	
+	/**
+	 * Get the number of edges in this graph. Every edge, directed or not, is
+	 * counted separately.
+	 * 
+	 * @return The total number of edges in this graph.
+	 */
+	public int edgeCount() {
+		int numEdges = 0;
+		for (List<Edge> edgeList : edges.values()) {
+			numEdges += edgeList.size();
+		}
+		return numEdges;
 	}
 	
 	/**
@@ -100,9 +149,11 @@ public class Graph {
 			UnorderedNodePair key = new UnorderedNodePair(neighbor, n);
 			if (edges.get(key) != null) {
 				List<Edge> removedEdgeList = edges.remove(key);
+				System.out.println(removedEdgeList);
 				removedEdgeMap.put(key, removedEdgeList);
 			}
 		}
+		nodes.remove(n);
 		return removedEdgeMap;
 	}
 	
@@ -135,8 +186,13 @@ public class Graph {
 				return false;
 			}
 			
-			Integer insertionIndex = (Integer) data;
-			edges.get(key).add(insertionIndex, e);
+			if (data == null || !(data instanceof Integer)) {
+				// For non-integer data, just append the edge
+				edges.get(key).add(e);
+			} else {
+				Integer insertionIndex = (Integer) data;
+				edges.get(key).add(insertionIndex, e);
+			}
 		}
 		
 		// Add this edge to its endpoints' data

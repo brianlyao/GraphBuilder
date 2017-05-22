@@ -27,17 +27,13 @@ public class Node extends GraphComponent {
 	private Set<SelfEdge> selfEdges;
 	
 	/**
-	 * Creates a node within the given context, with the given id and panel
-	 * containing the node's visual appearance.
+	 * Creates a node within the given context, with the given id.
 	 * 
-	 * @param ctxt  The context this node belongs to.
-	 * @param id    The id assigned to this node.
-	 * @param panel The panel with the node's appearance on the Editor.
+	 * @param ctxt The context this node belongs to.
+	 * @param id   The id assigned to this node.
 	 */
-	public Node(GraphBuilderContext ctxt, int id, NodePanel panel) {
+	public Node(GraphBuilderContext ctxt, int id) {
 		super(ctxt, id);
-		nodePanel = panel;
-		nodePanel.setNode(this);
 		
 		undirectedEdges = new HashMap<Node, Set<Edge>>();
 		outgoingDirectedEdges = new HashMap<Node, Set<Edge>>();
@@ -46,12 +42,30 @@ public class Node extends GraphComponent {
 	}
 	
 	/**
-	 * Copy constructor.
+	 * Creates a node within the given context, with the given id and panel
+	 * containing the node's visual appearance.
+	 * 
+	 * @param ctxt  The context this node belongs to.
+	 * @param id    The id assigned to this node.
+	 * @param panel The panel with the node's appearance on the Editor.
+	 */
+	public Node(GraphBuilderContext ctxt, int id, NodePanel panel) {
+		this(ctxt, id);
+		
+		if (panel != null) {
+			nodePanel = panel;
+			nodePanel.setNode(this);
+		}
+	}
+	
+	/**
+	 * Copy constructor. The ID of the copied node will be different from the original.
 	 * 
 	 * @param node The node to copy.
 	 */
 	public Node(Node node) {
-		this(node.getContext(), node.getContext().getNextIDAndInc(), new NodePanel(node.nodePanel));
+		this(node.getContext(), node.getContext().getNextIdAndInc(),
+				node.getNodePanel() == null ? null : new NodePanel(node.nodePanel));
 	}
 	
 	/**
@@ -116,6 +130,7 @@ public class Node extends GraphComponent {
 			if (toNeighborUndirected == null || toNeighborUndirected.isEmpty()) {
 				undirectedEdges.remove(other);
 			} else {
+				toNeighborUndirected.remove(e);
 				if (toNeighborUndirected.isEmpty()) {
 					undirectedEdges.remove(other);
 				}
@@ -143,6 +158,34 @@ public class Node extends GraphComponent {
 				}
 			}
 		} 
+	}
+	
+	public int numSelfEdges() {
+		return selfEdges.size();
+	}
+	
+	public int numUndirectedEdges() {
+		int count = 0;
+		for (Set<Edge> edgeSet : undirectedEdges.values()) {
+			count += edgeSet.size();
+		}
+		return count;
+	}
+	
+	public int numOutgoingDirectedEdges() {
+		int count = 0;
+		for (Set<Edge> edgeSet : outgoingDirectedEdges.values()) {
+			count += edgeSet.size();
+		}
+		return count;
+	}
+	
+	public int numIncomingDirectedEdges() {
+		int count = 0;
+		for (Set<Edge> edgeSet : incomingDirectedEdges.values()) {
+			count += edgeSet.size();
+		}
+		return count;
 	}
 	
 	/**
@@ -232,6 +275,7 @@ public class Node extends GraphComponent {
 	 */
 	public Set<Node> getNeighbors(boolean followDirected) {
 		Set<Node> neighbors = new HashSet<>();
+		
 		for (Set<Edge> edgeSet : undirectedEdges.values()) {
 			for (Edge e : edgeSet) {
 				Node n = e.getOtherEndpoint(this);

@@ -163,6 +163,10 @@ public class GraphBuilderContext {
 		OrderedPair<Node> ends = e.getEndpoints();
 		UnorderedNodePair endsp = new UnorderedNodePair(ends.getFirst(), ends.getSecond());
 		
+		// Add edge to the endpoints' data
+		ends.getFirst().addEdge(e);
+		ends.getSecond().addEdge(e);
+		
 		// Find the list of edges to add this one to, or create it if it doesn't exist
 		Map<UnorderedNodePair, List<Edge>> edgeMap = graph.getEdges();
 		List<Edge> addTo = edgeMap.get(endsp);
@@ -261,7 +265,7 @@ public class GraphBuilderContext {
 	 * 
 	 * @return The next graph component id.
 	 */
-	public int getNextIDAndInc() {
+	public int getNextIdAndInc() {
 		return idPool++;
 	}
 	
