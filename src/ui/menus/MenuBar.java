@@ -169,7 +169,7 @@ public class MenuBar extends JMenuBar {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getValue0(), true);
+				Traversals.depthFirstSearchAll(gui.getEditor().getSelections().getValue0(), true);
 			}
 			
 		});
@@ -179,7 +179,7 @@ public class MenuBar extends JMenuBar {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Traversals.traverseConnectedComponents(gui.getEditor().getSelections().getValue0(), false);
+				Traversals.depthFirstSearchAll(gui.getEditor().getSelections().getValue0(), false);
 			}
 			
 		});

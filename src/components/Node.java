@@ -12,7 +12,7 @@ import context.GraphBuilderContext;
 /**
  * An instance represents a node component of a graph.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class Node extends GraphComponent {
 	
@@ -160,10 +160,20 @@ public class Node extends GraphComponent {
 		} 
 	}
 	
+	/**
+	 * Get the number of self edges.
+	 * 
+	 * @return The number of self edges.
+	 */
 	public int numSelfEdges() {
 		return selfEdges.size();
 	}
 	
+	/**
+	 * Get the number of undirected edges.
+	 * 
+	 * @return The number of undirected edges.
+	 */
 	public int numUndirectedEdges() {
 		int count = 0;
 		for (Set<Edge> edgeSet : undirectedEdges.values()) {
@@ -172,6 +182,11 @@ public class Node extends GraphComponent {
 		return count;
 	}
 	
+	/**
+	 * Get the number of outgoing directed edges.
+	 * 
+	 * @return The number of outgoing directed edges.
+	 */
 	public int numOutgoingDirectedEdges() {
 		int count = 0;
 		for (Set<Edge> edgeSet : outgoingDirectedEdges.values()) {
@@ -180,6 +195,11 @@ public class Node extends GraphComponent {
 		return count;
 	}
 	
+	/**
+	 * Get the number of incoming directed edges.
+	 * 
+	 * @return The number of incoming directed edges.
+	 */
 	public int numIncomingDirectedEdges() {
 		int count = 0;
 		for (Set<Edge> edgeSet : incomingDirectedEdges.values()) {
@@ -262,6 +282,20 @@ public class Node extends GraphComponent {
 		}
 		
 		return neighboring;
+	}
+	
+	/**
+	 * Find the set of all edges having this node an the specified neighbor
+	 * as endpoints. If the followDirected parameter is set to true, the
+	 * set will exclude all edges incoming toward this node.
+	 * 
+	 * @param neighbor       The node neigboring this one (second endpoint).
+	 * @param followDirected True if we wish to exclude incoming edges.
+	 * @return A set of neigboring edges whose second endpoint is the provided
+	 *         neighbor node.
+	 */
+	public Set<Edge> getNeighboringEdgesForNeighbor(Node neighbor, boolean followDirected) {
+		return getNeighboringEdges(followDirected).get(neighbor);
 	}
 	
 	/**

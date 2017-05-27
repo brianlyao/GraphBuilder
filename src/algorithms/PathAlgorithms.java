@@ -1,6 +1,7 @@
 package algorithms;
 
 import graph.Graph;
+import graph.Path;
 
 import java.util.Comparator;
 import java.util.HashMap;

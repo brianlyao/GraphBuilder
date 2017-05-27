@@ -20,7 +20,7 @@ import components.WeightedEdge;
 /**
  * A class for a graph data structure.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class Graph {
 
@@ -60,6 +60,25 @@ public class Graph {
 	 */
 	public boolean hasConstraint(int constraint) {
 		return (constraints & constraint) == constraint;
+	}
+	
+	/**
+	 * Add constraint(s) to the graph.
+	 * 
+	 * @param constraint The added constraint(s).
+	 */
+	public void addConstraint(int constraint) {
+		constraints |= constraint;
+	}
+	
+	/**
+	 * Remove constraint(s) from the graph. If the graph does not have the
+	 * provided constraints, no change is made.
+	 * 
+	 * @param constraint The removed constraint(s).
+	 */
+	public void removeConstraint(int constraint) {
+		constraints &= ~constraint;
 	}
 	
 	/**
@@ -149,7 +168,6 @@ public class Graph {
 			UnorderedNodePair key = new UnorderedNodePair(neighbor, n);
 			if (edges.get(key) != null) {
 				List<Edge> removedEdgeList = edges.remove(key);
-				System.out.println(removedEdgeList);
 				removedEdgeMap.put(key, removedEdgeList);
 			}
 		}
@@ -160,8 +178,24 @@ public class Graph {
 	/**
 	 * Add the specified edge to this graph.
 	 * 
+	 * @param e The edge to add.
+	 * @return true if the edge was successfully added, false if the edge has
+	 *         already been added.
+	 */
+	public boolean addEdge(Edge e) {
+		return addEdge(e, null);
+	}
+	
+	/**
+	 * Add the specified edge to this graph. Extra data may be necessary. For
+	 * example, if we are inserting an edge into a multigraph, we may specify
+	 * the location of the new edge relative to the other edges between those
+	 * two endpoints. In this case, we would pass an integer index as the data.
+	 * 
 	 * @param e    The edge to add.
 	 * @param data Additional data needed to add the edge.
+	 * @return true if the edge was successfully added, false if the edge has
+	 *         already been added.
 	 */
 	public boolean addEdge(Edge e, Object data) {
 		UnorderedNodePair key = new UnorderedNodePair(e);
@@ -175,8 +209,15 @@ public class Graph {
 				edges.put(key, new ArrayList<Edge>());
 			}
 		} else if (simple) {
-			// Simple graph restriction violated
-			throw new IllegalArgumentException("Cannot add edge if the graph is to remain simple.");
+			for (Edge inSimple : edges.get(key)) {
+				if (key.equals(new UnorderedNodePair(inSimple))) {
+					// Edge already exists in graph; do not add a second time
+					return false;
+				} else {
+					// Simple graph restriction violated
+					throw new IllegalArgumentException("Cannot add edge if the graph is to remain simple.");
+				}
+			}
 		}
 		
 		if (multigraph) {
@@ -231,8 +272,9 @@ public class Graph {
 				pairEdges.remove(removedIndex);
 				return removedIndex;
 			}
-		}	
+		}
 		
+		// The given edge isn't in this graph
 		return -1;
 	}
 	
@@ -278,7 +320,8 @@ public class Graph {
 	
 	/**
 	 * Obtain the induced subgraph from this graph given the set of nodes in
-	 * the subgraph. All edges within the provided set of nodes are included.
+	 * the subgraph. All edges whose endpoints are in the provided set of
+	 * nodes are included.
 	 * 
 	 * @param nodes The set of nodes in the desired subgraph.
 	 * @return The induced subgraph.
@@ -308,7 +351,7 @@ public class Graph {
 	 * nodeid:neighbor0,neighbor1,neighbor2,...
 	 * 
 	 * where each value is an integer id. If there are no neighbors, there is
-	 * no semicolon.
+	 * no colon.
 	 * 
 	 * @return The adjacency list for this graph.
 	 */

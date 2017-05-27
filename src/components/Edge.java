@@ -1,5 +1,7 @@
 package components;
 
+import java.awt.Color;
+
 import structures.OrderedPair;
 import components.display.EdgeData;
 import context.GraphBuilderContext;
@@ -7,7 +9,7 @@ import context.GraphBuilderContext;
 /**
  * An instance represents an edge component of a graph.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public abstract class Edge extends GraphComponent {
 	
@@ -45,6 +47,15 @@ public abstract class Edge extends GraphComponent {
 	 */
 	public EdgeData getData() {
 		return data;
+	}
+	
+	/**
+	 * Set the directed nature of this edge.
+	 * 
+	 * @param directed true iff we want to set the edge to be directed.
+	 */
+	public void setDirected(boolean directed) {
+		this.directed = directed;
 	}
 	
 	/**
@@ -96,14 +107,20 @@ public abstract class Edge extends GraphComponent {
 	public String toString() {
 		Node n1 = endpoints.getFirst();
 		Node n2 = endpoints.getSecond();
-		return String.format("Edge[id=%d, node1id=%d, node2id=%d, color=%s, weight=%d, directed=%s]", getID(), n1.getID(), n2.getID(), data.getColor(), data.getWeight(), directed);
+		Color color = data == null ? null : data.getColor();
+		int weight = data == null ? -1 : data.getWeight();
+		return String.format("Edge[id=%d, node1id=%d, node2id=%d, color=%s,"
+				+ " weight=%d, directed=%s]", getID(), n1.getID(), n2.getID(),
+				color, weight, directed);
 	}
 	
 	@Override
 	public String toStorageString() {
 		Node n1 = endpoints.getFirst();
 		Node n2 = endpoints.getSecond();
-		return String.format("E:%d,%d,%d,%d,%d,%d,%s", getID(), n1.getID(), n2.getID(), data.getColor().getRGB(), data.getWeight(), directed ? 1 : 0, data.getText());
+		return String.format("E:%d,%d,%d,%d,%d,%d,%s", getID(), n1.getID(),
+				n2.getID(), data.getColor().getRGB(), data.getWeight(),
+				directed ? 1 : 0, data.getText());
 	}
 	
 }
