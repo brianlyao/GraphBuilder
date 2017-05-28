@@ -10,6 +10,7 @@ public final class GraphConstraint {
 	public static final int EDGE_BEHAVIOR_MASK = 0b11;
 	public static final int UNDIRECTED = 0b1;
 	public static final int DIRECTED = 0b10;
+	public static final int MIXED = 0b11;
 	
 	public static final int GRAPH_TYPE_MASK = 0b11000;
 	public static final int SIMPLE = 0b1000;

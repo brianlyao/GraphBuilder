@@ -60,8 +60,8 @@ public class PathAlgorithms {
 	 */
 	public static Path shortestPath(Graph graph, Node start, Node destination) {
 		if (!graph.containsNode(start) || !graph.containsNode(destination)) {
-			// Graph must contain start and end
-			return Path.WRONG_GRAPH;
+			// If start and destination nodes are not in the same graph
+			return null;
 		} else if (start == destination) {
 			// If the start and end are the same node
 			return new Path(start);
@@ -81,7 +81,7 @@ public class PathAlgorithms {
 		Set<Node> subGraph = Traversals.breadthFirstSearch(start, true);
 		if (!subGraph.contains(destination)) {
 			// If there is no connected path from start to end
-			return Path.DISCONNECTED;
+			return null;
 		}
 		
 		// Fill the heap
