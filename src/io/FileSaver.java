@@ -35,7 +35,7 @@ public class FileSaver {
 			// Write all components to the file (create it if it does not exist)
 			target.createNewFile();
 			PrintWriter pwriter = new PrintWriter(target);
-			pwriter.write(context.getNextID() + "\n"); // Write id pool
+			pwriter.write(context.getNextId() + "\n"); // Write id pool
 			pwriter.write(context.getGraph().getConstraints() + "\n"); // Write graph constraints
 			for (Node n : nodes) {
 				pwriter.write(n.toStorageString() + "\n");

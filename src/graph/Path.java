@@ -11,7 +11,7 @@ import components.Node;
  * least one node and at least zero edges. The number of edges is always one
  * less than the number of nodes.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public final class Path {
 	
@@ -63,7 +63,7 @@ public final class Path {
 	
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder("[");
+		StringBuilder builder = new StringBuilder("Path[");
 		if (nodes.size() > 0) {
 			builder.append(nodes.getFirst().getID());
 			ListIterator<Node> nodeIterator = nodes.listIterator(1);

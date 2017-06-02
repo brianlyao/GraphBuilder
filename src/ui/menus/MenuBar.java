@@ -31,12 +31,13 @@ import actions.file.SaveAs;
 import algorithms.Traversals;
 import structures.UnorderedNodePair;
 import ui.GUI;
+import ui.dialogs.CompleteGraphDialog;
 import util.FileUtils;
 
 /**
  * The main menu bar which appears at the top of the GUI.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class MenuBar extends JMenuBar {
 	
@@ -74,6 +75,9 @@ public class MenuBar extends JMenuBar {
 	private JMenuItem traverseUndirected;
 	private JMenuItem classify;
 	private JMenuItem generate;
+	
+	private JMenuItem completeGraph;
+	private JMenuItem fromSeed;
 	
 	public MenuBar(final GUI g) {
 		super();
@@ -169,7 +173,10 @@ public class MenuBar extends JMenuBar {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Traversals.depthFirstSearchAll(gui.getEditor().getSelections().getValue0(), true);
+				Set<Node> selectedNodes = gui.getEditor().getSelections().getValue0();
+				Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, true);
+				gui.getEditor().addSelections(traversed);
+				gui.getEditor().repaint();
 			}
 			
 		});
@@ -179,13 +186,31 @@ public class MenuBar extends JMenuBar {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Traversals.depthFirstSearchAll(gui.getEditor().getSelections().getValue0(), false);
+				Set<Node> selectedNodes = gui.getEditor().getSelections().getValue0();
+				Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, false);
+				gui.getEditor().addSelections(traversed);
+				gui.getEditor().repaint();
 			}
 			
 		});
 		
 		classify = new JMenuItem("Classify");
-		generate = new JMenuItem("Generate");
+		generate = new JMenu("Generate");
+		
+		completeGraph = new JMenuItem("Complete Graph");
+		completeGraph.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				new CompleteGraphDialog(gui);
+			}
+			
+		});
+		
+		fromSeed = new JMenuItem("From Seed");
+		
+		generate.add(completeGraph);
+		generate.add(fromSeed);
 		
 		graph.add(traverse);
 		graph.add(traverseUndirected);

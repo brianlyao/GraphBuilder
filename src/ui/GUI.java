@@ -15,7 +15,6 @@ import javax.swing.border.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import components.Node;
-
 import keybindings.KeyActions;
 import logger.Logger;
 import structures.OrderedPair;
@@ -29,9 +28,9 @@ import util.FileUtils;
 import context.GraphBuilderContext;
 
 /**
- * The main GUI in which the program runs.
+ * The main window in which the program runs.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class GUI extends JFrame {
 	
@@ -80,10 +79,10 @@ public class GUI extends JFrame {
 			}
 		} catch (Exception e) {
 			try {
-				Logger.writeEntry(Logger.WARNING, "Nimbus look and feel not found; backing off to system look and feel."); 
+				Logger.writeEntry(Logger.INFO, "Nimbus look and feel not found; backing off to system look and feel."); 
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			} catch (Exception e2) {
-				Logger.writeEntry(Logger.WARNING, "Unable to identify system look and feel.");
+				Logger.writeEntry(Logger.INFO, "Unable to identify system look and feel.");
 			}
 		}
 		
@@ -120,7 +119,7 @@ public class GUI extends JFrame {
 		
 		// Set JFrame properties
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		setSize(1024, 768);
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
 		setLayout(new GridBagLayout());
 		
 		// Perform a certain procedure when the window is closed (with the X button in the top right)
@@ -180,12 +179,9 @@ public class GUI extends JFrame {
 		
 		// Initialize and set up the main editor panel
 		editor = new Editor(this);
-		panelEditorScroll = new JScrollPane(editor, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		panelEditorScroll = new JScrollPane(editor, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		panelEditorScroll.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		JScrollBar horiz = panelEditorScroll.getHorizontalScrollBar();
-		JScrollBar vert = panelEditorScroll.getVerticalScrollBar();
-		horiz.setValue((horiz.getMaximum() + horiz.getVisibleAmount() - horiz.getMinimum())/2);
-		vert.setValue((vert.getMaximum()  + vert.getVisibleAmount() - vert.getMinimum())/2);
 		add(panelEditorScroll, editorgbc);
 		
 		// Initialize and set up the properties panel, used when someone right clicks an object and clicks properties
@@ -222,6 +218,30 @@ public class GUI extends JFrame {
 		
 		// Show GUI
 		setVisible(true);
+		
+		// Set the initial scrolling positions to the center
+		final JScrollBar horiz = panelEditorScroll.getHorizontalScrollBar();
+		final JScrollBar vert = panelEditorScroll.getVerticalScrollBar();
+		if (horiz != null) {
+			SwingUtilities.invokeLater(new Runnable() {
+				
+				@Override
+				public void run() {
+					horiz.setValue((horiz.getMaximum() - horiz.getVisibleAmount()) / 2);
+				}
+				
+			});
+		}
+		if (vert != null) {
+			SwingUtilities.invokeLater(new Runnable() {
+				
+				@Override
+				public void run() {
+					vert.setValue((vert.getMaximum() - vert.getVisibleAmount()) / 2);
+				}
+				
+			});
+		}
 	}
 	
 	/** 
@@ -279,6 +299,20 @@ public class GUI extends JFrame {
 	 */
 	public GraphBuilderContext getContext() {
 		return context;
+	}
+	
+	/**
+	 * Get the center of the viewport in editor coordinates (relative to the
+	 * top left corner of the actual editor panel, not the scroll pane).
+	 * 
+	 * @return The viewport center.
+	 */
+	public Point getEditorCenter() {
+		int viewportWidth = panelEditorScroll.getViewport().getWidth();
+		int viewportHeight = panelEditorScroll.getViewport().getHeight();
+		Point topLeft = panelEditorScroll.getViewport().getViewPosition();
+		
+		return new Point(topLeft.x + viewportWidth / 2, topLeft.y + viewportHeight / 2);
 	}
 	
 	/**

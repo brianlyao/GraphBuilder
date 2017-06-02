@@ -28,7 +28,7 @@ public class CycleAlgorithms {
 	 * applicable to undirected, directed, and mixed graphs. The definition of
 	 * acyclic for a mixed graph is: if there is no way to change undirected
 	 * edges into directed edges such that there is a directed cycle formed as
-	 * a result (and there are no undirected or directed edges), then the graph
+	 * a result (and there are no undirected or directed cycles), then the graph
 	 * is acyclic.
 	 * 
 	 * @param graph The graph to search in for cycles.
@@ -176,13 +176,12 @@ public class CycleAlgorithms {
 	 * whose length is <= 2) since this is done when find2Cycles() is called
 	 * on this graph.
 	 * 
-	 * @param n            The node being visited.
-	 * @param inMultigraph set to true iff the node belongs in a multigraph.
-	 * @param unvisited    The set of unvisited nodes.
-	 * @param visiting     The set of nodes being visited (neighbors being visited).
-	 * @param visited      The set of nodes which are fully visited.
-	 * @param parents      The map from a node to its "parent" node from which
-	 *                     the node was visited.
+	 * @param n         The node being visited.
+	 * @param unvisited The set of unvisited nodes.
+	 * @param visiting  The set of nodes being visited (neighbors being visited).
+	 * @param visited   The set of nodes which are fully visited.
+	 * @param parents   The map from a node to its "parent" node from which
+	 *                  the node was visited.
 	 * @return The first cycle found as a Path object, or null if no cycle was found.
 	 */
 	private static Path visitNotMixed(Node n, Set<Node> unvisited, Set<Node> visiting,

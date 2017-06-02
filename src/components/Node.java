@@ -1,5 +1,6 @@
 package components;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +17,11 @@ import context.GraphBuilderContext;
  */
 public class Node extends GraphComponent {
 	
+	public static final int DEFAULT_RADIUS = 30;
 	public static final String DEFAULT_TEXT = "";
+	public static final Color DEFAULT_FILL = Color.WHITE;
+	public static final Color DEFAULT_TC = Color.BLACK;
+	public static final Color DEFAULT_BC = Color.BLACK;
 	
 	// The JPanel containing this node's visual appearance
 	private NodePanel nodePanel;
@@ -75,6 +80,15 @@ public class Node extends GraphComponent {
 	 */
 	public NodePanel getNodePanel() {
 		return nodePanel;
+	}
+	
+	/**
+	 * Sets the node panel this node will use.
+	 * 
+	 * @param nodePanel The new node panel.
+	 */
+	public void setNodePanel(NodePanel nodePanel) {
+		this.nodePanel = nodePanel;
 	}
 	
 	/**
@@ -344,15 +358,20 @@ public class Node extends GraphComponent {
 	
 	@Override
 	public String toString() {
+		if (nodePanel == null) {
+			return String.format("Node[id=%d]", getID());
+		}
 		Point coords = nodePanel.getCoords();
-		return String.format("Node[x=%d,y=%d,r=%d,text=%s,id=%d]", coords.x, coords.y, nodePanel.getRadius(), nodePanel.getText() == null ? "" : nodePanel.getText(), getID());
+		return String.format("Node[x=%d,y=%d,r=%d,text=%s,id=%d]", coords.x, coords.y,
+				nodePanel.getRadius(), nodePanel.getText() == null ? "" : nodePanel.getText(), getID());
 	}
 	
 	@Override
 	public String toStorageString() {
-		Point coords = nodePanel.getCoords();
-		return String.format("N:%d,%d,%d,%d,%s,%d,%d,%d", getID(), coords.x, coords.y, nodePanel.getRadius(),
-				nodePanel.getText(), nodePanel.getFillColor().getRGB(), nodePanel.getBorderColor().getRGB(),
+		Point coords = nodePanel == null ? null : nodePanel.getCoords();
+		return String.format("N:%d,%d,%d,%d,%s,%d,%d,%d", getID(), coords.x,
+				coords.y, nodePanel.getRadius(),nodePanel.getText(),
+				nodePanel.getFillColor().getRGB(), nodePanel.getBorderColor().getRGB(),
 				nodePanel.getTextColor().getRGB());
 	}
 	

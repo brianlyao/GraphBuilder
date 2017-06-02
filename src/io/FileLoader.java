@@ -70,7 +70,7 @@ public class FileLoader {
 			}
 			
 			// Set the ID pool afterward, to start where it left off
-			loadedContext.setNextID(idPool);
+			loadedContext.setNextId(idPool);
 			
 			// Replace the old context with the one we just loaded
 			loadedContext.setCurrentlyLoadedFile(graphFile);

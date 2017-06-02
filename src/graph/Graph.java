@@ -15,10 +15,12 @@ import structures.UnorderedNodePair;
 import util.ClipboardUtils;
 import components.Edge;
 import components.Node;
-import components.WeightedEdge;
 
 /**
- * A class for a graph data structure.
+ * A class for a graph data structure. The implementation is specific to the
+ * needs of GraphBuilder, and not intended for general purposes. For such
+ * needs, there are far better libraries such as JGraph with more
+ * sophisticated parametrized graph types.
  * 
  * @author Brian Yao
  */
@@ -124,29 +126,6 @@ public class Graph {
 	}
 	
 	/**
-	 * Get the numeric weight for a particular edge. If the graph is
-	 * unweighted, give a weight of 1.0 by default.
-	 * 
-	 * @param edge The edge whose weight to return.
-	 * @return The numeric weight represented as a Double.
-	 */
-	@SuppressWarnings("unchecked")
-	public Double getWeight(Edge edge) {
-		if (this.hasConstraint(GraphConstraint.INTEGER_WEIGHTED)) {
-			WeightedEdge<Integer> intEdge = (WeightedEdge<Integer>) edge;
-			Integer intWeight = (Integer) intEdge.getWeight();
-			return intWeight.doubleValue();
-		} else if (this.hasConstraint(GraphConstraint.DOUBLE_WEIGHTED)) {
-			WeightedEdge<Double> doubleEdge = (WeightedEdge<Double>) edge;
-			Double doubleWeight = (Double) doubleEdge.getWeight();
-			return doubleWeight;
-		} else {
-			// Default case: weight of 1.0
-			return 1.0;
-		}
-	}
-	
-	/**
 	 * Add the provided node to this graph.
 	 * 
 	 * @param n The node to add.
@@ -176,13 +155,17 @@ public class Graph {
 	}
 	
 	/**
-	 * Add the specified edge to this graph.
+	 * Add the specified edge to this graph. If this graph is a multigraph,
+	 * the edge will be added at index 0.
 	 * 
 	 * @param e The edge to add.
 	 * @return true if the edge was successfully added, false if the edge has
 	 *         already been added.
 	 */
 	public boolean addEdge(Edge e) {
+		if (hasConstraint(GraphConstraint.MULTIGRAPH)) {
+			return addEdge(e, 0);
+		}
 		return addEdge(e, null);
 	}
 	
@@ -276,6 +259,16 @@ public class Graph {
 		
 		// The given edge isn't in this graph
 		return -1;
+	}
+	
+	/**
+	 * Adds all components from the given graph to this one.
+	 * 
+	 * @param graph The graph whose components to add.
+	 */
+	public void addAll(Graph graph) {
+		nodes.addAll(graph.getNodes());
+		edges.putAll(graph.getEdges());
 	}
 	
 	/**

@@ -16,7 +16,6 @@ import components.Edge;
 import components.GraphComponent;
 import components.Node;
 import actions.ReversibleAction;
-import structures.OrderedPair;
 import structures.UnorderedNodePair;
 import ui.Editor;
 import ui.GUI;
@@ -160,12 +159,11 @@ public class GraphBuilderContext {
 	 * @param position The position (from the left) of the edge relative to other edges sharing e's endpoints.
 	 */
 	public void addEdge(Edge e, int position) {
-		OrderedPair<Node> ends = e.getEndpoints();
-		UnorderedNodePair endsp = new UnorderedNodePair(ends.getFirst(), ends.getSecond());
+		UnorderedNodePair endsp = new UnorderedNodePair(e);
 		
 		// Add edge to the endpoints' data
-		ends.getFirst().addEdge(e);
-		ends.getSecond().addEdge(e);
+		endsp.getFirst().addEdge(e);
+		endsp.getSecond().addEdge(e);
 		
 		// Find the list of edges to add this one to, or create it if it doesn't exist
 		Map<UnorderedNodePair, List<Edge>> edgeMap = graph.getEdges();
@@ -200,10 +198,45 @@ public class GraphBuilderContext {
 	}
 	
 	/**
+	 * Adds all of the components in the provided graph to this context. The
+	 * components are assumed to already point toward this context.
+	 * 
+	 * @param graph The components to add to this context.
+	 */
+	public void addAll(Graph graph) {
+		for (Node node : graph.getNodes()) {
+			addNode(node);
+		}
+		
+		for (Map.Entry<UnorderedNodePair, List<Edge>> edgeEntry : graph.getEdges().entrySet()) {
+			Node first = edgeEntry.getKey().getFirst();
+			Node second = edgeEntry.getKey().getSecond();
+			for (Edge inList : edgeEntry.getValue()) {
+				first.addEdge(inList);
+				second.addEdge(inList);
+			}
+			
+			this.graph.getEdges().put(edgeEntry.getKey(), edgeEntry.getValue());
+		}
+	}
+	
+	/**
+	 * Removes all of the components in the provided graph to this context.
+	 * 
+	 * @param graph The components to add to this context.
+	 */
+	public void removeAll(Graph graph) {
+		for (Node inGraph : graph.getNodes()) {
+			removeNode(inGraph);
+		}
+	}
+	
+	/**
 	 * Add a reversible action to the top of the action history stack.
 	 * 
 	 * @param action           The action to push.
-	 * @param affectsSaveState Whether the action affects the save state (will making this action cause the file to be unsaved?).
+	 * @param affectsSaveState Whether the action affects the save state
+	 *                         (will making this action cause the file to be unsaved?).
 	 * @param redo             Whether the pushed action is a redo of some undone action.
 	 */
 	public void pushReversibleAction(ReversibleAction action, boolean affectsSaveState, boolean redo) {
@@ -220,7 +253,8 @@ public class GraphBuilderContext {
 	 * Add an reversible action to the top of the undo history stack.
 	 * 
 	 * @param action           The action to push.
-	 * @param affectsSaveState Whether the action affects the save state (will making this action cause the file to be unsaved?).
+	 * @param affectsSaveState Whether the action affects the save state
+	 *                         (will making this action cause the file to be unsaved?).
 	 */
 	public void pushReversibleUndoAction(ReversibleAction action, boolean affectsSaveState) {
 		undoHistory.push(action);
@@ -274,7 +308,7 @@ public class GraphBuilderContext {
 	 * 
 	 * @return The next graph component id.
 	 */
-	public int getNextID() {
+	public int getNextId() {
 		return idPool;
 	}
 	
@@ -283,7 +317,7 @@ public class GraphBuilderContext {
 	 * 
 	 * @param nid The value of the next id.
 	 */
-	public void setNextID(int nid) {
+	public void setNextId(int nid) {
 		idPool = nid;
 	}
 	

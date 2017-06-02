@@ -14,6 +14,8 @@ import context.GraphBuilderContext;
 public abstract class Edge extends GraphComponent {
 	
 	public static final String DEFAULT_TEXT = "";
+	public static final Color DEFAULT_COLOR = Color.BLACK;
+	public static final int DEFAULT_WEIGHT = 2;
 	
 	// Endpoint nodes of the edge. For directed edges, c1 is the source, c2 is the sink
 	private OrderedPair<Node> endpoints;
@@ -47,6 +49,15 @@ public abstract class Edge extends GraphComponent {
 	 */
 	public EdgeData getData() {
 		return data;
+	}
+	
+	/**
+	 * Sets the data used to display this edge.
+	 * 
+	 * @param data The new edge data.
+	 */
+	public void setData(EdgeData data) {
+		this.data = data;
 	}
 	
 	/**
