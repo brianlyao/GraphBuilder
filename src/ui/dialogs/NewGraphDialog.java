@@ -59,8 +59,7 @@ public class NewGraphDialog extends JDialog {
 	
 	private JPanel weightPanel;
 	private JRadioButton unweighted;
-	private JRadioButton intWeighted;
-	private JRadioButton doubleWeighted;
+	private JRadioButton weighted;
 	
 	private JPanel edgePanel;
 	private JRadioButton onlyUndirected;
@@ -206,36 +205,22 @@ public class NewGraphDialog extends JDialog {
 			
 		});
 		
-		intWeighted = new JRadioButton("Integer Weights");
-		intWeighted.addItemListener(new ItemListener() {
+		weighted = new JRadioButton("Numerical Weights");
+		weighted.addItemListener(new ItemListener() {
 			
 			@Override
 			public void itemStateChanged(ItemEvent e) {
 				if (e.getStateChange() == ItemEvent.SELECTED) {
-					constraints = (constraints & ~GraphConstraint.WEIGHT_MASK) | GraphConstraint.INTEGER_WEIGHTED;
-				}
-			}
-			
-		});
-		
-		doubleWeighted = new JRadioButton("Decimal Weights");
-		doubleWeighted.addItemListener(new ItemListener() {
-			
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
-					constraints = (constraints & ~GraphConstraint.WEIGHT_MASK) | GraphConstraint.DOUBLE_WEIGHTED;
+					constraints = (constraints & ~GraphConstraint.WEIGHT_MASK) | GraphConstraint.WEIGHTED;
 				}
 			}
 			
 		});
 		
 		weightGroup.add(unweighted);
-		weightGroup.add(intWeighted);
-		weightGroup.add(doubleWeighted);
+		weightGroup.add(weighted);
 		weightPanel.add(unweighted);
-		weightPanel.add(intWeighted);
-		weightPanel.add(doubleWeighted);
+		weightPanel.add(weighted);
 		
 		// Create the panel for regular graphs
 		graphPanel = new JPanel();
@@ -388,10 +373,8 @@ public class NewGraphDialog extends JDialog {
 		} else {
 			dialog.onlyUndirected.setSelected(true);
 		}
-		if (oldGraph.hasConstraint(GraphConstraint.INTEGER_WEIGHTED)) {
-			dialog.intWeighted.setSelected(true);
-		} else if (oldGraph.hasConstraint(GraphConstraint.DOUBLE_WEIGHTED)) {
-			dialog.doubleWeighted.setSelected(true);
+		if (oldGraph.hasConstraint(GraphConstraint.WEIGHTED)) {
+			dialog.weighted.setSelected(true);
 		} else {
 			dialog.unweighted.setSelected(true);
 		}

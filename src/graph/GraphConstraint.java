@@ -3,7 +3,7 @@ package graph;
 /**
  * A class of constants used to describe graph constraints.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public final class GraphConstraint {
 
@@ -16,9 +16,8 @@ public final class GraphConstraint {
 	public static final int SIMPLE = 0b1000;
 	public static final int MULTIGRAPH = 0b10000;
 	
-	public static final int WEIGHT_MASK = 0b11100000;
+	public static final int WEIGHT_MASK = 0b1100000;
 	public static final int UNWEIGHTED = 0b100000;
-	public static final int INTEGER_WEIGHTED = 0b1000000;
-	public static final int DOUBLE_WEIGHTED = 0b10000000;
+	public static final int WEIGHTED = 0b1000000;
 	
 }
