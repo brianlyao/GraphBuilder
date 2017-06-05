@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * A class containing data structure-related utility methods.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class StructureUtils {
 

@@ -42,7 +42,7 @@ import util.CoordinateUtils;
 /**
  * The visual panel which represents a node on the editor panel.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class NodePanel extends JPanel {
 	
@@ -152,11 +152,19 @@ public class NodePanel extends JPanel {
 							// Otherwise, if this node is not already selected, remove all existing
 							// selections and select this node
 							editor.removeAllSelections();
+							for (Node wasSelected : editor.getSelections().getValue0()) {
+								editor.removeNodePanelEntry(wasSelected.getNodePanel());
+							}
 							editor.repaint();
 							
 							// Add this node as a selection
 							editor.addSelection(sink);
 							editor.addNodePanelEntry(sinkPanel);
+						} else {
+							// If this node is already selected, we don't change the selections
+							for (Node selectedNode : editor.getSelections().getValue0()) {
+								editor.addNodePanelEntry(selectedNode.getNodePanel());
+							}
 						}
 						editor.getGUI().getMainMenuBar().updateWithSelection();
 						repaint(); // Redraw this node panel
@@ -218,6 +226,7 @@ public class NodePanel extends JPanel {
 				HashMap<NodePanel, OrderedPair<Point>> movementMap = new HashMap<>();
 				Point originalPoint;
 				Point currentPoint;
+				
 				for (Map.Entry<NodePanel, Point> npEntry : editor.getNodePanelPositionMap().entrySet()) {
 					originalPoint = npEntry.getValue();
 					currentPoint = npEntry.getKey().getCoords();

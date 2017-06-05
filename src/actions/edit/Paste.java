@@ -22,7 +22,7 @@ import context.GraphBuilderContext;
 /**
  * An instance is a paste of one or many graph components.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class Paste extends ReversibleAction {
 	
@@ -60,9 +60,9 @@ public class Paste extends ReversibleAction {
 		super(ctxt);
 		Clipboard currentClipboard = this.getContext().getClipboard();
 		Pair<Set<Node>, Map<Node, Node>> copyNodes = ClipboardUtils.copyNodes(currentClipboard.getNodes());
-		pastedNodes = copyNodes.getValue0();
+		pastedNodes = new HashSet<>(copyNodes.getValue0());
 		oldToNew = copyNodes.getValue1();
-		Point lowerLeft = ClipboardUtils.lowerLeftCorner(currentClipboard.getNodes());
+		Point lowerLeft = ClipboardUtils.lowerRightCorner(currentClipboard.getNodes());
 		maxX = lowerLeft.x;
 		maxY = lowerLeft.y;
 		originalCenterOfMass = CoordinateUtils.centerOfMass(currentClipboard.getNodes());

@@ -12,6 +12,7 @@ import org.javatuples.Pair;
 import structures.UnorderedNodePair;
 import ui.Editor;
 import util.ClipboardUtils;
+import util.StructureUtils;
 import components.Edge;
 import components.Node;
 import context.GraphBuilderContext;
@@ -21,7 +22,7 @@ import actions.ReversibleAction;
  * A duplicate action on one or multiple graph components, which does
  * not add duplicated contents to the clipboard.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class Duplicate extends ReversibleAction {
 
@@ -50,8 +51,8 @@ public class Duplicate extends ReversibleAction {
 	public Duplicate(GraphBuilderContext ctxt, boolean full) {
 		super(ctxt);
 		Editor editor = this.getContext().getGUI().getEditor();
-		nodesToDuplicate = editor.getSelections().getValue0();
-		edgesToDuplicate = editor.getSelections().getValue1();
+		nodesToDuplicate = new HashSet<>(editor.getSelections().getValue0());
+		edgesToDuplicate = StructureUtils.shallowCopy(editor.getSelections().getValue1());
 		
 		// Copy nodes and edges
 		Pair<Set<Node>, Map<Node, Node>> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
@@ -64,9 +65,9 @@ public class Duplicate extends ReversibleAction {
 			duplicatedEdges = ClipboardUtils.copyEdges(edgesToDuplicate, oldToNew);
 		}
 		
-		Point lowerLeft = ClipboardUtils.lowerLeftCorner(nodesToDuplicate);
-		maxX = lowerLeft.x;
-		maxY = lowerLeft.y;
+		Point lowerRight = ClipboardUtils.lowerRightCorner(nodesToDuplicate);
+		maxX = lowerRight.x;
+		maxY = lowerRight.y;
 	}
 
 	@Override

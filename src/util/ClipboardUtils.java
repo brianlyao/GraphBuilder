@@ -23,7 +23,7 @@ import ui.Editor;
 /**
  * Utility class for clipboard (copy, paste, delete, etc.) procedures.
  * 
- * @author Brian
+ * @author Brian Yao
  */
 public class ClipboardUtils {
 	
@@ -141,9 +141,9 @@ public class ClipboardUtils {
 	 * box containing the nodes' visual panels.
 	 * 
 	 * @param nodes The collection of nodes.
-	 * @return a Point representing the lower left corner of the bounding box.
+	 * @return a Point representing the lower right corner of the bounding box.
 	 */
-	public static Point lowerLeftCorner(Collection<Node> nodes) {
+	public static Point lowerRightCorner(Collection<Node> nodes) {
 		int maxX = 0;
 		int maxY = 0;
 		for (Node n : nodes) {

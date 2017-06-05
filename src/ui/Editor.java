@@ -72,7 +72,7 @@ public class Editor extends JPanel {
 	private Set<Node> selectedNodes;
 	private Map<UnorderedNodePair, List<Edge>> selectedEdges;
 	
-	private HashMap<NodePanel, Point> nodePanelPosition; // Map from panel to upper left corner position on editor
+	private Map<NodePanel, Point> nodePanelPosition; // Map from panel to upper left corner position on editor
 	
 	private Edge previewEdge;
 	private int previewEdgeIndex;
@@ -413,7 +413,7 @@ public class Editor extends JPanel {
 	 * 
 	 * @return The mapping of node panel to position.
 	 */
-	public HashMap<NodePanel, Point> getNodePanelPositionMap() {
+	public Map<NodePanel, Point> getNodePanelPositionMap() {
 		return nodePanelPosition;
 	}
 	
