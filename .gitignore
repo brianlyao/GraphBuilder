@@ -1,6 +1,9 @@
 bin/
 doc/
+target/
 .settings/
 .classpath
 .project
+*.iml
+.idea/
 log.txt
