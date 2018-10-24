@@ -1,7 +1,7 @@
 package ui.tooloptions;
 
 import tool.Tool;
-import ui.GUI;
+import ui.GBFrame;
 import util.ImageUtils;
 
 import javax.swing.*;
@@ -40,9 +40,9 @@ public class NodeOptionsBar extends ToolOptionsBar {
 	private Color circleTextColor;
 
 	/**
-	 * @param g The GUI object this bar will appear in.
+	 * @param g The GBFrame object this bar will appear in.
 	 */
-	public NodeOptionsBar(GUI g) {
+	public NodeOptionsBar(GBFrame g) {
 		super(g);
 		this.setLayout(new FlowLayout(FlowLayout.LEADING));
 		circleRadiusLabel = new JLabel("Node Radius (px):");

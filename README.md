@@ -14,5 +14,5 @@ Ultimately, users will be able to load and save their graphs, run algorithms on 
 
 ## External Dependencies
 
-GraphBuilder fetches it dependencies using Maven. See pom.xml for details.
+GraphBuilder fetches its dependencies using Maven. See pom.xml for details.
 

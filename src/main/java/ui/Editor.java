@@ -43,7 +43,7 @@ public class Editor extends JPanel {
 
 	private static final Dimension DEFAULT_DIMENSION = new Dimension(2048, 2048);
 
-	private GUI gui; // The GUI this editor is placed in
+	private GBFrame gui; // The GBFrame this editor is placed in
 
 	private Point lastMousePoint; // Keep track of the last mouse position
 
@@ -67,9 +67,9 @@ public class Editor extends JPanel {
 	/**
 	 * Constructor for an editor panel.
 	 *
-	 * @param g The GUI object we want our editor placed in.
+	 * @param g The GBFrame object we want our editor placed in.
 	 */
-	public Editor(GUI g) {
+	public Editor(GBFrame g) {
 		super();
 
 		gui = g;
@@ -350,9 +350,9 @@ public class Editor extends JPanel {
 	}
 
 	/**
-	 * Get the context of the GUI this editor is on.
+	 * Get the context of the GBFrame this editor is on.
 	 *
-	 * @return The context of the GUI this editor is on.
+	 * @return The context of the GBFrame this editor is on.
 	 */
 	public GBContext getContext() {
 		return gui.getContext();
@@ -374,11 +374,11 @@ public class Editor extends JPanel {
 	}
 
 	/**
-	 * Get the GUI this editor is on.
+	 * Get the GBFrame this editor is on.
 	 *
-	 * @return The GUI instance this editor is on.
+	 * @return The GBFrame instance this editor is on.
 	 */
-	public GUI getGUI() {
+	public GBFrame getGUI() {
 		return gui;
 	}
 
@@ -688,8 +688,8 @@ public class Editor extends JPanel {
 				g2d.drawLine(center.x, center.y, lastMousePoint.x, lastMousePoint.y);
 				if (ctool == Tool.DIRECTED_EDGE) {
 					double dist = Point.distance(lastMousePoint.x, lastMousePoint.y, center.x, center.y);
-					double unitX = -(lastMousePoint.x - center.x) / dist;
-					double unitY = -(lastMousePoint.y - center.y) / dist;
+					double unitX = (lastMousePoint.x - center.x) / dist;
+					double unitY = (lastMousePoint.y - center.y) / dist;
 					drawArrowTip(g2d, unitX, unitY, lastMousePoint, weight);
 				}
 			}
@@ -734,7 +734,7 @@ public class Editor extends JPanel {
 		GBNode n1 = nodePair.getFirst();
 
 		// Draw the edges one by one
-		for (int i = 0; i < edges.size(); i++) {
+		for (int i = 0 ; i < edges.size() ; i++) {
 			GBEdge e = edges.get(i);
 
 			// Get the weight of the current edge
@@ -889,8 +889,8 @@ public class Editor extends JPanel {
 		double leftCornerY = tip.y - 5 * weight * unitVectorY - 2.5 * weight * unitVectorX;
 		double rightCornerX = leftCornerX - 5 * weight * unitVectorY;
 		double rightCornerY = leftCornerY + 5 * weight * unitVectorX;
-		g2d.fillPolygon(new int[]{tip.x, (int) leftCornerX, (int) rightCornerX},
-						new int[]{tip.y, (int) leftCornerY, (int) rightCornerY}, 3);
+		g2d.fillPolygon(new int[] {tip.x, (int) leftCornerX, (int) rightCornerX},
+						new int[] {tip.y, (int) leftCornerY, (int) rightCornerY}, 3);
 	}
 
 	/**

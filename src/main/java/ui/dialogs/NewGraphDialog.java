@@ -3,7 +3,7 @@ package ui.dialogs;
 import context.GBContext;
 import graph.Graph;
 import graph.GraphConstraint;
-import ui.GUI;
+import ui.GBFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,9 +60,9 @@ public class NewGraphDialog extends JDialog {
 	private int option;
 
 	/**
-	 * @param g The GUI this dialog is displayed alongside.
+	 * @param g The GBFrame this dialog is displayed alongside.
 	 */
-	public NewGraphDialog(GUI g) {
+	public NewGraphDialog(GBFrame g) {
 		super(g, NEW_FILE_TITLE);
 
 		setSize(800, 500);
@@ -314,7 +314,7 @@ public class NewGraphDialog extends JDialog {
 	 * @param parent The parent component, or null if there is none.
 	 * @return The constraints on the graph, in bit field form.
 	 */
-	public static Integer getConstraints(GUI parent) {
+	public static Integer getConstraints(GBFrame parent) {
 		NewGraphDialog dialog = new NewGraphDialog(parent);
 		dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
 		dialog.setVisible(true);
@@ -332,11 +332,11 @@ public class NewGraphDialog extends JDialog {
 	/**
 	 * Change the constraints from the current constraints.
 	 *
-	 * @param parent     The parent GUI.
+	 * @param parent     The parent GBFrame.
 	 * @param oldContext The context we are changing from.
 	 * @return The new constraints, or null if the user pressed cancel.
 	 */
-	public static Integer modifyConstraints(GUI parent, GBContext oldContext) {
+	public static Integer modifyConstraints(GBFrame parent, GBContext oldContext) {
 		NewGraphDialog dialog = new NewGraphDialog(parent);
 		dialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
 		dialog.setTitle(CHANGE_CONSTRAINTS_TITLE);

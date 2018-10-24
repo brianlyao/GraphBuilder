@@ -17,9 +17,6 @@ import ui.tooloptions.NodeOptionsBar;
 import util.FileUtils;
 
 import javax.swing.*;
-import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -32,12 +29,15 @@ import java.util.Map;
  *
  * @author Brian Yao
  */
-public class GUI extends JFrame {
+public class GBFrame extends JFrame {
 
 	private static final long serialVersionUID = -8275121379599770074L;
 	private static final String VERSION = "0.1.6";
+	private static final String GRAPH_BUILDER_FILES = "Graph Builder Files";
+
+	public static final String DEFAULT_FILENAME = "Untitled";
 	public static final String DEFAULT_TITLE = "GraphBuilder " + VERSION;
-	private static final String DEFAULT_FILENAME = "Untitled";
+	public static final String GRAPH_BUILDER_FILE_EXTENSION = "gbf";
 
 	// Dialogs, if they are being displayed
 	@Getter
@@ -48,7 +48,7 @@ public class GUI extends JFrame {
 	private MenuBar menuBar; // The menu bar
 	private ToolBar toolBar; // The tool bar
 
-	//Tool option bars
+	// Tool option bars
 	@Getter
 	private NodeOptionsBar nodeOptionsBar;
 	@Getter
@@ -61,10 +61,6 @@ public class GUI extends JFrame {
 	@Getter
 	private Editor editor; // The main panel workspace
 
-	private JPanel panelProperties;
-
-	private JPanel panelStatus;
-
 	@Getter
 	private JFileChooser fileChooser;
 
@@ -74,9 +70,7 @@ public class GUI extends JFrame {
 	@Getter
 	private GBContext context; // The context for the current instance of the program
 
-	public GUI(GBContext initialContext) {
-		super();
-
+	public GBFrame(GBContext initialContext) {
 		// Set context
 		context = initialContext;
 		context.setGUI(this);
@@ -100,7 +94,7 @@ public class GUI extends JFrame {
 		// Initialize and customize the file chooser
 		fileChooser = new JFileChooser();
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Graph Builder Files", "gbf"));
+		fileChooser.setFileFilter(new FileNameExtensionFilter(GRAPH_BUILDER_FILES, GRAPH_BUILDER_FILE_EXTENSION));
 
 		// Initialize and fill out the options panel
 		toolOptionsPanel = new JPanel();
@@ -118,7 +112,7 @@ public class GUI extends JFrame {
 
 			@Override
 			public void windowClosing(WindowEvent e) {
-				FileUtils.exitProcedure(GUI.this.context);
+				FileUtils.exitProcedure(GBFrame.this.context);
 			}
 
 		});
@@ -127,8 +121,6 @@ public class GUI extends JFrame {
 		GridBagConstraints tbargbc = new GridBagConstraints();
 		GridBagConstraints toptgbc = new GridBagConstraints();
 		GridBagConstraints editorgbc = new GridBagConstraints();
-		GridBagConstraints propgbc = new GridBagConstraints();
-		GridBagConstraints statusgbc = new GridBagConstraints();
 
 		tbargbc.gridx = 0;
 		tbargbc.gridy = 0;
@@ -154,20 +146,6 @@ public class GUI extends JFrame {
 		editorgbc.insets = new Insets(9, 9, 9, 9);
 		editorgbc.fill = GridBagConstraints.BOTH;
 
-		propgbc.gridx = 1;
-		propgbc.gridy = 2;
-		propgbc.weightx = 0.1;
-		propgbc.weighty = 0.8;
-		propgbc.insets = new Insets(2, 2, 2, 2);
-		propgbc.fill = GridBagConstraints.BOTH;
-
-		statusgbc.gridx = 1;
-		statusgbc.gridy = 3;
-		statusgbc.weightx = 0.1;
-		statusgbc.weighty = 0.4;
-		statusgbc.insets = new Insets(2, 2, 2, 2);
-		statusgbc.fill = GridBagConstraints.BOTH;
-
 		// Initialize and set up the main editor panel
 		editor = new Editor(this);
 		panelEditorScroll = new JScrollPane(editor, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -175,17 +153,6 @@ public class GUI extends JFrame {
 		panelEditorScroll.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		add(panelEditorScroll, editorgbc);
 
-		// Initialize and set up the properties panel, used when someone right clicks an object and clicks properties
-		panelProperties = new JPanel();
-		Border lowerEtched = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-		panelProperties.setBorder(BorderFactory.createTitledBorder(lowerEtched, "Properties"));
-
-		// Add properties panel
-		add(panelProperties, propgbc);
-
-		panelStatus = new JPanel();
-		panelStatus.setBorder(lowerEtched);
-		add(panelStatus, statusgbc);
 		revalidate();
 
 		// By default, start with the Select tool
@@ -197,15 +164,16 @@ public class GUI extends JFrame {
 			editor.add(n.getNodePanel());
 		}
 
-		// Update GUI title
-		if (context.existsOnDisk()) {
-			setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(context.getCurrentlyLoadedFile()));
-		} else {
-			setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
-		}
+		// Update GBFrame title
+		setTitle(FileUtils.getGuiTitle(this));
+//		if (context.existsOnDisk()) {
+//			setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(context.getCurrentlyLoadedFile()));
+//		} else {
+//			setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
+//		}
 		context.setAsSaved();
 
-		// Show GUI
+		// Show GBFrame
 		setVisible(true);
 
 		// Set the initial scrolling positions to the center
@@ -272,7 +240,7 @@ public class GUI extends JFrame {
 	}
 
 	/**
-	 * Make changes to certain parts of the GUI according to the current
+	 * Make changes to certain parts of the GBFrame according to the current
 	 * set of constraints in the context graph.
 	 */
 	public void updateByConstraint() {
@@ -295,16 +263,17 @@ public class GUI extends JFrame {
 		updateByConstraint();
 		KeyActions.initialize(this); // Re-initialize key bindings with correct context
 		menuBar.updateWithNewContext();
-		if (newContext.getCurrentlyLoadedFile() == null) {
-			this.setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
-		} else {
-			this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
-		}
+		setTitle(FileUtils.getGuiTitle(this));
+//		if (newContext.getCurrentlyLoadedFile() == null) {
+//			this.setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
+//		} else {
+//			this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
+//		}
 		context.setAsSaved();
 	}
 
 	/**
-	 * Get the menu bar object on this GUI.
+	 * Get the menu bar object on this GBFrame.
 	 *
 	 * @return The menu bar.
 	 */
@@ -315,7 +284,7 @@ public class GUI extends JFrame {
 	/**
 	 * Get the scrolling pane containing the editor panel.
 	 *
-	 * @return This GUI's scroll pane.
+	 * @return This GBFrame's scroll pane.
 	 */
 	public JScrollPane getScrollPane() {
 		return panelEditorScroll;

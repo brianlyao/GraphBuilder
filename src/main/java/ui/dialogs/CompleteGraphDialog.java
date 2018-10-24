@@ -5,7 +5,7 @@ import graph.Graph;
 import graph.GraphConstraint;
 import graph.GraphFactory;
 import graph.components.gb.GBGraph;
-import ui.GUI;
+import ui.GBFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -27,7 +27,7 @@ public class CompleteGraphDialog extends JDialog {
 	/**
 	 * Create the dialog.
 	 */
-	public CompleteGraphDialog(final GUI g) {
+	public CompleteGraphDialog(final GBFrame g) {
 		super(g, "Complete Graph");
 
 		setResizable(false);
@@ -70,7 +70,7 @@ public class CompleteGraphDialog extends JDialog {
 		});
 
 		JButton cancelButton = new JButton("Cancel");
-		cancelButton.addActionListener(ignored -> this.dispose());
+		cancelButton.addActionListener($ -> this.dispose());
 
 		getRootPane().setDefaultButton(okButton);
 		buttonPane.add(okButton);

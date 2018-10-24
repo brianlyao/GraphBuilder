@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import structures.UOPair;
 import ui.Editor;
-import ui.GUI;
+import ui.GBFrame;
 
 import java.io.File;
 import java.util.*;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class GBContext {
 
-	private GUI gui; // The GUI using this context
+	private GBFrame gui; // The GBFrame using this context
 
 	@Getter
 	private GBGraph graph;
@@ -74,11 +74,11 @@ public class GBContext {
 	}
 
 	/**
-	 * Set the GUI object providing an interface for this context.
+	 * Set the GBFrame object providing an interface for this context.
 	 *
-	 * @param g The GUI for this context.
+	 * @param g The GBFrame for this context.
 	 */
-	public void setGUI(GUI g) {
+	public void setGUI(GBFrame g) {
 		gui = g;
 	}
 
@@ -175,7 +175,7 @@ public class GBContext {
 			editor.removeSelection(n);
 			removedEdges.values().forEach(editor::removeSelections);
 
-			// Update GUI appearance and button states
+			// Update GBFrame appearance and button states
 			this.getGUI().getMainMenuBar().updateWithSelection();
 
 			// Revalidate the editor panel after removing the panel
@@ -278,7 +278,8 @@ public class GBContext {
 	 * Updates the "saved" state of the current graph.
 	 */
 	public void updateSaveState() {
-		if ((actionHistory.isEmpty() && actionIdOnLastSave < 0) || actionHistory.peek().actionId() == actionIdOnLastSave) {
+		if ((actionHistory.isEmpty() && actionIdOnLastSave < 0) ||
+			actionHistory.peek().actionId() == actionIdOnLastSave) {
 			setAsSaved();
 		} else {
 			setAsUnsaved();
@@ -288,11 +289,11 @@ public class GBContext {
 	}
 
 	/**
-	 * Get the GUI corresponding to this context.
+	 * Get the GBFrame corresponding to this context.
 	 *
-	 * @return The GUI corresponding to this context.
+	 * @return The GBFrame corresponding to this context.
 	 */
-	public GUI getGUI() {
+	public GBFrame getGUI() {
 		return gui;
 	}
 
@@ -333,7 +334,7 @@ public class GBContext {
 	}
 
 	/**
-	 * Mark the graph in this context as saved, which changes the GUI's appearance slightly.
+	 * Mark the graph in this context as saved, which changes the GBFrame's appearance slightly.
 	 */
 	public void setAsSaved() {
 		unsaved = false;
@@ -343,12 +344,13 @@ public class GBContext {
 	}
 
 	/**
-	 * Mark the graph in this context as unsaved, which changes the GUI's appearance slightly.
+	 * Mark the graph in this context as unsaved, which changes the GBFrame's appearance slightly.
 	 */
 	public void setAsUnsaved() {
 		unsaved = true;
-		if (!gui.getTitle().endsWith("*"))
+		if (!gui.getTitle().endsWith("*")) {
 			gui.setTitle(gui.getTitle() + "*");
+		}
 	}
 
 	/**
@@ -358,10 +360,6 @@ public class GBContext {
 	 */
 	public void setActionIdOnLastSave(int id) {
 		actionIdOnLastSave = id;
-	}
-
-	public void putInIdMap(GBComponent component) {
-		idMap.put(component.getId(), component);
 	}
 
 	/**

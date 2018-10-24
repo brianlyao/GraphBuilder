@@ -10,7 +10,7 @@ import java.awt.event.ActionListener;
 import java.util.HashMap;
 
 /**
- * The main tool bar at the top of the GUI.
+ * The main tool bar at the top of the GBFrame.
  *
  * @author Brian
  */

@@ -1,6 +1,6 @@
 package util;
 
-import ui.GUI;
+import ui.GBFrame;
 
 import javax.swing.*;
 import java.io.PrintWriter;
@@ -19,7 +19,7 @@ public class ExceptionUtils {
 	 * @param parent The parent component.
 	 * @param e      The exception to display.
 	 */
-	public static void displayException(GUI parent, Exception e) {
+	public static void displayException(GBFrame parent, Exception e) {
 		// Convert the stack trace to a string
 		String stackTrace = exceptionToString(e);
 

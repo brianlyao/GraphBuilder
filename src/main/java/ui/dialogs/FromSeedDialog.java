@@ -3,7 +3,7 @@
 //import actions.GenerateRadialGraphAction;
 //import graph.Graph;
 //import graph.GraphFactory;
-//import ui.GUI;
+//import ui.GBFrame;
 //
 //import javax.swing.*;
 //import javax.swing.GroupLayout.Alignment;
@@ -23,7 +23,7 @@
 //	/**
 //	 * Create the dialog.
 //	 */
-//	public FromSeedDialog(final GUI g) {
+//	public FromSeedDialog(final GBFrame g) {
 //		super(g, "Generate Graph From Seed");
 //
 //		setResizable(false);

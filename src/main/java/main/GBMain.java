@@ -3,7 +3,7 @@ package main;
 import context.GBContext;
 import io.FileLoader;
 import logger.Logger;
-import ui.GUI;
+import ui.GBFrame;
 import ui.dialogs.NewGraphDialog;
 import ui.dialogs.StartupDialog;
 
@@ -55,7 +55,7 @@ public class GBMain {
 			}
 		}
 
-		new GUI(startingContext);
+		new GBFrame(startingContext);
 	}
 
 	/**

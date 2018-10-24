@@ -1,6 +1,5 @@
 package util;
 
-import graph.Graph;
 import graph.components.Edge;
 import graph.components.Node;
 
@@ -14,37 +13,10 @@ import java.util.Arrays;
 public class TestUtils {
 
 	/**
-	 * Add the specified nodes to this graph.
-	 *
-	 * @param nodes An array of nodes to add.
-	 */
-	public static void addNodes(Graph graph, Node... nodes) {
-		for (Node n : nodes) {
-			graph.addNode(n);
-		}
-	}
-
-	/**
-	 * Add the specified edges to the graph. Using this method implies no
-	 * additional data needs to be provided for any of the edges being
-	 * added.
-	 *
-	 * @param edges The array of edges to add.
-	 * @return true iff every edge was successfully added.
-	 */
-	public static boolean addEdges(Graph graph, Edge... edges) {
-		boolean added = true;
-		for (Edge e : edges) {
-			added = added && graph.addEdge(e);
-		}
-		return added;
-	}
-
-	/**
 	 * Generate an array of nodes with the specified length.
 	 *
 	 * @param numNodes The number of nodes to create.
-	 * @param startId  The starting id; consecutive ids will be assigned to
+	 * @param startId  The starting ID; consecutive IDs will be assigned to
 	 *                 subsequently generated nodes.
 	 * @return the array of new nodes.
 	 */
@@ -68,7 +40,7 @@ public class TestUtils {
 	 * @param directed   An array of booleans specifying whether an edge should
 	 *                   be directed.
 	 * @param nodes      The list of nodes from which endpoints are taken.
-	 * @param startId    The starting id; consecutive ids will be assigned to
+	 * @param startId    The starting ID; consecutive IDs will be assigned to
 	 *                   subsequently generated edges.
 	 * @return the array of new edges.
 	 */
@@ -91,7 +63,7 @@ public class TestUtils {
 	 * @param value  The value to fill the array with.
 	 * @return the filled array.
 	 */
-	public static boolean[] filledBooleanArray(int length, boolean value) {
+	public static boolean[] booleans(int length, boolean value) {
 		boolean[] directed = new boolean[length];
 		Arrays.fill(directed, value);
 		return directed;

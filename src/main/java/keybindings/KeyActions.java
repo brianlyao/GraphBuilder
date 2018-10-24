@@ -8,7 +8,7 @@ import actions.file.Save;
 import actions.file.SaveAs;
 import context.GBContext;
 import tool.Tool;
-import ui.GUI;
+import ui.GBFrame;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -44,11 +44,11 @@ public class KeyActions {
 	public static final KeyStroke EXIT = KeyStroke.getKeyStroke("control W");
 
 	/**
-	 * Initialize the key bindings in the given GUI.
+	 * Initialize the key bindings in the given GBFrame.
 	 *
-	 * @param g The GUI in which we want to apply key bindings.
+	 * @param g The GBFrame in which we want to apply key bindings.
 	 */
-	public static void initialize(GUI g) {
+	public static void initialize(GBFrame g) {
 		GBContext ctxt = g.getContext();
 
 		ActionMap actionMap = g.getRootPane().getActionMap();

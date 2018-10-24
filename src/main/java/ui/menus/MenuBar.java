@@ -12,7 +12,7 @@ import graph.components.gb.GBNode;
 import keybindings.KeyActions;
 import org.javatuples.Pair;
 import structures.UOPair;
-import ui.GUI;
+import ui.GBFrame;
 import ui.dialogs.CompleteGraphDialog;
 import util.FileUtils;
 
@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * The main menu bar which appears at the top of the GUI.
+ * The main menu bar which appears at the top of the GBFrame.
  *
  * @author Brian Yao
  */
@@ -33,7 +33,7 @@ public class MenuBar extends JMenuBar {
 
 	private static final long serialVersionUID = -7109662156036502356L;
 
-	private GUI gui;
+	private GBFrame gui;
 
 	private JMenu file;
 	private JMenu edit;
@@ -69,7 +69,7 @@ public class MenuBar extends JMenuBar {
 	private JMenuItem completeGraph;
 	private JMenuItem fromSeed;
 
-	public MenuBar(final GUI g) {
+	public MenuBar(final GBFrame g) {
 		super();
 
 		gui = g;
@@ -185,7 +185,7 @@ public class MenuBar extends JMenuBar {
 		generate = new JMenu("Generate");
 
 		completeGraph = new JMenuItem("Complete Graph");
-		completeGraph.addActionListener(ignored -> new CompleteGraphDialog(gui));
+		completeGraph.addActionListener($ -> new CompleteGraphDialog(gui));
 
 		fromSeed = new JMenuItem("From Seed");
 
@@ -228,7 +228,7 @@ public class MenuBar extends JMenuBar {
 
 	/**
 	 * Update the actions associated with menu items to occur in the context
-	 * of the GUI (the context likely has just been changed).
+	 * of the GBFrame (the context likely has just been changed).
 	 */
 	public void updateWithNewContext() {
 		removeAllActionListeners(new AbstractButton[]{

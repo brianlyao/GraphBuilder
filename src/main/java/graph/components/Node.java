@@ -3,6 +3,7 @@ package graph.components;
 import graph.components.gb.GBNode;
 import lombok.Getter;
 import lombok.Setter;
+import util.StructureUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +12,9 @@ import java.util.Set;
 
 /**
  * An instance represents a node component of a graph.
+ *
+ * Each instance retains "adjacency list"-like metadata which keeps track of
+ * all edges to and from neighboring nodes as well as self-edges.
  *
  * @author Brian Yao
  */
@@ -54,11 +58,46 @@ public class Node extends GraphComponent {
 	}
 
 	/**
-	 * Add an edge containing this node as an endpoint to this node's data.
+	 * Creates a node with the given component ID.
+	 *
+	 * @param id The ID of this node.
+	 */
+	public Node(int id) {
+		this();
+		this.setId(id);
+	}
+
+	/**
+	 * @param e The edge to check.
+	 * @return true iff this edge exists in this node's metadata.
+	 */
+	public boolean hasEdge(Edge e) {
+		if (!e.hasEndpoint(this)) {
+			return false;
+		}
+
+		Node other = e.getOtherEndpoint(this);
+		if (this == other) {
+			return selfEdges.contains(e);
+		} else if (!e.isDirected()) {
+			return undirectedEdges.get(other) != null && undirectedEdges.get(other).contains(e);
+		} else if (e.getFirstEnd() == this) {
+			return outgoingDirectedEdges.get(other) != null && outgoingDirectedEdges.get(other).contains(e);
+		} else {
+			return incomingDirectedEdges.get(other) != null && incomingDirectedEdges.get(other).contains(e);
+		}
+	}
+
+	/**
+	 * Add an edge to this node's metadata.
 	 *
 	 * @param e The edge to add.
 	 */
 	public void addEdge(Edge e) {
+		if (this.hasEdge(e)) {
+			throw new IllegalArgumentException("Cannot add an edge to this node's metadata more than once.");
+		}
+
 		Node other = e.getOtherEndpoint(this);
 		if (this == other) {
 			// Self edge case
@@ -66,16 +105,15 @@ public class Node extends GraphComponent {
 			return;
 		}
 
-		// Handle non-self edges
 		if (!e.isDirected()) {
-			undirectedEdges.computeIfAbsent(other, ignored -> new HashSet<>());
+			undirectedEdges.computeIfAbsent(other, $ -> new HashSet<>());
 			undirectedEdges.get(other).add(e);
 		} else {
 			if (e.getFirstEnd() == this) {
-				outgoingDirectedEdges.computeIfAbsent(other, ignored -> new HashSet<>());
+				outgoingDirectedEdges.computeIfAbsent(other, $ -> new HashSet<>());
 				outgoingDirectedEdges.get(other).add(e);
 			} else if (e.getSecondEnd() == this) {
-				incomingDirectedEdges.computeIfAbsent(other, ignored -> new HashSet<>());
+				incomingDirectedEdges.computeIfAbsent(other, $ -> new HashSet<>());
 				incomingDirectedEdges.get(other).add(e);
 			}
 		}
@@ -87,6 +125,10 @@ public class Node extends GraphComponent {
 	 * @param e The edge to remove.
 	 */
 	public void removeEdge(Edge e) {
+		if (!this.hasEdge(e)) {
+			throw new IllegalArgumentException("Cannot remove an edge which does not exist in this node's metadata.");
+		}
+
 		Node other = e.getOtherEndpoint(this);
 		if (this == other) {
 			// Self edge case
@@ -94,73 +136,24 @@ public class Node extends GraphComponent {
 			return;
 		}
 
-		// Handle simple edges
 		if (!e.isDirected()) {
-			Set<Edge> toNeighborUndir = this.undirectedEdges.get(other);
-			if (toNeighborUndir != null && !toNeighborUndir.isEmpty()) {
-				toNeighborUndir.remove(e);
+			undirectedEdges.get(other).remove(e);
+			if (undirectedEdges.get(other).isEmpty()) {
+				undirectedEdges.remove(other);
 			}
 		} else {
 			if (e.getFirstEnd() == this) {
-				Set<Edge> toNeighbor = outgoingDirectedEdges.get(other);
-				if (toNeighbor != null && !toNeighbor.isEmpty()) {
-					toNeighbor.remove(e);
+				outgoingDirectedEdges.get(other).remove(e);
+				if (outgoingDirectedEdges.get(other).isEmpty()) {
+					outgoingDirectedEdges.remove(other);
 				}
 			} else if (e.getSecondEnd() == this) {
-				Set<Edge> fromNeighbor = incomingDirectedEdges.get(other);
-				if (fromNeighbor != null && !fromNeighbor.isEmpty()) {
-					fromNeighbor.remove(e);
+				incomingDirectedEdges.get(other).remove(e);
+				if (incomingDirectedEdges.get(other).isEmpty()) {
+					incomingDirectedEdges.remove(other);
 				}
 			}
 		}
-	}
-
-	/**
-	 * Get the number of self edges.
-	 *
-	 * @return The number of self edges.
-	 */
-	public int numSelfEdges() {
-		return selfEdges.size();
-	}
-
-	/**
-	 * Get the number of undirected edges.
-	 *
-	 * @return The number of undirected edges.
-	 */
-	public int numUndirectedEdges() {
-		int count = 0;
-		for (Set<Edge> edgeSet : undirectedEdges.values()) {
-			count += edgeSet.size();
-		}
-		return count;
-	}
-
-	/**
-	 * Get the number of outgoing directed edges.
-	 *
-	 * @return The number of outgoing directed edges.
-	 */
-	public int numOutgoingDirectedEdges() {
-		int count = 0;
-		for (Set<Edge> edgeSet : outgoingDirectedEdges.values()) {
-			count += edgeSet.size();
-		}
-		return count;
-	}
-
-	/**
-	 * Get the number of incoming directed edges.
-	 *
-	 * @return The number of incoming directed edges.
-	 */
-	public int numIncomingDirectedEdges() {
-		int count = 0;
-		for (Set<Edge> edgeSet : incomingDirectedEdges.values()) {
-			count += edgeSet.size();
-		}
-		return count;
 	}
 
 	/**
@@ -172,24 +165,17 @@ public class Node extends GraphComponent {
 	 * @return A map of edges from this node to its neighbors.
 	 */
 	public Map<Node, Set<Edge>> getNeighboringEdges(boolean followDirected) {
-		Map<Node, Set<Edge>> neighboring = new HashMap<>(undirectedEdges);
+		Map<Node, Set<Edge>> neighboring = new HashMap<>();
+		undirectedEdges.forEach((node, edges) -> neighboring.put(node, new HashSet<>(edges)));
 		for (Map.Entry<Node, Set<Edge>> outEntry : outgoingDirectedEdges.entrySet()) {
-			Set<Edge> neighborValue = neighboring.get(outEntry.getKey());
-			if (neighborValue == null) {
-				neighboring.put(outEntry.getKey(), outEntry.getValue());
-			} else {
-				neighborValue.addAll(outEntry.getValue());
-			}
+			neighboring.computeIfAbsent(outEntry.getKey(), $ -> new HashSet<>());
+			neighboring.get(outEntry.getKey()).addAll(outEntry.getValue());
 		}
 
 		if (!followDirected) {
 			for (Map.Entry<Node, Set<Edge>> inEntry : incomingDirectedEdges.entrySet()) {
-				Set<Edge> neighborValue = neighboring.get(inEntry.getKey());
-				if (neighborValue == null) {
-					neighboring.put(inEntry.getKey(), inEntry.getValue());
-				} else {
-					neighborValue.addAll(inEntry.getValue());
-				}
+				neighboring.computeIfAbsent(inEntry.getKey(), $ -> new HashSet<>());
+				neighboring.get(inEntry.getKey()).addAll(inEntry.getValue());
 			}
 		}
 

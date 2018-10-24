@@ -1,6 +1,6 @@
 package ui.dialogs;
 
-import ui.GUI;
+import ui.GBFrame;
 import util.ImageUtils;
 
 import javax.swing.*;
@@ -31,7 +31,7 @@ public class GridSettingsDialog extends JDialog {
 	private static final boolean DEFAULT_SHOW_GRID_ENABLED = false;
 	private static final Color DEFAULT_GRID_COLOR = Color.DARK_GRAY;
 
-	private GUI gui;
+	private GBFrame gui;
 
 	private JLabel gridLevelLabel;
 	private JTextField gridLevelTextField;
@@ -58,7 +58,7 @@ public class GridSettingsDialog extends JDialog {
 	private Boolean tempShowGrid;
 	private Color tempGridColor;
 
-	public GridSettingsDialog(GUI g) {
+	public GridSettingsDialog(GBFrame g) {
 		super(g, "Grid: Settings");
 
 		setResizable(false);

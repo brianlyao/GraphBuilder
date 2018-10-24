@@ -1,6 +1,6 @@
 package ui.tooloptions;
 
-import ui.GUI;
+import ui.GBFrame;
 
 import javax.swing.*;
 
@@ -11,19 +11,19 @@ public abstract class ToolOptionsBar extends JToolBar {
 
 	private static final long serialVersionUID = 3598910131347326252L;
 
-	private GUI gui;
+	private GBFrame gui;
 
 	/**
 	 * Create a new options panel.
 	 *
-	 * @param g The GUI in which this panel will be.
+	 * @param g The GBFrame in which this panel will be.
 	 */
-	public ToolOptionsBar(GUI g) {
+	public ToolOptionsBar(GBFrame g) {
 		super();
 		gui = g;
 	}
 
-	public GUI getGUI() {
+	public GBFrame getGUI() {
 		return gui;
 	}
 

@@ -4,6 +4,7 @@ import graph.components.gb.GBEdge;
 import lombok.Getter;
 import lombok.Setter;
 import structures.OrderedPair;
+import structures.UOPair;
 
 /**
  * An instance represents an edge component of a graph.
@@ -26,13 +27,28 @@ public class Edge extends GraphComponent {
 	/**
 	 * Create a new edge.
 	 *
-	 * @param n1       A node endpoint.
-	 * @param n2       Another node endpoint. We draw this edge from c1 to c2.
+	 * @param n1       The first endpoint.
+	 * @param n2       The second endpoint. This order is only important for
+	 *                 directed edges.
 	 * @param directed Whether this edge is directed.
 	 */
 	public Edge(Node n1, Node n2, boolean directed) {
 		this.endpoints = new OrderedPair<>(n1, n2);
 		this.directed = directed;
+	}
+
+	/**
+	 * Create a new edge with the given component ID.
+	 *
+	 * @param id       The ID of this edge.
+	 * @param n1       The first endpoint.
+	 * @param n2       The second endpoint. This order is only important for
+	 *                 directed edges.
+	 * @param directed Whether this edge is directed.
+	 */
+	public Edge(int id, Node n1, Node n2, boolean directed) {
+		this(n1, n2, directed);
+		this.setId(id);
 	}
 
 	/**
@@ -50,6 +66,13 @@ public class Edge extends GraphComponent {
 	 */
 	public boolean hasEndpoint(Node c) {
 		return c == endpoints.getFirst() || c == endpoints.getSecond();
+	}
+
+	/**
+	 * @return an unordered pair of this edge's endpoints.
+	 */
+	public UOPair<Node> getUoEndpoints() {
+		return new UOPair<>(this.getFirstEnd(), this.getSecondEnd());
 	}
 
 	/**
@@ -71,16 +94,39 @@ public class Edge extends GraphComponent {
 	 *
 	 * @param endpoint The provided endpoint of this edge.
 	 * @return The other endpoint of this edge.
-	 * @throws IllegalArgumentException if the provided endpoint is not an endpoint of this edge.
+	 * @throws IllegalArgumentException if the provided endpoint is not an
+	 *         endpoint of this edge.
 	 */
 	public Node getOtherEndpoint(Node endpoint) {
 		if (!hasEndpoint(endpoint)) {
 			throw new IllegalArgumentException("This edge does not have this node as an endpoint: " + endpoint);
 		}
+
 		if (endpoints.getFirst() == endpoint) {
 			return endpoints.getSecond();
 		}
+
 		return endpoints.getFirst();
+	}
+
+	/**
+	 * Adds this edge to each endpoint's metadata.
+	 */
+	public void addSelfToNodeData() {
+		this.getFirstEnd().addEdge(this);
+		if (!this.isSelfEdge()) {
+			this.getSecondEnd().addEdge(this);
+		}
+	}
+
+	/**
+	 * Removes this edge from each endpoint's metadata.
+	 */
+	public void removeSelfFromNodeData() {
+		this.getFirstEnd().removeEdge(this);
+		if (!this.isSelfEdge()) {
+			this.getSecondEnd().removeEdge(this);
+		}
 	}
 
 	/**
@@ -99,7 +145,7 @@ public class Edge extends GraphComponent {
 
 	@Override
 	public String toString() {
-		return String.format("(%d,%d)", this.getFirstEnd().getId(), this.getSecondEnd().getId());
+		return String.format("%s(%d,%d)", directed ? 'd' : 'u', this.getFirstEnd().getId(), this.getSecondEnd().getId());
 	}
 
 }

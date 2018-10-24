@@ -1,7 +1,7 @@
 package util;
 
 import graph.components.gb.GBNode;
-import ui.GUI;
+import ui.GBFrame;
 
 import java.awt.*;
 import java.util.Collection;
@@ -16,11 +16,11 @@ public class CoordinateUtils {
 	/**
 	 * Returns the closest point on the grid from the given point.
 	 *
-	 * @param g    The GUI with the grid in question.
+	 * @param g    The GBFrame with the grid in question.
 	 * @param from The point we want to compute the closest grid point from.
 	 * @return The point corresponding to the point on the grid closest to "from".
 	 */
-	public static Point closestGridPoint(GUI g, Point from) {
+	public static Point closestGridPoint(GBFrame g, Point from) {
 		int level = g.getGridSettingsDialog().getGridLevel();
 
 		// Compute the minimum distance from each of the four points

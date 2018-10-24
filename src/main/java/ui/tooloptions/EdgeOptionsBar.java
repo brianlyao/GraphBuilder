@@ -1,7 +1,7 @@
 package ui.tooloptions;
 
 import tool.Tool;
-import ui.GUI;
+import ui.GBFrame;
 import util.ImageUtils;
 
 import javax.swing.*;
@@ -32,9 +32,9 @@ public class EdgeOptionsBar extends ToolOptionsBar {
 	private String choose = "Choose Edge Color";
 
 	/**
-	 * @param g The GUI object this bar will appear in.
+	 * @param g The GBFrame object this bar will appear in.
 	 */
-	public EdgeOptionsBar(GUI g) {
+	public EdgeOptionsBar(GBFrame g) {
 		super(g);
 		this.setLayout(new FlowLayout(FlowLayout.LEADING));
 		lineWeightLabel = new JLabel("Line Weight: ");

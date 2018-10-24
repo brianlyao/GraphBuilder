@@ -5,7 +5,7 @@ import graph.components.gb.GBNode;
 import io.FileLoader;
 import io.FileSaver;
 import main.GBMain;
-import ui.GUI;
+import ui.GBFrame;
 import ui.dialogs.NewGraphDialog;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ public class FileUtils {
 	 * @param context The current context.
 	 */
 	public static void checkUnsaved(GBContext context) {
-		GUI gui = context.getGUI();
+		GBFrame gui = context.getGUI();
 		if (context.isUnsaved()) {
 			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them first?", "Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
 			if (resp == JOptionPane.YES_OPTION) {
@@ -46,7 +46,7 @@ public class FileUtils {
 	 * @param context The context before creating a new file.
 	 */
 	public static void newFileProcedure(GBContext context) {
-		GUI gui = context.getGUI();
+		GBFrame gui = context.getGUI();
 		Integer constraints = NewGraphDialog.getConstraints(gui);
 		if (constraints != null) {
 			GBContext newContext = new GBContext(constraints);
@@ -61,7 +61,7 @@ public class FileUtils {
 	 * @param context The current context.
 	 */
 	public static void openFileProcedure(GBContext context) {
-		GUI gui = context.getGUI();
+		GBFrame gui = context.getGUI();
 		JFileChooser fc = gui.getFileChooser();
 
 		checkUnsaved(context);
@@ -85,13 +85,13 @@ public class FileUtils {
 	 * @param context The current context.
 	 */
 	public static void saveAsFileProcedure(GBContext context) {
-		GUI gui = context.getGUI();
+		GBFrame gui = context.getGUI();
 		JFileChooser fc = gui.getFileChooser();
 		int response = fc.showSaveDialog(gui);
 		if (response == JFileChooser.APPROVE_OPTION) {
 			File toSave = fc.getSelectedFile();
 			FileSaver.saveGraph(context, toSave);
-			gui.setTitle(GUI.DEFAULT_TITLE + " - " + FileUtils.getBaseName(toSave));
+			gui.setTitle(GBFrame.DEFAULT_TITLE + " - " + FileUtils.getBaseName(toSave));
 		}
 	}
 
@@ -114,7 +114,7 @@ public class FileUtils {
 	 * @param context The current context.
 	 */
 	public static void exitProcedure(GBContext context) {
-		GUI gui = context.getGUI();
+		GBFrame gui = context.getGUI();
 		if (context.isUnsaved()) {
 			int resp = JOptionPane.showConfirmDialog(gui, "You have unsaved changes. Do you want to save them before " +
 				"exiting GraphBuilder?", "Exit: Unsaved Changes", JOptionPane.YES_NO_CANCEL_OPTION);
@@ -129,15 +129,24 @@ public class FileUtils {
 	}
 
 	/**
+	 * @param gui The GBFrame to get the title of.
+	 * @return the title of the GUI
+	 */
+	public static String getGuiTitle(GBFrame gui) {
+		if (gui.getContext().existsOnDisk()) {
+			return GBFrame.DEFAULT_TITLE + " - " + getBaseName(gui.getContext().getCurrentlyLoadedFile());
+		} else {
+			return GBFrame.DEFAULT_TITLE + " - " + GBFrame.DEFAULT_FILENAME;
+		}
+	}
+
+	/**
 	 * Get the base filename of a file (no extension).
 	 *
 	 * @param f The file to get the base name of.
 	 * @return The name of the file without the extension.
 	 */
-	public static String getBaseName(File f) {
-		if (f == null) {
-			return "null";
-		}
+	private static String getBaseName(File f) {
 		String fn = f.getName();
 		int lastDot = fn.lastIndexOf('.');
 		if (lastDot >= 0) {

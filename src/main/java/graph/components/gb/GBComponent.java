@@ -24,7 +24,7 @@ public abstract class GBComponent extends GraphComponent {
 
 	/**
 	 * Check if this component is selected in the Editor. This will only
-	 * succeed if the context has a GUI attached to it.
+	 * succeed if the context has a GBFrame attached to it.
 	 *
 	 * @return true if the component is selected, false otherwise.
 	 */

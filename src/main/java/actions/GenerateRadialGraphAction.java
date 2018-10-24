@@ -25,7 +25,7 @@ public class GenerateRadialGraphAction extends ReversibleAction {
 
 	/**
 	 * Creates an action for adding a graph to the provided context. It is
-	 * expected that the context contains an associated GUI object.
+	 * expected that the context contains an associated GBFrame object.
 	 *
 	 * @param graph The graph to add.
 	 */

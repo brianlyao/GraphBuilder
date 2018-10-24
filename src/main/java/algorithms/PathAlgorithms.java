@@ -56,12 +56,14 @@ public class PathAlgorithms {
 
 	/**
 	 * An implementation of Dijkstra's algorithm, which computes the shortest
-	 * path from the starting node to the destination node.
+	 * path from the starting node to the destination node. This is only useful
+	 * on graphs with edges that all have positive numeric weights.
 	 *
 	 * @param graph       The graph to search for the path in.
 	 * @param start       The start of our path.
 	 * @param destination The destination of our path.
-	 * @return The shortest path from start to destination in graph.
+	 * @return The shortest path from start to destination in graph, or null if
+	 *         no connecting path exists.
 	 */
 	public static Path dijkstra(Graph graph, Node start, Node destination) {
 		if (!graph.containsNode(start) || !graph.containsNode(destination)) {
@@ -72,10 +74,11 @@ public class PathAlgorithms {
 			return new Path(start);
 		}
 
-		Comparator<DijkstraItem> comparator = Comparator.comparingDouble(DijkstraItem::getPriority);
-		PriorityQueue<DijkstraItem> heap = new PriorityQueue<>(comparator);
-		Set<Node> visited = new HashSet<>();
+		// Keep track of which item contains which node
 		Map<Node, DijkstraItem> nodeToItem = new HashMap<>();
+
+		Comparator<DijkstraItem> comparator = Comparator.comparingDouble(DijkstraItem::getPriority);
+		PriorityQueue<DijkstraItem> priorityQueue = new PriorityQueue<>(comparator);
 
 		Set<Node> subGraph = Traversals.breadthFirstSearch(start, true);
 		if (!subGraph.contains(destination)) {
@@ -83,50 +86,55 @@ public class PathAlgorithms {
 			return null;
 		}
 
-		// Fill the heap
+		// Add the starting node the the priority queue
 		DijkstraItem startItem = new DijkstraItem(0., start);
-		heap.add(startItem);
+		priorityQueue.add(startItem);
 		nodeToItem.put(start, startItem);
 		for (Node node : subGraph) {
 			if (node != start) {
 				DijkstraItem nodeItem = new DijkstraItem(Double.POSITIVE_INFINITY, node);
-				heap.add(nodeItem);
+				priorityQueue.add(nodeItem);
 				nodeToItem.put(node, nodeItem);
 			}
 		}
 
 		// Visit nodes until we visit the destination node
-		while (!visited.contains(destination)) {
-			DijkstraItem currentItem = heap.poll();
+		while (!priorityQueue.isEmpty()) {
+			DijkstraItem currentItem = priorityQueue.poll();
 			Node currentNode = currentItem.currentNode;
+
+			// Terminate the search
+			if (currentNode == destination) {
+				break;
+			}
 
 			// Calculate tentative distance for each neighbor
 			for (Node neighbor : currentNode.getNeighbors(true)) {
-				if (!visited.contains(neighbor)) {
-					Edge minEdge = GraphUtils.minWeightEdge(currentNode, neighbor, true);
-					double minEdgeWeight = minEdge.getNumericWeight();
+				Edge minEdge = GraphUtils.minWeightEdge(currentNode, neighbor, true);
+				double minEdgeWeight = minEdge.getNumericWeight();
 
-					// Check if tentative priority is lower than existing priority
-					// for this neighbor. If so, set the priority to be the new lower one
-					DijkstraItem neighborItem = nodeToItem.get(neighbor);
-					Double newPriority = currentItem.priority + minEdgeWeight;
-					if (newPriority < neighborItem.priority) {
-						neighborItem.setPriority(newPriority);
-						neighborItem.setPrevious(currentNode, minEdge);
-					}
+				// Check if tentative priority is lower than existing priority
+				// for this neighbor. If so, set the priority to be the new lower one
+				DijkstraItem neighborItem = nodeToItem.get(neighbor);
+				double newPriority = currentItem.priority + minEdgeWeight;
+				if (newPriority < neighborItem.priority) {
+					neighborItem.setPriority(newPriority);
+					neighborItem.setPrevious(currentNode, minEdge);
+
+					// Re-add the item to update its priority
+					priorityQueue.remove(neighborItem);
+					priorityQueue.add(neighborItem);
 				}
 			}
-
-			visited.add(currentNode);
 		}
 
 		// Construct the minimum path
 		Path shortestPath = new Path(destination);
-		Node currentlyLinking = destination;
-		while (currentlyLinking != null) {
-			DijkstraItem linkingItem = nodeToItem.get(currentlyLinking);
-			shortestPath.prependNode(linkingItem.previousNode, linkingItem.fromPreviousNode);
-			currentlyLinking = linkingItem.previousNode;
+		Node current = destination;
+		while (current != start) {
+			DijkstraItem currItem = nodeToItem.get(current);
+			shortestPath.prependNode(currItem.previousNode, currItem.fromPreviousNode);
+			current = currItem.previousNode;
 		}
 		return shortestPath;
 	}

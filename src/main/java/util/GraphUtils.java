@@ -1,5 +1,6 @@
 package util;
 
+import graph.Graph;
 import graph.components.Edge;
 import graph.components.Node;
 import graph.components.WeightedEdge;
@@ -43,6 +44,33 @@ public class GraphUtils {
 		}
 
 		return minWeightEdge;
+	}
+
+	/**
+	 * Gets an adjacency list representation of the given graph in a multi-line
+	 * string. The format for each node is:
+	 * <p>
+	 * nodeId:neighbor0,neighbor1,neighbor2,...
+	 * <p>
+	 * where each value is an integer ID. If there are no neighbors, there is
+	 * no colon.
+	 *
+	 * @param graph The graph to obtain an adjacency list representation of.
+	 * @return The adjacency list for the given graph.
+	 */
+	public String asAdjacencyList(Graph graph) {
+		StringBuilder adjList = new StringBuilder();
+		for (Node n : graph.getNodes()) {
+			adjList.append(n.getId());
+			adjList.append(':');
+			for (Node neighbor : n.getNeighbors(true)) {
+				adjList.append(neighbor.getId());
+				adjList.append(',');
+			}
+			adjList.replace(adjList.length() - 1, 1, "\n");
+		}
+
+		return adjList.toString();
 	}
 
 }
