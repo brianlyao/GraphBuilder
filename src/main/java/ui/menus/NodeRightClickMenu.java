@@ -12,7 +12,7 @@ import javax.swing.*;
 /**
  * The right click menu which appears when the user right clicks on a node.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class NodeRightClickMenu {
 

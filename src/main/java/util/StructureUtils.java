@@ -1,6 +1,13 @@
 package util;
 
+import graph.components.Edge;
+import graph.components.Node;
+import graph.components.gb.GBEdge;
+import graph.components.gb.GBNode;
+import structures.UOPair;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A class containing data structure-related utility methods.
@@ -77,6 +84,68 @@ public class StructureUtils {
 			iterator.next();
 		}
 		return iterator.next();
+	}
+
+	/**
+	 * Converts a set of Nodes to GBNodes, assuming the nodes are associated
+	 * with a context.
+	 *
+	 * @param nodes The set of plain nodes to convert.
+	 * @return The set of corresponding GBNodes.
+	 */
+	public static Set<GBNode> toGbNodes(Collection<Node> nodes) {
+		return nodes.stream().map(Node::getGbNode).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Converts a map of Edges to GBEdges, assuming the edges are associated
+	 * with a context.
+	 *
+	 * @param edges The set of plain edges to convert.
+	 * @return The set of corresponding GBNodes.
+	 */
+	public static Map<UOPair<GBNode>, List<GBEdge>> toGbEdges(Map<UOPair<Node>, List<Edge>> edges) {
+		Map<UOPair<GBNode>, List<GBEdge>> gbEdgeMap = new HashMap<>();
+		edges.entrySet().forEach(edgeEntry -> {
+			UOPair<Node> oldPair = edgeEntry.getKey();
+			UOPair<GBNode> gbPair = new UOPair<>(oldPair.getFirst().getGbNode(), oldPair.getSecond().getGbNode());
+			List<GBEdge> gbEdges = edgeEntry.getValue().stream().map(Edge::getGbEdge).collect(Collectors.toList());
+
+			// Fill map
+			gbEdgeMap.put(gbPair, gbEdges);
+		});
+
+		return gbEdgeMap;
+	}
+
+	/**
+	 * Converts a set of GBNodes to Nodes.
+	 *
+	 * @param gbNodes The set of GBNodes to convert.
+	 * @return The set of corresponding Nodes.
+	 */
+	public static Set<Node> toNodes(Collection<GBNode> gbNodes) {
+		return gbNodes.stream().map(GBNode::getNode).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Converts a map of GBEdges to Edges.
+	 *
+	 * @param gbEdges The set of GBEdges to convert.
+	 * @return The set of corresponding Edges.
+	 */
+	public static Map<UOPair<Node>, List<Edge>> toEdges(Map<UOPair<GBNode>, List<GBEdge>> gbEdges) {
+		Map<UOPair<Node>, List<Edge>> edgeMap = new HashMap<>();
+		gbEdges.entrySet().forEach(edgeEntry -> {
+			UOPair<GBNode> oldPair = edgeEntry.getKey();
+			UOPair<Node> nodePair = new UOPair<>(oldPair.getFirst().getNode(), oldPair.getSecond().getNode());
+			List<Edge> edges = edgeEntry.getValue().stream().map(GBEdge::getEdge).collect(Collectors.toList());
+
+			// Fill map
+			edgeMap.put(nodePair, edges);
+		});
+
+		return edgeMap;
 	}
 
 }

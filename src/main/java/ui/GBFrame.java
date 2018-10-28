@@ -21,7 +21,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -56,8 +55,8 @@ public class GBFrame extends JFrame {
 	@Getter
 	private JPanel toolOptionsPanel; // This panel will hold all tool option bars
 
-	private JScrollPane panelEditorScroll; // The scrolling pane containing the editor
-
+	@Getter
+	private JScrollPane scrollPane; // The scrolling pane containing the editor
 	@Getter
 	private Editor editor; // The main panel workspace
 
@@ -84,7 +83,7 @@ public class GBFrame extends JFrame {
 		newGraphDialog = new NewGraphDialog(this);
 
 		// Initialize toolbar
-		toolBar = new ToolBar(context);
+		toolBar = new ToolBar(this);
 		toolBar.setFloatable(false);
 		toolBar.setRollover(true);
 
@@ -148,10 +147,10 @@ public class GBFrame extends JFrame {
 
 		// Initialize and set up the main editor panel
 		editor = new Editor(this);
-		panelEditorScroll = new JScrollPane(editor, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-											JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		panelEditorScroll.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		add(panelEditorScroll, editorgbc);
+		scrollPane = new JScrollPane(editor, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+									 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		add(scrollPane, editorgbc);
 
 		revalidate();
 
@@ -159,26 +158,19 @@ public class GBFrame extends JFrame {
 		updateTool(Tool.SELECT);
 		updateByConstraint();
 
-		// Add all nodes to the editor panel
-		for (GBNode n : context.getGbNodes()) {
-			editor.add(n.getNodePanel());
-		}
+		// Add all node panels to the editor panel
+		context.getGbNodes().forEach(gn -> editor.add(gn.getNodePanel()));
 
 		// Update GBFrame title
 		setTitle(FileUtils.getGuiTitle(this));
-//		if (context.existsOnDisk()) {
-//			setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(context.getCurrentlyLoadedFile()));
-//		} else {
-//			setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
-//		}
 		context.setAsSaved();
 
 		// Show GBFrame
 		setVisible(true);
 
 		// Set the initial scrolling positions to the center
-		final JScrollBar horiz = panelEditorScroll.getHorizontalScrollBar();
-		final JScrollBar vert = panelEditorScroll.getVerticalScrollBar();
+		final JScrollBar horiz = scrollPane.getHorizontalScrollBar();
+		final JScrollBar vert = scrollPane.getVerticalScrollBar();
 		if (horiz != null) {
 			SwingUtilities.invokeLater(() -> horiz.setValue((horiz.getMaximum() - horiz.getVisibleAmount()) / 2));
 		}
@@ -193,8 +185,8 @@ public class GBFrame extends JFrame {
 	 * @param t The Tool we want to change to.
 	 */
 	public void updateTool(Tool t) {
-		HashMap<Tool, JButton> toolButtons = toolBar.getToolButtons();
-		HashMap<Tool, OrderedPair<ImageIcon>> toolIcons = toolBar.getToolIcons();
+		Map<Tool, JButton> toolButtons = toolBar.getToolButtons();
+		Map<Tool, OrderedPair<ImageIcon>> toolIcons = toolBar.getToolIcons();
 		if (currentTool != null) {
 			if (currentTool != t) {
 				toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool).getFirst());
@@ -232,9 +224,9 @@ public class GBFrame extends JFrame {
 	 * @return The viewport center.
 	 */
 	public Point getEditorCenter() {
-		int viewportWidth = panelEditorScroll.getViewport().getWidth();
-		int viewportHeight = panelEditorScroll.getViewport().getHeight();
-		Point topLeft = panelEditorScroll.getViewport().getViewPosition();
+		int viewportWidth = scrollPane.getViewport().getWidth();
+		int viewportHeight = scrollPane.getViewport().getHeight();
+		Point topLeft = scrollPane.getViewport().getViewPosition();
 
 		return new Point(topLeft.x + viewportWidth / 2, topLeft.y + viewportHeight / 2);
 	}
@@ -264,11 +256,6 @@ public class GBFrame extends JFrame {
 		KeyActions.initialize(this); // Re-initialize key bindings with correct context
 		menuBar.updateWithNewContext();
 		setTitle(FileUtils.getGuiTitle(this));
-//		if (newContext.getCurrentlyLoadedFile() == null) {
-//			this.setTitle(DEFAULT_TITLE + " - " + DEFAULT_FILENAME);
-//		} else {
-//			this.setTitle(DEFAULT_TITLE + " - " + FileUtils.getBaseName(newContext.getCurrentlyLoadedFile()));
-//		}
 		context.setAsSaved();
 	}
 
@@ -279,15 +266,6 @@ public class GBFrame extends JFrame {
 	 */
 	public MenuBar getMainMenuBar() {
 		return menuBar;
-	}
-
-	/**
-	 * Get the scrolling pane containing the editor panel.
-	 *
-	 * @return This GBFrame's scroll pane.
-	 */
-	public JScrollPane getScrollPane() {
-		return panelEditorScroll;
 	}
 
 }

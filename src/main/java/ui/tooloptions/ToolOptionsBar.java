@@ -5,7 +5,9 @@ import ui.GBFrame;
 import javax.swing.*;
 
 /**
- * An abstract class for a bar which displays options for a tools.
+ * An abstract class for a bar which displays options for a tool.
+ *
+ * @author Brian Yao
  */
 public abstract class ToolOptionsBar extends JToolBar {
 
@@ -23,6 +25,9 @@ public abstract class ToolOptionsBar extends JToolBar {
 		gui = g;
 	}
 
+	/**
+	 * @return the GBFrame this options bar is displayed in.
+	 */
 	public GBFrame getGUI() {
 		return gui;
 	}

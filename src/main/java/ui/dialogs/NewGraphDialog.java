@@ -16,7 +16,7 @@ import java.awt.event.ItemListener;
  * Dialog prompting the user to start a new graph. The user specifies the
  * type of graph they intend to create.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class NewGraphDialog extends JDialog {
 

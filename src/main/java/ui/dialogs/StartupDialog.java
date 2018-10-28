@@ -8,7 +8,7 @@ import java.awt.event.ActionListener;
 /**
  * The dialog which appears when the program is first started up.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class StartupDialog extends JDialog {
 
@@ -36,36 +36,21 @@ public class StartupDialog extends JDialog {
 
 		selectLabel = new JLabel("Select an option:");
 		newFileButton = new JButton("New File");
-		newFileButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				choice = NEW_FILE_CHOICE;
-				dispose();
-			}
-
+		newFileButton.addActionListener($ -> {
+			choice = NEW_FILE_CHOICE;
+			dispose();
 		});
 
 		openFileButton = new JButton("Open Existing File");
-		openFileButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				choice = OPEN_FILE_CHOICE;
-				dispose();
-			}
-
+		openFileButton.addActionListener($ -> {
+			choice = OPEN_FILE_CHOICE;
+			dispose();
 		});
 
 		exitButton = new JButton("Exit GraphBuilder");
-		exitButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				choice = EXIT_CHOICE;
-				dispose();
-			}
-
+		exitButton.addActionListener($ -> {
+			choice = EXIT_CHOICE;
+			dispose();
 		});
 
 		selectLabel.setAlignmentX(Component.CENTER_ALIGNMENT);

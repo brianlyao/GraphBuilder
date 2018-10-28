@@ -12,9 +12,9 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * The main top-level class, where the interface is initialized.
+ * The main top-level class, where the program is initialized.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class GBMain {
 
@@ -24,7 +24,9 @@ public class GBMain {
 		try {
 			Logger.setLogFile(LOG_FILE);
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Unable to initialize logger. This means that any crashes/problems will not be logged! Please ensure that GraphBuilder has sufficient permissions to write files.", "Logger Initialization Failed", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(null, "Unable to initialize logger. This means that any crashes/problems" +
+				"will not be logged! Please ensure that GraphBuilder has sufficient permissions to write files.",
+										  "Logger Initialization Failed", JOptionPane.ERROR_MESSAGE);
 		}
 
 		Logger.writeEntry(Logger.INFO, "Starting GraphBuilder.");

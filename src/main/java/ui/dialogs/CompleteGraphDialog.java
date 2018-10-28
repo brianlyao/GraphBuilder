@@ -10,8 +10,6 @@ import ui.GBFrame;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * The dialog used to generate complete graphs. Built using WindowBuilder.
@@ -55,18 +53,13 @@ public class CompleteGraphDialog extends JDialog {
 		getContentPane().add(buttonPane, BorderLayout.SOUTH);
 
 		JButton okButton = new JButton("OK");
-		okButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
-				Graph completeGraph = GraphFactory.completeGraph((int) spinner.getValue(), constraints);
-				GenerateRadialGraphAction genAction = new GenerateRadialGraphAction(new GBGraph(g.getContext(), completeGraph));
-				genAction.perform();
-				g.getContext().pushReversibleAction(genAction, true, false);
-				dispose();
-			}
-
+		okButton.addActionListener($ -> {
+			int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
+			Graph completeGraph = GraphFactory.completeGraph((int) spinner.getValue(), constraints);
+			GenerateRadialGraphAction genAction = new GenerateRadialGraphAction(new GBGraph(g.getContext(), completeGraph));
+			genAction.perform();
+			g.getContext().pushReversibleAction(genAction, true, false);
+			dispose();
 		});
 
 		JButton cancelButton = new JButton("Cancel");

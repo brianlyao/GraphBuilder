@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 /**
  * The right click menu which appears when the user right clicks on the editor.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class EditorRightClickMenu {
 
@@ -30,16 +30,12 @@ public class EditorRightClickMenu {
 		JMenuItem paste = new JMenuItem("Paste");
 		final Clipboard currentClipboard = ctxt.getClipboard();
 		paste.setEnabled(!currentClipboard.isEmpty());
-		paste.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Paste pasteAtPoint = new Paste(ctxt, new Point(x, y));
-				pasteAtPoint.perform();
-				ctxt.pushReversibleAction(pasteAtPoint, true, false);
-			}
-
+		paste.addActionListener($ -> {
+			Paste pasteAtPoint = new Paste(ctxt, new Point(x, y));
+			pasteAtPoint.perform();
+			ctxt.pushReversibleAction(pasteAtPoint, true, false);
 		});
+
 		menu.add(paste);
 		menu.show(editor, x, y);
 	}

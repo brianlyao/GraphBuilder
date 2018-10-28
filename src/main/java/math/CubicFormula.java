@@ -4,7 +4,7 @@ package math;
  * A class containing an implementation of the "cubic formula", which obtains
  * all three complex roots of a third degree polynomial.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class CubicFormula {
 
@@ -23,7 +23,7 @@ public class CubicFormula {
 		Complex[] roots = new Complex[3];
 		Complex disc0 = new Complex(b * b - 3 * a * c);
 		Complex disc1 = new Complex(2 * b * b * b - 9 * a * b * c + 27 * a * a * d);
-		Complex incbrt = null;
+		Complex incbrt;
 		if (disc0.isZero()) {
 			incbrt = disc1;
 			if (disc1.getReal() < 0) {

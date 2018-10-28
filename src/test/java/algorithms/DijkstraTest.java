@@ -7,8 +7,7 @@ import graph.components.Node;
 import org.junit.jupiter.api.Test;
 import util.TestUtils;
 
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * JUnit test cases for Dijkstra's algorithm.

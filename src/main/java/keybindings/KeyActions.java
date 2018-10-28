@@ -16,7 +16,7 @@ import java.awt.event.KeyEvent;
 /**
  * A class containing all the keystroke-to-action mappings.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class KeyActions {
 

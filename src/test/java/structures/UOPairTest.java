@@ -3,7 +3,6 @@ package structures;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * JUnit test cases for the UOPair (unordered pair) structure.
@@ -36,8 +35,20 @@ public class UOPairTest {
 	public void getterTest() {
 		UOPair<Integer> pair = new UOPair<>(0, 1);
 
-		assertTrue(pair.getFirst() == 0);
-		assertTrue(pair.getSecond() == 1);
+		assertEquals(Integer.valueOf(0), pair.getFirst());
+		assertEquals(Integer.valueOf(1), pair.getSecond());
+	}
+
+	@Test
+	public void mapTest() {
+		UOPair<Integer> pair = new UOPair<>(3, 7);
+		UOPair<Integer> pair2 = pair.map(n -> n * n);
+		UOPair<String> pair3 = pair.map(String::valueOf);
+
+		assertEquals(Integer.valueOf(9), pair2.getFirst());
+		assertEquals(Integer.valueOf(49), pair2.getSecond());
+		assertEquals("3", pair3.getFirst());
+		assertEquals("7", pair3.getSecond());
 	}
 
 }

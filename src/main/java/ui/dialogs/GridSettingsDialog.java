@@ -1,23 +1,20 @@
 package ui.dialogs;
 
+import lombok.Getter;
 import ui.GBFrame;
 import util.ImageUtils;
 
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 
 /**
  * A dialog displaying settings for the grid display/snap.
  * Built with the Window Builder plugin for Eclipse.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class GridSettingsDialog extends JDialog {
 
@@ -30,8 +27,6 @@ public class GridSettingsDialog extends JDialog {
 	private static final boolean DEFAULT_SNAP_TO_GRID_ENABLED = false;
 	private static final boolean DEFAULT_SHOW_GRID_ENABLED = false;
 	private static final Color DEFAULT_GRID_COLOR = Color.DARK_GRAY;
-
-	private GBFrame gui;
 
 	private JLabel gridLevelLabel;
 	private JTextField gridLevelTextField;
@@ -48,9 +43,11 @@ public class GridSettingsDialog extends JDialog {
 	private JButton cancelButton;
 
 	// The values which will be used by the editor panel
+	@Getter
 	private int gridLevel;
 	private boolean snapToGrid;
 	private boolean showGrid;
+	@Getter
 	private Color gridColor;
 
 	// The temporary values which are not saved until "Apply" is clicked
@@ -60,10 +57,6 @@ public class GridSettingsDialog extends JDialog {
 
 	public GridSettingsDialog(GBFrame g) {
 		super(g, "Grid: Settings");
-
-		setResizable(false);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setVisible(false);
 
 		// Set default values for settings
 		gridLevel = DEFAULT_GRID_LEVEL;
@@ -77,99 +70,63 @@ public class GridSettingsDialog extends JDialog {
 		gridLevelSlider = new JSlider(JSlider.HORIZONTAL, MIN_GRID_LEVEL, MAX_GRID_LEVEL, DEFAULT_GRID_LEVEL);
 		gridLevelSlider.setPreferredSize(new Dimension(100, 10));
 
-		gridLevelTextField.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String entered = gridLevelTextField.getText();
-				try {
-					int newValue = Integer.parseInt(entered);
-					if (newValue < MIN_GRID_LEVEL)
-						JOptionPane.showMessageDialog(GridSettingsDialog.this, "The integer you entered is too small. It must be at least " + MIN_GRID_LEVEL + ".", "Grid Settings: Error", JOptionPane.INFORMATION_MESSAGE);
-					else if (newValue > MAX_GRID_LEVEL)
-						JOptionPane.showMessageDialog(GridSettingsDialog.this, "The integer you entered is too large. It must be at most " + MAX_GRID_LEVEL + ".", "Grid Settings: Error", JOptionPane.INFORMATION_MESSAGE);
-					else
-						gridLevelSlider.setValue(newValue); // Set the slider's value
-				} catch (NumberFormatException nfe) {
-					JOptionPane.showMessageDialog(GridSettingsDialog.this, "The value you entered is not a valid grid level. It must be an integer.");
+		gridLevelTextField.addActionListener($ -> {
+			String entered = gridLevelTextField.getText();
+			try {
+				int newValue = Integer.parseInt(entered);
+				if (newValue < MIN_GRID_LEVEL) {
+					JOptionPane.showMessageDialog(GridSettingsDialog.this, "The integer you entered is too " +
+													  "small. It must be at least " + MIN_GRID_LEVEL + ".",
+												  "Grid Settings: Error", JOptionPane.INFORMATION_MESSAGE);
+				} else if (newValue > MAX_GRID_LEVEL) {
+					JOptionPane.showMessageDialog(GridSettingsDialog.this, "The integer you entered is too " +
+													  "large. It must be at most " + MAX_GRID_LEVEL + ".",
+												  "Grid Settings: Error", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					// Set the slider's value
+					gridLevelSlider.setValue(newValue);
 				}
+			} catch (NumberFormatException nfe) {
+				JOptionPane.showMessageDialog(GridSettingsDialog.this, "The value you entered is not a valid grid " +
+					"level. It must be an integer.");
 			}
-
 		});
 
-		gridLevelSlider.addChangeListener(new ChangeListener() {
-
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				// Change the text field's value
-				gridLevelTextField.setText(String.valueOf(gridLevelSlider.getValue()));
-			}
-
-		});
-
+		gridLevelSlider.addChangeListener($ -> gridLevelTextField.setText(String.valueOf(gridLevelSlider.getValue())));
 		snapToGridBox = new JCheckBox("Snap To Grid");
-		snapToGridBox.setToolTipText("Allows nodes moved using the select tool to automatically snap to the grid. Existing nodes will not be automatically snapped to the grid.");
-		snapToGridBox.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				boolean selected = snapToGridBox.isSelected();
-				tempSnapToGrid = new Boolean(selected);
-			}
-
-		});
+		snapToGridBox.setToolTipText("Allows nodes moved using the select tool to automatically snap to the grid. " +
+										 "Existing nodes will not be automatically snapped to the grid.");
+		snapToGridBox.addActionListener($ -> tempSnapToGrid = snapToGridBox.isSelected());
 
 		showGridBox = new JCheckBox("Show Grid Lines");
 		showGridBox.setToolTipText("Toggles the display of the grid lines on the editor panel.");
-		showGridBox.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				boolean selected = showGridBox.isSelected();
-				gridColorLabel.setEnabled(selected);
-				gridColorButton.setEnabled(selected);
-				tempShowGrid = new Boolean(selected);
-			}
-
+		showGridBox.addActionListener($ -> {
+			boolean selected = showGridBox.isSelected();
+			gridColorLabel.setEnabled(selected);
+			gridColorButton.setEnabled(selected);
+			tempShowGrid = selected;
 		});
 
 		gridColorLabel = new JLabel("Grid Line Color:");
 		gridColorIcon = new ImageIcon(new BufferedImage(15, 15, BufferedImage.TYPE_INT_ARGB));
 		gridColorButton = new JButton(gridColorIcon);
-		gridColorButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				tempGridColor = JColorChooser.showDialog(gui, "Choose Text Color", gridColor);
-				ImageUtils.fillImage((BufferedImage) gridColorIcon.getImage(), tempGridColor);
-			}
-
+		gridColorButton.addActionListener($ -> {
+			tempGridColor = JColorChooser.showDialog(this.getParent(), "Choose Text Color", gridColor);
+			ImageUtils.fillImage((BufferedImage) gridColorIcon.getImage(), tempGridColor);
 		});
 
 		applyButton = new JButton("Apply");
-		applyButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				gridLevel = gridLevelSlider.getValue();
-				snapToGrid = tempSnapToGrid != null ? tempSnapToGrid.booleanValue() : snapToGrid;
-				showGrid = tempShowGrid != null ? tempShowGrid.booleanValue() : showGrid;
-				if (tempGridColor != null)
-					gridColor = tempGridColor;
-				hideDialog();
-			}
-
+		applyButton.addActionListener($ -> {
+			gridLevel = gridLevelSlider.getValue();
+			snapToGrid = tempSnapToGrid != null ? tempSnapToGrid : snapToGrid;
+			showGrid = tempShowGrid != null ? tempShowGrid : showGrid;
+			if (tempGridColor != null)
+				gridColor = tempGridColor;
+			hideDialog();
 		});
 
 		cancelButton = new JButton("Cancel");
-		cancelButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				hideDialog();
-			}
-
-		});
+		cancelButton.addActionListener($ -> hideDialog());
 
 		GroupLayout layout = new GroupLayout(this.getContentPane());
 		layout.setHorizontalGroup(
@@ -215,10 +172,13 @@ public class GridSettingsDialog extends JDialog {
 											.addComponent(applyButton)
 											.addComponent(cancelButton)))
 		);
-		getContentPane().setLayout(layout);
 
 		layout.setAutoCreateContainerGaps(true);
 
+		this.getContentPane().setLayout(layout);
+		this.setResizable(false);
+		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		this.setVisible(false);
 	}
 
 	/**
@@ -241,24 +201,8 @@ public class GridSettingsDialog extends JDialog {
 
 		// Fit dialog to size of components
 		pack();
-		setLocationRelativeTo(gui);
+		setLocationRelativeTo(this.getParent());
 		setVisible(true);
-	}
-
-	/**
-	 * Hide the grid settings dialog.
-	 */
-	public void hideDialog() {
-		setVisible(false);
-	}
-
-	/**
-	 * Get the currently set grid level.
-	 *
-	 * @return The integer grid level.
-	 */
-	public int getGridLevel() {
-		return gridLevel;
 	}
 
 	/**
@@ -280,12 +224,10 @@ public class GridSettingsDialog extends JDialog {
 	}
 
 	/**
-	 * Get the color the grid is drawn in.
-	 *
-	 * @return The color the grid is drawn in.
+	 * Hide the grid settings dialog.
 	 */
-	public Color getGridColor() {
-		return gridColor;
+	private void hideDialog() {
+		setVisible(false);
 	}
 
 }

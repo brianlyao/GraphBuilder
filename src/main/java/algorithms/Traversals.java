@@ -29,11 +29,11 @@ public class Traversals {
 
 		while (!toVisit.isEmpty()) {
 			Node visiting = toVisit.pop();
-			for (Node neighbor : visiting.getNeighbors(followDirected)) {
+			visiting.getNeighbors(followDirected).forEach(neighbor -> {
 				if (!visited.contains(neighbor)) {
 					toVisit.push(neighbor);
 				}
-			}
+			});
 			visited.add(visiting);
 		}
 
@@ -58,11 +58,11 @@ public class Traversals {
 
 		while (!toVisit.isEmpty()) {
 			Node visiting = toVisit.poll();
-			for (Node neighbor : visiting.getNeighbors(followDirected)) {
+			visiting.getNeighbors(followDirected).forEach(neighbor -> {
 				if (!visited.contains(neighbor)) {
 					toVisit.add(neighbor);
 				}
-			}
+			});
 			visited.add(visiting);
 		}
 
@@ -80,11 +80,11 @@ public class Traversals {
 	 */
 	public static Set<Node> depthFirstSearchAll(Collection<Node> startingNodes, boolean followDirected) {
 		Set<Node> visited = new HashSet<>();
-		for (Node start : startingNodes) {
+		startingNodes.forEach(start -> {
 			if (!visited.contains(start)) {
 				visited.addAll(depthFirstSearch(start, followDirected));
 			}
-		}
+		});
 		return visited;
 	}
 
@@ -99,11 +99,11 @@ public class Traversals {
 	 */
 	public static Set<Node> breadthFirstSearchAll(Collection<Node> startingNodes, boolean followDirected) {
 		Set<Node> visited = new HashSet<>();
-		for (Node start : startingNodes) {
+		startingNodes.forEach(start -> {
 			if (!visited.contains(start)) {
 				visited.addAll(breadthFirstSearch(start, followDirected));
 			}
-		}
+		});
 		return visited;
 	}
 

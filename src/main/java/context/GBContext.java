@@ -2,8 +2,6 @@ package context;
 
 import actions.ReversibleAction;
 import clipboard.Clipboard;
-import graph.components.Edge;
-import graph.components.Node;
 import graph.components.gb.GBComponent;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBGraph;
@@ -13,10 +11,10 @@ import lombok.Setter;
 import structures.UOPair;
 import ui.Editor;
 import ui.GBFrame;
+import util.StructureUtils;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * A collection of fields necessary to keep track of the program's state. Any time
@@ -161,7 +159,7 @@ public class GBContext {
 	 */
 	public Map<UOPair<GBNode>, List<GBEdge>> removeNode(GBNode n) {
 		// Remove the node from the set of all nodes in this context
-		Map<UOPair<GBNode>, List<GBEdge>> removedEdges = toGbEdges(graph.removeNode(n.getNode()));
+		Map<UOPair<GBNode>, List<GBEdge>> removedEdges = StructureUtils.toGbEdges(graph.removeNode(n.getNode()));
 
 		if (gui != null) {
 			Editor editor = gui.getEditor();
@@ -378,7 +376,7 @@ public class GBContext {
 	 * @return The set of GBNodes in this context.
 	 */
 	public Set<GBNode> getGbNodes() {
-		return toGbNodes(graph.getNodes());
+		return StructureUtils.toGbNodes(graph.getNodes());
 	}
 
 	/**
@@ -387,7 +385,7 @@ public class GBContext {
 	 * @return The map of GBEdges in this context.
 	 */
 	public Map<UOPair<GBNode>, List<GBEdge>> getGbEdges() {
-		return toGbEdges(graph.getEdges());
+		return StructureUtils.toGbEdges(graph.getEdges());
 	}
 
 	/**
@@ -399,38 +397,6 @@ public class GBContext {
 	 */
 	public List<GBEdge> getEdgesBetweenNodes(UOPair<GBNode> nodes) {
 		return this.getGbEdges().get(nodes);
-	}
-
-	/**
-	 * Converts a set of nodes to GBNodes, assuming the nodes are associated
-	 * with a context.
-	 *
-	 * @param nodes The set of plain nodes to convert.
-	 * @return The set of corresponding GBNodes.
-	 */
-	private Set<GBNode> toGbNodes(Set<Node> nodes) {
-		return nodes.stream().map(Node::getGbNode).collect(Collectors.toSet());
-	}
-
-	/**
-	 * Converts a map of edges to GBEdges, assuming the edges are associated
-	 * with a context.
-	 *
-	 * @param edges The set of plain edges to convert.
-	 * @return The set of corresponding GBNodes.
-	 */
-	private Map<UOPair<GBNode>, List<GBEdge>> toGbEdges(Map<UOPair<Node>, List<Edge>> edges) {
-		Map<UOPair<GBNode>, List<GBEdge>> gbEdgeMap = new HashMap<>();
-		for (Map.Entry<UOPair<Node>, List<Edge>> edgeEntry : edges.entrySet()) {
-			UOPair<Node> oldPair = edgeEntry.getKey();
-			UOPair<GBNode> gbPair = new UOPair<>(oldPair.getFirst().getGbNode(), oldPair.getSecond().getGbNode());
-			List<GBEdge> gbEdges = edgeEntry.getValue().stream().map(Edge::getGbEdge).collect(Collectors.toList());
-
-			// Fill map
-			gbEdgeMap.put(gbPair, gbEdges);
-		}
-
-		return gbEdgeMap;
 	}
 
 }

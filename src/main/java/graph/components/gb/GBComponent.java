@@ -33,6 +33,16 @@ public abstract class GBComponent extends GraphComponent {
 	}
 
 	/**
+	 * Check if this component is highlighted in the Editor. This will only
+	 * succeed if the context has a GBFrame attached to it.
+	 *
+	 * @return true if the component is highlighted, false otherwise.
+	 */
+	public boolean isHighlighted() {
+		return context.getGUI().getEditor().isHighlighted(this);
+	}
+
+	/**
 	 * A method for converting GBComponents into strings. This is how
 	 * GraphBuilder saves graphs to files.
 	 *

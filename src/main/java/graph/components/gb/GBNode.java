@@ -17,6 +17,11 @@ import java.awt.*;
  */
 public class GBNode extends GBComponent {
 
+	public static final String DEFAULT_TEXT = "";
+	public static final Color DEFAULT_FILL_COLOR = Color.WHITE;
+	public static final Color DEFAULT_TEXT_COLOR = Color.BLACK;
+	public static final Color DEFAULT_BORDER_COLOR = Color.BLACK;
+
 	// The JPanel containing this node's visual appearance
 	@Getter @Setter
 	private NodePanel nodePanel;

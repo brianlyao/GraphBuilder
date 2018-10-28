@@ -1,16 +1,21 @@
 package math;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * An instance is a single complex number a + bi, where a and b are real values, and
  * i is the imaginary constant (square root of -1).
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class Complex {
 
 	private static final double E = 1e-14; // Epsilon value for floating point errors
 
+	@Getter @Setter
 	private double real;
+	@Getter @Setter
 	private double imag;
 
 	/**
@@ -43,42 +48,6 @@ public class Complex {
 	public Complex(double len, double rads, boolean isPolar) {
 		real = len * Math.cos(rads);
 		imag = len * Math.sin(rads);
-	}
-
-	/**
-	 * Get the real component.
-	 *
-	 * @return The real component.
-	 */
-	public double getReal() {
-		return real;
-	}
-
-	/**
-	 * Get the imaginary component.
-	 *
-	 * @return The imaginary component.
-	 */
-	public double getImag() {
-		return imag;
-	}
-
-	/**
-	 * Set the real component.
-	 *
-	 * @param r The new real component.
-	 */
-	public void setReal(double r) {
-		real = r;
-	}
-
-	/**
-	 * Set the imaginary component.
-	 *
-	 * @param i The new imaginary component.
-	 */
-	public void setImag(double i) {
-		imag = i;
 	}
 
 	/**
@@ -187,26 +156,6 @@ public class Complex {
 	 */
 	public Complex divide(Complex c) {
 		return this.multiply(c.conjugate()).scale(1 / (c.real * c.real + c.imag * c.imag));
-	}
-
-	/**
-	 * Compute the nth roots of unity. These are the complex numbers x where
-	 * x^n = 1. There are exactly n complex solutions. These solutions are
-	 * returned in an array of length n.
-	 *
-	 * @param n The degree of the roots of unity.
-	 * @return An array of n roots of unity.
-	 */
-	public static Complex[] rootsOfUnity(int n) {
-		if (n < 1) {
-			return null;
-		}
-		Complex[] roots = new Complex[n];
-		for (int i = 0; i < n; i++) {
-			double ang = (2 * Math.PI * i) / n;
-			roots[i] = new Complex(1, ang, true);
-		}
-		return roots;
 	}
 
 	/**

@@ -3,7 +3,7 @@ package tool;
 /**
  * An enumeration of all the tools available in GraphBuilder.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public enum Tool {
 
@@ -12,6 +12,6 @@ public enum Tool {
 	NODE,
 	DIRECTED_EDGE,
 	EDGE,
-	PAN;
+	PAN
 
 }

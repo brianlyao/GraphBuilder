@@ -1,9 +1,12 @@
 package structures;
 
+import java.util.function.Function;
+
 /**
  * A generic unordered pair structure.
  *
  * @param <T> The type of datum this pair holds two of.
+ * @author Brian Yao
  */
 public class UOPair<T> {
 
@@ -36,6 +39,18 @@ public class UOPair<T> {
 	 */
 	public T getSecond() {
 		return second;
+	}
+
+	/**
+	 * Get a new pair consisting of the results of applying the given function
+	 * to the elements of this pair.
+	 *
+	 * @param mapper The mapping function.
+	 * @param <R> The data type being mapped to.
+	 * @return The new pair of mapped values.
+	 */
+	public <R> UOPair<R> map(Function<? super T, ? extends R> mapper) {
+		return new UOPair<>(mapper.apply(first), mapper.apply(second));
 	}
 
 	@Override

@@ -4,7 +4,7 @@ package structures;
  * An instance is an ordered pair of two elements of the same type.
  *
  * @param <T> The type of element this pair holds.
- * @author Brian
+ * @author Brian Yao
  */
 public class OrderedPair<T> {
 

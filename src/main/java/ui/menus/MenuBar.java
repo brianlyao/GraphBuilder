@@ -7,22 +7,15 @@ import actions.file.Save;
 import actions.file.SaveAs;
 import algorithms.Traversals;
 import graph.components.Node;
-import graph.components.gb.GBEdge;
-import graph.components.gb.GBNode;
 import keybindings.KeyActions;
-import org.javatuples.Pair;
-import structures.UOPair;
 import ui.GBFrame;
 import ui.dialogs.CompleteGraphDialog;
 import util.FileUtils;
+import util.StructureUtils;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The main menu bar which appears at the top of the GBFrame.
@@ -61,11 +54,14 @@ public class MenuBar extends JMenuBar {
 
 	private JMenuItem grid;
 
-	private JMenuItem traverse;
-	private JMenuItem traverseUndirected;
+	private JMenu search;
+	private JMenuItem bfs;
+	private JMenuItem dfs;
+	private JMenuItem bfsUndirected;
+	private JMenuItem dfsUndirected;
 	private JMenuItem classify;
-	private JMenuItem generate;
 
+	private JMenu generate;
 	private JMenuItem completeGraph;
 	private JMenuItem fromSeed;
 
@@ -151,35 +147,45 @@ public class MenuBar extends JMenuBar {
 		view.add(grid);
 
 		// Fill "Graph" menu
-		traverse = new JMenuItem("Traverse selected");
-		traverse.addActionListener(new ActionListener() {
+		search = new JMenu("Search");
+		search.setEnabled(false);
+		bfs = new JMenuItem("BFS");
+		dfs = new JMenuItem("DFS");
+		bfsUndirected = new JMenuItem("BFS Undirected");
+		dfsUndirected = new JMenuItem("DFS Undirected");
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<Node> selectedNodes = gui.getEditor().getSelections().getValue0().stream()
-					.map(GBNode::getNode)
-					.collect(Collectors.toSet());
-				Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, true);
-				gui.getEditor().addSelections(traversed.stream().map(Node::getGbNode).collect(Collectors.toSet()));
-				gui.getEditor().repaint();
-			}
-
+		bfs.addActionListener($ -> {
+			Set<Node> selectedNodes = StructureUtils.toNodes(gui.getEditor().getSelections().getValue0());
+			Set<Node> traversed = Traversals.breadthFirstSearchAll(selectedNodes, true);
+			gui.getEditor().addHighlights(StructureUtils.toGbNodes(traversed));
+			gui.getEditor().repaint();
 		});
 
-		traverseUndirected = new JMenuItem("Traverse selected ignoring direction");
-		traverseUndirected.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Set<Node> selectedNodes = gui.getEditor().getSelections().getValue0().stream()
-					.map(GBNode::getNode)
-					.collect(Collectors.toSet());
-				Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, false);
-				gui.getEditor().addSelections(traversed.stream().map(Node::getGbNode).collect(Collectors.toSet()));
-				gui.getEditor().repaint();
-			}
-
+		dfs.addActionListener($ -> {
+			Set<Node> selectedNodes = StructureUtils.toNodes(gui.getEditor().getSelections().getValue0());
+			Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, true);
+			gui.getEditor().addHighlights(StructureUtils.toGbNodes(traversed));
+			gui.getEditor().repaint();
 		});
+
+		bfsUndirected.addActionListener($ -> {
+			Set<Node> selectedNodes = StructureUtils.toNodes(gui.getEditor().getSelections().getValue0());
+			Set<Node> traversed = Traversals.breadthFirstSearchAll(selectedNodes, false);
+			gui.getEditor().addHighlights(StructureUtils.toGbNodes(traversed));
+			gui.getEditor().repaint();
+		});
+
+		dfsUndirected.addActionListener($ -> {
+			Set<Node> selectedNodes = StructureUtils.toNodes(gui.getEditor().getSelections().getValue0());
+			Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, false);
+			gui.getEditor().addHighlights(StructureUtils.toGbNodes(traversed));
+			gui.getEditor().repaint();
+		});
+
+		search.add(bfs);
+		search.add(dfs);
+		search.add(bfsUndirected);
+		search.add(dfsUndirected);
 
 		classify = new JMenuItem("Classify");
 		generate = new JMenu("Generate");
@@ -192,8 +198,7 @@ public class MenuBar extends JMenuBar {
 		generate.add(completeGraph);
 		generate.add(fromSeed);
 
-		graph.add(traverse);
-		graph.add(traverseUndirected);
+		graph.add(search);
 		graph.add(classify);
 		graph.add(generate);
 
@@ -231,10 +236,10 @@ public class MenuBar extends JMenuBar {
 	 * of the GBFrame (the context likely has just been changed).
 	 */
 	public void updateWithNewContext() {
-		removeAllActionListeners(new AbstractButton[]{
+		removeAllActionListeners(
 			newFile, openFile, saveFile, saveAsFile, exit, undo, redo, copy, copyFull, duplicate,
 			duplicateFull, paste, cut, cutFull, delete, duplicate, duplicateFull
-		});
+		);
 
 		newFile.addActionListener(new New(gui.getContext()));
 		openFile.addActionListener(new Open(gui.getContext()));
@@ -260,17 +265,18 @@ public class MenuBar extends JMenuBar {
 	 * Update the enabled/disabled state of menu items depending on empty/non-empty selection.
 	 */
 	public void updateWithSelection() {
-		Pair<Set<GBNode>, Map<UOPair<GBNode>, List<GBEdge>>> selections = gui.getEditor().getSelections();
-		boolean somethingSelected = !selections.getValue0().isEmpty() || !selections.getValue1().isEmpty();
+		boolean somethingSelected = !gui.getEditor().selectionsEmpty();
 		copy.setEnabled(somethingSelected);
 		cut.setEnabled(somethingSelected);
 		delete.setEnabled(somethingSelected);
 		duplicate.setEnabled(somethingSelected);
 
-		boolean nodeSelected = !selections.getValue0().isEmpty();
+		boolean nodeSelected = !gui.getEditor().getSelections().getValue0().isEmpty();
 		copyFull.setEnabled(nodeSelected);
 		duplicateFull.setEnabled(nodeSelected);
 		cutFull.setEnabled(nodeSelected);
+
+		search.setEnabled(nodeSelected);
 	}
 
 	/**
@@ -285,7 +291,7 @@ public class MenuBar extends JMenuBar {
 	 *
 	 * @param buttons The list of buttons to remove action listeners from.
 	 */
-	private static void removeAllActionListeners(AbstractButton[] buttons) {
+	private static void removeAllActionListeners(AbstractButton... buttons) {
 		for (AbstractButton button : buttons) {
 			for (ActionListener listener : button.getActionListeners()) {
 				button.removeActionListener(listener);

@@ -19,7 +19,6 @@ import java.awt.geom.Point2D;
  */
 public class GBEdge extends GBComponent {
 
-	public static final String DEFAULT_TEXT = "";
 	public static final Color DEFAULT_COLOR = Color.BLACK;
 	public static final int DEFAULT_WEIGHT = 2;
 

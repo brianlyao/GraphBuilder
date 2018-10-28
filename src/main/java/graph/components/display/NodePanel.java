@@ -42,11 +42,6 @@ public class NodePanel extends JPanel {
 	private static final int SELECTED_BORDER_THICKNESS = 1;
 	private static final int PADDING = 1;
 
-	private static final String DEFAULT_TEXT = "";
-	private static final Color DEFAULT_FILL = Color.WHITE;
-	private static final Color DEFAULT_TEXT_COLOR = Color.BLACK;
-	private static final Color DEFAULT_BORDER_COLOR = Color.BLACK;
-
 	// The node this panel visualizes
 	@Getter @Setter
 	private GBNode gbNode;
@@ -98,16 +93,16 @@ public class NodePanel extends JPanel {
 		this.y = y;
 		this.radius = r;
 
-		this.text = DEFAULT_TEXT;
-		this.fillColor = DEFAULT_FILL;
-		this.borderColor = DEFAULT_BORDER_COLOR;
-		this.textColor = DEFAULT_TEXT_COLOR;
+		this.text = GBNode.DEFAULT_TEXT;
+		this.fillColor = GBNode.DEFAULT_FILL_COLOR;
+		this.borderColor = GBNode.DEFAULT_BORDER_COLOR;
+		this.textColor = GBNode.DEFAULT_TEXT_COLOR;
 
 		this.hovering = false;
 		this.clickPoint = new Point();
 
-		setOpaque(false);
-		setVisible(true);
+		this.setOpaque(false);
+		this.setVisible(true);
 
 		// Listen for mouse events
 		addMouseListener(new MouseAdapter() {
@@ -133,9 +128,12 @@ public class NodePanel extends JPanel {
 
 				// Display the right click menu if the node is right clicked
 				Editor editor = gbNode.getContext().getGUI().getEditor();
-				if (contains && SwingUtilities.isLeftMouseButton(e)) {
-					Tool current = editor.getGUI().getCurrentTool();
-					if (current == Tool.SELECT) {
+				if (SwingUtilities.isLeftMouseButton(e)) {
+					Tool tool = editor.getGUI().getCurrentTool();
+					if (!editor.highlightsEmpty()) {
+						// Remove all highlights if clicked anywhere on this panel
+						editor.removeAllHighlights();
+					} else if (contains && tool == Tool.SELECT) {
 						// If this node was clicked while the select tool is held
 						if ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) == InputEvent.CTRL_DOWN_MASK ||
 							(e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK) {
@@ -168,7 +166,7 @@ public class NodePanel extends JPanel {
 						}
 						editor.getGUI().getMainMenuBar().updateWithSelection();
 						repaint(); // Redraw this node panel
-					} else if (current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
+					} else if (contains && tool == Tool.EDGE || tool == Tool.DIRECTED_EDGE) {
 						// If we left click on the node with an edge tool
 						if (editor.getEdgeBasePoint() == null) {
 							// If the base point is not set, set this node as the base point
@@ -177,9 +175,9 @@ public class NodePanel extends JPanel {
 							// If the base point is set, draw a new edge
 							GBNode source = editor.getEdgeBasePoint();
 							NodePanel sourcePanel = source.getNodePanel();
-							Color currentLineColor = editor.getGUI().getEdgeOptionsBar().getCurrentLineColor();
+							Color currentLineColor = editor.getGUI().getEdgeOptionsBar().getLineColor();
 							int currentLineWeight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
-							boolean directed = current == Tool.DIRECTED_EDGE;
+							boolean directed = tool == Tool.DIRECTED_EDGE;
 
 							// Check if the edge should be a self-edge, and initialize accordingly
 							GBEdge newEdge;
@@ -206,7 +204,8 @@ public class NodePanel extends JPanel {
 							boolean violatesSimple = currentGraph.hasConstraint(GraphConstraint.SIMPLE) &&
 								pairEdges != null;
 							if (!violatesLoops && !violatesSimple) {
-								PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(), newEdge, edgePosition);
+								PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(),
+																				  newEdge, edgePosition);
 								placeAction.perform();
 								editor.getContext().pushReversibleAction(placeAction, true, false);
 							}
@@ -354,7 +353,7 @@ public class NodePanel extends JPanel {
 						Tool ctool = editor.getGUI().getCurrentTool();
 
 						if ((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebpPanel != null) {
-							Color previewColor = (Color) Preferences.EDGE_PREVIEW_COLOR.getData();
+							Color previewColor = Preferences.PREVIEW_COLOR;
 							int weight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
 							boolean directed = ctool == Tool.DIRECTED_EDGE;
 
@@ -447,7 +446,7 @@ public class NodePanel extends JPanel {
 			}
 
 			// Compute the angle over which the edges are spread
-			double spreadAngle = (double) Preferences.EDGE_SPREAD_ANGLE.getData();
+			double spreadAngle = Preferences.EDGE_SPREAD_ANGLE;
 			double boundAngle = (spreadAngle * (numExistingEdges - 1)) / 2.0;
 			if (angleFromCenters > boundAngle) {
 				edgePosition = numExistingEdges;
@@ -563,42 +562,11 @@ public class NodePanel extends JPanel {
 	}
 
 	/**
-	 * Set the coords of the panel so its center lies at the given point.
-	 *
-	 * @param newCenter The new center point.
+	 * Sets this panel's absolute position on the parent container (in this
+	 * case, the parent container is the Editor panel).
 	 */
-	public void setCenter(Point newCenter) {
-		x = newCenter.x - radius;
-		y = newCenter.y - radius;
-	}
-
-	/**
-	 * Set the coords of the panel so its center lies at the given point.
-	 *
-	 * @param cx The x-coordinate of the new center.
-	 * @param cy The y-coordinate of the new center.
-	 */
-	public void setCenter(int cx, int cy) {
-		x = cx - radius;
-		y = cy - radius;
-	}
-
-	/**
-	 * Get the x-coordinate of the panel's lower right corner.
-	 *
-	 * @return The integer x-coordinate.
-	 */
-	public int getLowerRightX() {
-		return x + 2 * radius;
-	}
-
-	/**
-	 * Get the y-coordinate of the panel's lower right corner.
-	 *
-	 * @return The integer y-coordinate.
-	 */
-	public int getLowerRightY() {
-		return y + 2 * radius;
+	public void enforceLocation() {
+		this.setLocation(x, y);
 	}
 
 	/**
@@ -619,62 +587,51 @@ public class NodePanel extends JPanel {
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
+
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		Ellipse2D.Double circle = new Ellipse2D.Double(PADDING, PADDING, 2 * radius, 2 * radius);
 		g2d.setStroke(new BasicStroke(BORDER_THICKNESS));
 		g2d.setColor(fillColor);
 
-		// Draw the circle, border, and text
-		g2d.fill(circle);
-		if (borderColor != null) {
-			g2d.setColor(borderColor);
-			g2d.draw(circle);
-		}
-		if (textColor != null && text != null) {
-			g2d.setColor(textColor);
-			Rectangle bounds = g2d.getFontMetrics().getStringBounds(text, g2d).getBounds();
-			g2d.drawString(text, radius - bounds.width / 2, radius + bounds.height / 2);
+		// The circle which depicts this node
+		Ellipse2D.Double circle = new Ellipse2D.Double(PADDING, PADDING, 2 * radius, 2 * radius);
+
+		Color trueFillColor = fillColor;
+		Color trueBorderColor = borderColor;
+
+		if (gbNode.isHighlighted()) {
+			trueFillColor = Preferences.HIGHLIGHT_COLOR;
+			trueBorderColor = Preferences.HIGHLIGHT_COLOR;
+		} else if (gbNode.isSelected()) {
+			trueFillColor = Preferences.SELECTION_COLOR;
+			trueBorderColor = Preferences.SELECTION_COLOR;
 		}
 
-		// Compute the rectangular bounds of the node
-		Rectangle bounds = circle.getBounds();
-		bounds.x -= SELECTED_BORDER_THICKNESS;
-		bounds.y -= SELECTED_BORDER_THICKNESS;
-		bounds.width += 2 * SELECTED_BORDER_THICKNESS;
-		bounds.height += 2 * SELECTED_BORDER_THICKNESS;
-		if (gbNode.isSelected()) {
-			// Draw the selection "box" if the node is selected
-			g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-			g2d.setColor((Color) Preferences.SELECTION_COLOR.getData());
-			g2d.draw(bounds);
-		} else if (hovering) {
-			// Draw various "hover" visual effects
+		if (hovering) {
+			// Set colors for "hover" visual effects
 			Editor editor = gbNode.getContext().getGUI().getEditor();
-			Tool current = editor.getGUI().getCurrentTool();
-			if (current == Tool.EDGE) {
-				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if (editor.getEdgeBasePoint() == null) {
-					g2d.setColor((Color) Preferences.LINE_START_COLOR.getData());
-				} else {
-					g2d.setColor((Color) Preferences.LINE_END_COLOR.getData());
-				}
-				g2d.draw(bounds);
-			} else if (current == Tool.DIRECTED_EDGE) {
-				g2d.setStroke(new BasicStroke(SELECTED_BORDER_THICKNESS));
-				if (editor.getEdgeBasePoint() == null) {
-					g2d.setColor((Color) Preferences.ARROW_START_COLOR.getData());
-				} else {
-					g2d.setColor((Color) Preferences.ARROW_END_COLOR.getData());
-				}
-				g2d.draw(bounds);
+			Tool current = gbNode.getContext().getGUI().getCurrentTool();
+			if (current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
+				trueBorderColor = editor.getEdgeBasePoint() == null ? Preferences.EDGE_BASE_POINT_COLOR :
+					Preferences.EDGE_SECOND_POINT_COLOR;
 			}
+		}
+
+		// Draw the circle, border, and text
+		g2d.setColor(trueFillColor);
+		g2d.fill(circle);
+		g2d.setColor(trueBorderColor);
+		g2d.draw(circle);
+		if (text != null && !text.isEmpty()) {
+			g2d.setColor(textColor);
+			Rectangle stringBounds = g2d.getFontMetrics().getStringBounds(text, g2d).getBounds();
+			g2d.drawString(text, radius - stringBounds.width / 2, radius + stringBounds.height / 2);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return String.format("NodePanel[x=%d, y=%d, txt=%s]", x, y, text);
+		return String.format("NP[%d, %d]", x, y);
 	}
 
 }

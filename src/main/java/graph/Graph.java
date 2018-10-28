@@ -3,7 +3,6 @@ package graph;
 import graph.components.Edge;
 import graph.components.Node;
 import lombok.Getter;
-import structures.OrderedPair;
 import structures.UOPair;
 
 import java.util.*;
@@ -174,8 +173,8 @@ public class Graph {
 	}
 
 	/**
-	 * Remove the specified node from the graph, and return the map of edges
-	 * which were connected to the specified node which were removed as a result.
+	 * Remove the specified node from the graph. As a result, any edges
+	 * incident to it are also removed. These are returned.
 	 *
 	 * @param n The node to remove.
 	 * @return The edges removed as a result of the node's removal.
@@ -192,6 +191,7 @@ public class Graph {
 			// Remove edges connected to the deleted node
 			if (edges.get(key) != null) {
 				List<Edge> removedEdgeList = edges.remove(key);
+				removedEdgeList.forEach(Edge::removeSelfFromNodeData);
 				removedEdgeMap.put(key, removedEdgeList);
 			}
 		}
