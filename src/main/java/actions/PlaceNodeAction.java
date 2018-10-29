@@ -8,7 +8,7 @@ import java.awt.event.ActionEvent;
 /**
  * An instance represents the action of placing a new node on the editor panel.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class PlaceNodeAction extends ReversibleAction {
 

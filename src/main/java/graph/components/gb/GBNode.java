@@ -41,7 +41,7 @@ public class GBNode extends GBComponent {
 		this.node = node;
 		this.node.setGbNode(this);
 		this.nodePanel = nodePanel;
-		this.nodePanel.setGbNode(this);
+		this.nodePanel.setGbData(this);
 	}
 
 	/**

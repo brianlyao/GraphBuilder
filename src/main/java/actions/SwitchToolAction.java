@@ -8,7 +8,7 @@ import java.awt.event.ActionEvent;
 /**
  * An instance represents the procedure of switching to a particular Tool.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class SwitchToolAction extends SimpleAction {
 
@@ -27,8 +27,8 @@ public class SwitchToolAction extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		getContext().getGUI().updateTool(toTool);
-		getContext().getGUI().changeToolOptionsBar();
+		this.getContext().getGUI().updateTool(toTool);
+		this.getContext().getGUI().changeToolOptionsBar();
 	}
 
 }

@@ -29,7 +29,7 @@ public abstract class GBComponent extends GraphComponent {
 	 * @return true if the component is selected, false otherwise.
 	 */
 	public boolean isSelected() {
-		return context.getGUI().getEditor().isSelected(this);
+		return context.getGUI().getEditor().getData().isSelected(this);
 	}
 
 	/**
@@ -39,7 +39,7 @@ public abstract class GBComponent extends GraphComponent {
 	 * @return true if the component is highlighted, false otherwise.
 	 */
 	public boolean isHighlighted() {
-		return context.getGUI().getEditor().isHighlighted(this);
+		return context.getGUI().getEditor().getData().isHighlighted(this);
 	}
 
 	/**

@@ -5,6 +5,7 @@ import context.GBContext;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
 import org.javatuples.Pair;
+import structures.EditorData;
 import structures.UOPair;
 import ui.Editor;
 import util.ClipboardUtils;
@@ -49,9 +50,9 @@ public class Duplicate extends ReversibleAction {
 	 */
 	public Duplicate(GBContext ctxt, boolean full) {
 		super(ctxt);
-		Editor editor = this.getContext().getGUI().getEditor();
-		nodesToDuplicate = new HashSet<>(editor.getSelections().getValue0());
-		edgesToDuplicate = StructureUtils.shallowCopy(editor.getSelections().getValue1());
+		EditorData editorData = this.getContext().getGUI().getEditor().getData();
+		nodesToDuplicate = new HashSet<>(editorData.getSelectedNodes());
+		edgesToDuplicate = StructureUtils.shallowCopy(editorData.getSelectedEdges());
 
 		// Copy nodes and edges
 		Pair<Set<GBNode>, Map<GBNode, GBNode>> copyNodes = ClipboardUtils.copyNodes(nodesToDuplicate);
@@ -73,6 +74,7 @@ public class Duplicate extends ReversibleAction {
 	public void actionPerformed(ActionEvent arg0) {
 		// Make sure the bounding box of pasted nodes is "in bounds"
 		Editor editor = this.getContext().getGUI().getEditor();
+		EditorData editorData = editor.getData();
 		int editorMaxX = editor.getWidth();
 		int editorMaxY = editor.getHeight();
 		int diffX = DUPLICATE_OFFSET_X;
@@ -84,10 +86,11 @@ public class Duplicate extends ReversibleAction {
 			diffY = editorMaxY - maxY;
 		}
 
-		// Deselect all currently selected
-		previousSelectedNodes = new HashSet<>(editor.getSelections().getValue0());
-		previousSelectedEdges = new HashSet<>(editor.getSelectedEdges());
-		editor.removeAllSelections();
+		// Deselect all currently selected, and remember what was selected
+		previousSelectedNodes = new HashSet<>(editorData.getSelectedNodes());
+		previousSelectedEdges = new HashSet<>();
+		editorData.getSelectedEdges().values().forEach(previousSelectedEdges::addAll);
+		editorData.removeAllSelections();
 
 		// Add the new nodes and edges to the context
 		for (GBNode oldNode : nodesToDuplicate) {
@@ -98,16 +101,14 @@ public class Duplicate extends ReversibleAction {
 		}
 
 		// Select new nodes
-		editor.addSelections(duplicatedNodes);
+		editorData.addSelections(duplicatedNodes);
 
-		for (List<GBEdge> edgeList : duplicatedEdges.values()) {
-			for (int i = 0; i < edgeList.size(); i++) {
-				this.getContext().addEdge(edgeList.get(i), i);
-			}
+		duplicatedEdges.values().forEach(edgeList -> {
+			this.getContext().addEdges(edgeList);
 
 			// Select new edges
-			editor.addSelections(edgeList);
-		}
+			editorData.addSelections(edgeList);
+		});
 
 		editor.repaint();
 	}
@@ -121,9 +122,9 @@ public class Duplicate extends ReversibleAction {
 
 		// Reselect old selections
 		Editor editor = this.getContext().getGUI().getEditor();
-		editor.removeAllSelections();
-		editor.addSelections(previousSelectedNodes);
-		editor.addSelections(previousSelectedEdges);
+		editor.getData().removeAllSelections();
+		editor.getData().addSelections(previousSelectedNodes);
+		editor.getData().addSelections(previousSelectedEdges);
 
 		editor.repaint();
 	}

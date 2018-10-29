@@ -8,7 +8,7 @@ import javax.swing.*;
 /**
  * An abstract class for any action which can be performed by the user.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public abstract class SimpleAction extends AbstractAction {
 
@@ -29,7 +29,8 @@ public abstract class SimpleAction extends AbstractAction {
 	}
 
 	/**
-	 * Alias for the inherited actionPerformed method.
+	 * Alias for the inherited actionPerformed method where the action event
+	 * is ignored.
 	 */
 	public void perform() {
 		this.actionPerformed(null);

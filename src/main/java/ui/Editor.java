@@ -6,15 +6,13 @@ import graph.Graph;
 import graph.GraphConstraint;
 import graph.components.Node;
 import graph.components.display.NodePanel;
-import graph.components.gb.GBComponent;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
 import lombok.Getter;
-import lombok.Setter;
 import math.Complex;
 import math.CubicFormula;
-import org.javatuples.Pair;
 import preferences.Preferences;
+import structures.EditorData;
 import structures.UOPair;
 import tool.Tool;
 import ui.menus.EditorRightClickMenu;
@@ -22,7 +20,6 @@ import util.CoordinateUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -41,31 +38,12 @@ public class Editor extends JPanel {
 
 	private static final long serialVersionUID = 7327691115632869820L;
 
-	private static final Dimension DEFAULT_DIMENSION = new Dimension(2048, 2048);
+	private static final Dimension DEFAULT_DIMENSION = new Dimension(4096, 4096);
 
 	private GBFrame gui; // The GBFrame this editor is placed in
 
-	private Point lastMousePoint; // Keep track of the last mouse position
-
-	private Point closestEdgeSelectPoint; // Used for the edge select tool
-	private GBEdge closestEdge;
-
-	@Getter @Setter
-	private GBNode edgeBasePoint; // The first node that's selected when drawing an edge
-
-	private Set<GBNode> selectedNodes;
-	private Map<UOPair<GBNode>, List<GBEdge>> selectedEdges;
-
-	private Set<GBNode> highlightedNodes;
-	private Map<UOPair<GBNode>, List<GBEdge>> highlightedEdges;
-
 	@Getter
-	private Map<NodePanel, Point> nodePanelPositionMap; // Map from panel to upper left corner position on editor
-
-	private GBEdge previewEdge;
-	private int previewEdgeIndex;
-	@Setter
-	private boolean drawPreviewUsingObject; // If true, the preview edge should be the object previewEdge
+	private EditorData data;
 
 	/**
 	 * Constructor for an editor panel.
@@ -76,13 +54,7 @@ public class Editor extends JPanel {
 		super();
 
 		gui = g;
-		lastMousePoint = new Point(0, 0);
-
-		selectedNodes = new HashSet<>();
-		selectedEdges = new HashMap<>();
-		highlightedNodes = new HashSet<>();
-		highlightedEdges = new HashMap<>();
-		nodePanelPositionMap = new HashMap<>();
+		data = new EditorData(this);
 
 		// Initialize the panel with default settings...
 		setBackground(Color.WHITE);
@@ -92,11 +64,7 @@ public class Editor extends JPanel {
 		addMouseListener(new MouseListener() {
 
 			@Override
-			public void mouseClicked(MouseEvent evt) {
-				if (SwingUtilities.isRightMouseButton(evt) && edgeBasePoint == null) {
-					EditorRightClickMenu.show(Editor.this, evt.getX(), evt.getY());
-				}
-			}
+			public void mouseClicked(MouseEvent evt) {}
 
 			@Override
 			public void mouseEntered(MouseEvent evt) {
@@ -110,71 +78,88 @@ public class Editor extends JPanel {
 
 			@Override
 			public void mousePressed(MouseEvent evt) {
-				Tool currentTool = gui.getCurrentTool();
-				boolean shouldDeselect = currentTool == Tool.SELECT ||
-					((currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) && edgeBasePoint == null);
-				if (shouldDeselect) {
-					if (!Editor.this.highlightsEmpty()) {
-						// Clicking the canvas will remove all highlights
-						Editor.this.removeAllHighlights();
-						Editor.this.repaint();
-					} else if ((evt.getModifiersEx() & (InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) == 0 &&
-						SwingUtilities.isLeftMouseButton(evt)) {
-						// Clicking the canvas will deselect all selections
-						Editor.this.removeAllSelections();
-						Editor.this.repaint();
+				// Clicking the editor will remove all highlights and ONLY do
+				// so, such that any other press actions require another press
+				if (!data.highlightsEmpty()) {
+					data.removeAllHighlights();
+					repaint();
+					return;
+				}
+
+				// Handle right click events
+				if (SwingUtilities.isRightMouseButton(evt)) {
+					if (data.getEdgeBasePoint() == null) {
+						EditorRightClickMenu.show(Editor.this, evt.getX(), evt.getY());
+					} else {
+						data.clearEdgeBasePoint();
+					}
+
+					if (data.getPathBasePoint() != null) {
+						data.clearPathBasePoint();
+					}
+				}
+
+				// Handle left click events
+				if (SwingUtilities.isLeftMouseButton(evt)) {
+					Tool currentTool = gui.getCurrentTool();
+					boolean shouldDeselect = currentTool == Tool.SELECT ||
+						((currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) &&
+							data.getEdgeBasePoint() == null);
+					if (shouldDeselect && !evt.isControlDown() && !evt.isShiftDown()) {
+						// Clicking the editor will deselect all selections
+						// unless shift or control is held
+						data.removeAllSelections();
 						gui.getMainMenuBar().updateWithSelection();
 					}
-				} else if (currentTool == Tool.NODE && SwingUtilities.isLeftMouseButton(evt)) {
-					// If user left clicks the canvas with the node tool, add a new node
-					Color[] colors = gui.getNodeOptionsBar().getCurrentCircleColors();
-					int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
 
-					// If grid snap is enabled, the location of placement is different
-					Point placed;
-					if (gui.getGridSettingsDialog().getSnapToGrid()) {
-						// Compute "snapped" placement position
-						placed = CoordinateUtils.closestGridPoint(gui, lastMousePoint);
-						placed.x -= currentRadius;
-						placed.y -= currentRadius;
-					} else {
-						// Use regular placement position (at cursor)
-						placed = new Point(Math.max(0, lastMousePoint.x - currentRadius),
-										   Math.max(0, lastMousePoint.y - currentRadius));
+					if (currentTool == Tool.NODE) {
+						// If user left clicks the canvas with the node tool, add a new node
+						Color[] colors = gui.getNodeOptionsBar().getCurrentCircleColors();
+						int currentRadius = gui.getNodeOptionsBar().getCurrentRadius();
+
+						// If grid snap is enabled, the location of placement is different
+						Point mousePoint = data.getLastMousePoint();
+						Point placed;
+						if (gui.getGridSettingsDialog().getSnapToGrid()) {
+							// Compute "snapped" placement position
+							placed = CoordinateUtils.closestGridPoint(gui, mousePoint);
+							placed.x -= currentRadius;
+							placed.y -= currentRadius;
+						} else {
+							// Use regular placement position (at cursor)
+							placed = new Point(Math.max(0, mousePoint.x - currentRadius),
+											   Math.max(0, mousePoint.y - currentRadius));
+						}
+
+						// Create the node panel with appropriate colors
+						NodePanel newPanel = new NodePanel(placed.x, placed.y, currentRadius);
+						newPanel.setFillColor(colors[0]);
+						newPanel.setBorderColor(colors[1]);
+						newPanel.setTextColor(colors[2]);
+
+						// The new node being added to the graph
+						GBNode newNode = new GBNode(new Node(), getContext(), newPanel);
+
+						// Perform the action for placing a node
+						PlaceNodeAction placeAction = new PlaceNodeAction(getContext(), newNode);
+						placeAction.perform();
+						gui.getContext().pushReversibleAction(placeAction, true, false);
 					}
-					// By default, the new node has no text
-					NodePanel newPanel = new NodePanel(placed.x, placed.y, currentRadius);
-					newPanel.setFillColor(colors[0]);
-					newPanel.setBorderColor(colors[1]);
-					newPanel.setTextColor(colors[2]);
 
-					// The new node being added to the graph
-					GBNode newNode = new GBNode(new Node(), getContext(), newPanel);
-
-					// Perform the action for placing a node
-					PlaceNodeAction placeAction = new PlaceNodeAction(getContext(), newNode);
-					placeAction.perform();
-					gui.getContext().pushReversibleAction(placeAction, true, false);
-				}
-
-				if (currentTool == Tool.EDGE_SELECT && closestEdge != null && SwingUtilities.isLeftMouseButton(evt)) {
-					// Select the edge
-					if ((evt.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != InputEvent.CTRL_DOWN_MASK &&
-						(evt.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != InputEvent.SHIFT_DOWN_MASK) {
-						// De-select all else if shift and control are not held
-						removeAllSelections();
+					GBEdge closestEdge = data.getClosestEdge();
+					if (currentTool == Tool.EDGE_SELECT && closestEdge != null) {
+						// Select the edge
+						if (!evt.isControlDown() && !evt.isShiftDown()) {
+							// De-select all else if shift and control are not held
+							data.removeAllSelections();
+						}
+						data.addSelection(closestEdge);
+						gui.getMainMenuBar().updateWithSelection();
 					}
-					addSelection(closestEdge);
-					gui.getMainMenuBar().updateWithSelection();
-					repaint(); // To draw the selected look
 				}
 
-				if ((currentTool == Tool.EDGE || currentTool == Tool.DIRECTED_EDGE) &&
-					edgeBasePoint != null && SwingUtilities.isRightMouseButton(evt)) {
-					// Reset base point to "cancel" edge placement using right click
-					clearEdgeBasePoint();
-					repaint(); // To "un"-draw the preview
-				}
+				// Repaint on each press
+				repaint();
 			}
 
 			@Override
@@ -188,10 +173,11 @@ public class Editor extends JPanel {
 			@Override
 			public void mouseDragged(MouseEvent evt) {
 				Tool current = gui.getCurrentTool();
+				Point mousePoint = data.getLastMousePoint();
 				if (current == Tool.PAN) {
 					Point currentPoint = evt.getPoint();
-					int changeX = currentPoint.x - lastMousePoint.x;
-					int changeY = currentPoint.y - lastMousePoint.y;
+					int changeX = currentPoint.x - mousePoint.x;
+					int changeY = currentPoint.y - mousePoint.y;
 					JScrollPane sp = gui.getScrollPane();
 					JScrollBar horiz = sp.getHorizontalScrollBar();
 					JScrollBar vert = sp.getVerticalScrollBar();
@@ -205,13 +191,13 @@ public class Editor extends JPanel {
 					horiz.setValue(newHorizVal);
 					vert.setValue(newVertVal);
 				}
-				lastMousePoint = evt.getPoint();
+				data.setLastMousePoint(evt.getPoint());
 				repaint();
 			}
 
 			@Override
 			public void mouseMoved(MouseEvent evt) {
-				lastMousePoint = evt.getPoint();
+				data.setLastMousePoint(evt.getPoint());
 				Tool currentTool = gui.getCurrentTool();
 
 				if (currentTool == Tool.EDGE_SELECT) {
@@ -226,30 +212,6 @@ public class Editor extends JPanel {
 	}
 
 	/**
-	 * Get the context of the GBFrame this editor is on.
-	 *
-	 * @return The context of the GBFrame this editor is on.
-	 */
-	public GBContext getContext() {
-		return gui.getContext();
-	}
-
-	/**
-	 * Clears all state held by the editor, like the set of selections, the nodes
-	 * currently displayed, the preview edge, etc.
-	 */
-	public void clearState() {
-		selectedNodes.clear();
-		selectedEdges.clear();
-		nodePanelPositionMap.clear();
-		this.clearEdgeBasePoint();
-		this.clearPreviewEdge();
-
-		// Remove all node panels
-		this.removeAll();
-	}
-
-	/**
 	 * Get the GBFrame this editor is on.
 	 *
 	 * @return The GBFrame instance this editor is on.
@@ -259,188 +221,22 @@ public class Editor extends JPanel {
 	}
 
 	/**
-	 * Sets the last mouse point; we need this if the mouse is not on the Editor panel.
+	 * Get the context of the GBFrame this editor is on.
 	 *
-	 * @param x The x coordinate of the new position.
-	 * @param y The y coordinate of the new position.
+	 * @return The context of the GBFrame this editor is on.
 	 */
-	public void setLastMousePoint(int x, int y) {
-		if (lastMousePoint != null) {
-			lastMousePoint.setLocation(x, y);
-		} else {
-			lastMousePoint = new Point(x, y);
-		}
+	public GBContext getContext() {
+		return gui.getContext();
 	}
 
 	/**
-	 * Add a new entry to the mapping from node panel to position.
-	 *
-	 * @param np The node panel we want to add.
+	 * Clears all data maintained by this editor, and remove all node panels.
 	 */
-	public void addNodePanelEntry(NodePanel np) {
-		nodePanelPositionMap.put(np, np.getCoords());
-	}
+	public void clearState() {
+		data.clear();
 
-	/**
-	 * Remove an entry from the mapping from node panel to position.
-	 *
-	 * @param np The node panel whose entry to remove.
-	 */
-	public void removeNodePanelEntry(NodePanel np) {
-		nodePanelPositionMap.remove(np);
-	}
-
-	/**
-	 * Check if a component is selected.
-	 *
-	 * @param gc The component to check.
-	 * @return true iff the component is selected in this Editor.
-	 */
-	public boolean isSelected(GBComponent gc) {
-		return componentBelongsTo(gc, selectedNodes, selectedEdges);
-	}
-
-	/**
-	 * Add the given component to the set of selections.
-	 *
-	 * @param gc The selected component.
-	 */
-	public void addSelection(GBComponent gc) {
-		addComponentTo(gc, selectedNodes, selectedEdges, this.getContext());
-	}
-
-	/**
-	 * Add the given components to the set of selections.
-	 *
-	 * @param components The selected components.
-	 */
-	public void addSelections(Iterable<? extends GBComponent> components) {
-		components.forEach(this::addSelection);
-	}
-
-	/**
-	 * Remove the given component from the set of selections.
-	 *
-	 * @param gc The deselected component.
-	 */
-	public void removeSelection(GBComponent gc) {
-		removeComponentFrom(gc, selectedNodes, selectedEdges);
-	}
-
-	/**
-	 * Remove the given components from the set of selections.
-	 *
-	 * @param components The deselected components.
-	 */
-	public void removeSelections(Iterable<? extends GBComponent> components) {
-		components.forEach(this::removeSelection);
-	}
-
-	/**
-	 * Clear all selections.
-	 */
-	public void removeAllSelections() {
-		selectedNodes.clear();
-		selectedEdges.clear();
-	}
-
-	/**
-	 * @return true iff no graph components are selected.
-	 */
-	public boolean selectionsEmpty() {
-		return selectedNodes.isEmpty() && selectedEdges.isEmpty();
-	}
-
-	/**
-	 * Check if a component is highlighted.
-	 *
-	 * @param gc The component to check.
-	 * @return true iff the component is highlighted.
-	 */
-	public boolean isHighlighted(GBComponent gc) {
-		return componentBelongsTo(gc, highlightedNodes, highlightedEdges);
-	}
-
-	/**
-	 * Add the given component to the set of highlighted components.
-	 *
-	 * @param gc The highlighted component.
-	 */
-	public void addHighlight(GBComponent gc) {
-		addComponentTo(gc, highlightedNodes, highlightedEdges, this.getContext());
-	}
-
-	/**
-	 * Add the given components to the set of highlighted components.
-	 *
-	 * @param components The highlighted components.
-	 */
-	public void addHighlights(Iterable<? extends GBComponent> components) {
-		components.forEach(this::addHighlight);
-	}
-
-	/**
-	 * Clear all highlighted components.
-	 */
-	public void removeAllHighlights() {
-		highlightedNodes.clear();
-		highlightedEdges.clear();
-	}
-
-	/**
-	 * @return true iff no graph components are highlighted.
-	 */
-	public boolean highlightsEmpty() {
-		return highlightedNodes.isEmpty() && highlightedEdges.isEmpty();
-	}
-
-	/**
-	 * Get the set of all selected edges.
-	 *
-	 * @return The set of all selected edges.
-	 */
-	public Set<GBEdge> getSelectedEdges() {
-		Set<GBEdge> edgeSet = new HashSet<>();
-		for (List<GBEdge> edgeList : selectedEdges.values()) {
-			edgeSet.addAll(edgeList);
-		}
-		return edgeSet;
-	}
-
-	/**
-	 * Get the set of all selected components. The node and
-	 * edge selections are wrapped together as a Pair.
-	 *
-	 * @return The Pair, containing a set of selected nodes and map of selected edges.
-	 */
-	public Pair<Set<GBNode>, Map<UOPair<GBNode>, List<GBEdge>>> getSelections() {
-		return new Pair<>(selectedNodes, selectedEdges);
-	}
-
-	/**
-	 * Clear the edge base point (set it to null).
-	 */
-	public void clearEdgeBasePoint() {
-		this.setEdgeBasePoint(null);
-	}
-
-	/**
-	 * Set the editor's preview edge and the preview edge's position
-	 *
-	 * @param edge     The edge object representing the preview edge.
-	 * @param position The position of the preview edge relative to the existing edges between the
-	 *                 the same endpoints the preview edge has.
-	 */
-	public void setPreviewEdge(GBEdge edge, int position) {
-		previewEdge = edge;
-		previewEdgeIndex = position;
-	}
-
-	/**
-	 * Clear the preview edge object (set it to null).
-	 */
-	public void clearPreviewEdge() {
-		this.setPreviewEdge(null, -1);
+		// Remove all node panels
+		this.removeAll();
 	}
 
 	@Override
@@ -474,19 +270,21 @@ public class Editor extends JPanel {
 		// Check if the preview edge's endpoint pair exists in the edge map
 		// If not, then we need to draw it separately
 		Graph currentGraph = this.getContext().getGraph();
+		GBEdge previewEdge = data.getPreviewEdge();
 		boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.MULTIGRAPH) &&
 			previewEdge != null && previewEdge.isSelfEdge();
 		if (previewEdge != null) {
 			UOPair<GBNode> previewPair = previewEdge.getUoEndpoints();
 			if (!edgeMap.containsKey(previewPair) && !violatesLoops) {
 				List<GBEdge> previewList = Collections.singletonList(previewEdge);
-				drawEdgesBetweenNodePair(g2d, previewPair, previewList, previewEdge == null);
+				drawEdgesBetweenNodePair(g2d, previewPair, previewList, false);
 			}
 		}
 
 		// Iterate through the pairs of nodes in the edge map, and draw the edges between them
 		// If there is a preview edge, we "add" it (not directly) to the list of existing edges
 		// before we draw the list of edges
+		int previewEdgeIndex = data.getPreviewEdgeIndex();
 		edgeMap.keySet().forEach(pair -> {
 			List<GBEdge> toDrawEdges;
 			List<GBEdge> pairEdges = edgeMap.get(pair);
@@ -515,6 +313,7 @@ public class Editor extends JPanel {
 
 		// Draw tool-specific graphics
 		Tool ctool = gui.getCurrentTool();
+		Point mousePoint = data.getLastMousePoint();
 		if (ctool == Tool.NODE) {
 			// Draw preview for the Node tool
 			g2d.setColor(Preferences.PREVIEW_COLOR);
@@ -524,26 +323,28 @@ public class Editor extends JPanel {
 			Ellipse2D.Double preview;
 			if (gui.getGridSettingsDialog().getSnapToGrid()) {
 				// Draw the "snapped" preview circle
-				Point closestGridPoint = CoordinateUtils.closestGridPoint(gui, lastMousePoint);
+				Point closestGridPoint = CoordinateUtils.closestGridPoint(gui, mousePoint);
 				preview = new Ellipse2D.Double(closestGridPoint.x - currentRadius,
 											   closestGridPoint.y - currentRadius,
 											   2 * currentRadius, 2 * currentRadius);
 			} else {
 				// Draw the normal preview circle (at the cursor location)
-				preview = new Ellipse2D.Double(lastMousePoint.x - currentRadius,
-											   lastMousePoint.y - currentRadius,
+				preview = new Ellipse2D.Double(mousePoint.x - currentRadius,
+											   mousePoint.y - currentRadius,
 											   2 * currentRadius, 2 * currentRadius);
 			}
 
 			g2d.draw(preview);
 		} else if (ctool == Tool.EDGE_SELECT) {
-			if (closestEdgeSelectPoint != null) {
+			Point closestEdgePoint = data.getClosestEdgePoint();
+			if (closestEdgePoint != null) {
 				// Draw the edge select line to closest edge
 				g2d.setColor(Preferences.EDGE_SELECT_PREVIEW_COLOR);
-				g2d.drawLine(closestEdgeSelectPoint.x, closestEdgeSelectPoint.y, lastMousePoint.x, lastMousePoint.y);
+				g2d.drawLine(closestEdgePoint.x, closestEdgePoint.y, mousePoint.x, mousePoint.y);
 			}
 		} else if (ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) {
-			if (edgeBasePoint != null && !drawPreviewUsingObject) {
+			GBNode edgeBasePoint = data.getEdgeBasePoint();
+			if (edgeBasePoint != null && !data.isPreviewUsingObject()) {
 				// Draw preview edge when not hovering over a node
 				int weight = gui.getEdgeOptionsBar().getCurrentLineWeight();
 				g2d.setStroke(new BasicStroke(weight));
@@ -551,12 +352,12 @@ public class Editor extends JPanel {
 				Point center = edgeBasePoint.getNodePanel().getLocation();
 				center.x += edgeBasePoint.getNodePanel().getRadius();
 				center.y += edgeBasePoint.getNodePanel().getRadius();
-				g2d.drawLine(center.x, center.y, lastMousePoint.x, lastMousePoint.y);
+				g2d.drawLine(center.x, center.y, mousePoint.x, mousePoint.y);
 				if (ctool == Tool.DIRECTED_EDGE) {
-					double dist = Point.distance(lastMousePoint.x, lastMousePoint.y, center.x, center.y);
-					double unitX = (lastMousePoint.x - center.x) / dist;
-					double unitY = (lastMousePoint.y - center.y) / dist;
-					drawArrowTip(g2d, unitX, unitY, lastMousePoint, weight);
+					double dist = Point.distance(mousePoint.x, mousePoint.y, center.x, center.y);
+					double unitX = (mousePoint.x - center.x) / dist;
+					double unitY = (mousePoint.y - center.y) / dist;
+					drawArrowTip(g2d, unitX, unitY, mousePoint, weight);
 				}
 			}
 		}
@@ -711,15 +512,16 @@ public class Editor extends JPanel {
 
 	/**
 	 * Finds the edge closest to the cursor position, and sets the closestEdge
-	 * and closestEdgeSelectPoint fields.
+	 * and closestEdgePoint fields.
 	 */
 	private void findClosestEdge() {
 		// Compute the line and distance to the closest edge
-		Point2D.Double clickd = new Point2D.Double(lastMousePoint.x, lastMousePoint.y); // Move point
+		Point mousePoint = data.getLastMousePoint();
+		Point2D.Double mouse = new Point2D.Double(mousePoint.x, mousePoint.y);
 
 		// Iteratively updated variables for determining the closest edge
-		closestEdgeSelectPoint = null;
-		closestEdge = null;
+		Point closestEdgePoint = null;
+		GBEdge closestEdge = null;
 		double minDistance = Double.MAX_VALUE;
 
 		// Get the edges in the graph
@@ -753,7 +555,7 @@ public class Editor extends JPanel {
 						Point2D intersection = null;
 						if (c2.x != c1.x && c2.y != c1.y) {
 							// Find closest point to line using a parametric line
-							Point2D.Double c1click = new Point2D.Double(clickd.x - c1.x, clickd.y - c1.y);
+							Point2D.Double c1click = new Point2D.Double(mouse.x - c1.x, mouse.y - c1.y);
 							Point2D.Double c1c2 = new Point2D.Double(c2.x - c1.x, c2.y - c1.y);
 							double dot = c1click.x * c1c2.x + c1click.y * c1c2.y;
 							double t = dot / (c1c2.x * c1c2.x + c1c2.y * c1c2.y);
@@ -764,11 +566,11 @@ public class Editor extends JPanel {
 							}
 						} else if (c2.x == c1.x) {
 							// If the line happens to be vertical
-							intersection = new Point((int) c1.x, lastMousePoint.y);
+							intersection = new Point((int) c1.x, mousePoint.y);
 
 						} else {
 							// If the line happens to be horizontal
-							intersection = new Point(lastMousePoint.x, (int) c1.y);
+							intersection = new Point(mousePoint.x, (int) c1.y);
 						}
 
 						if (intersection != null) {
@@ -777,8 +579,8 @@ public class Editor extends JPanel {
 
 						// Determine the closest point among the candidates
 						Point2D closestCandidate = Collections.min(candidatePoints,
-																   Comparator.comparingDouble(p -> p.distance(clickd)));
-						closestDist = closestCandidate.distance(clickd);
+																   Comparator.comparingDouble(p -> p.distance(mouse)));
+						closestDist = closestCandidate.distance(mouse);
 						closestPoint = new Point((int) closestCandidate.getX(), (int) closestCandidate.getY());
 					} else {
 						// To get the closest point on a bezier curve... solve a cubic
@@ -788,8 +590,8 @@ public class Editor extends JPanel {
 						double d = bcp[1].y;
 						double e = bcp[2].x;
 						double f = bcp[2].y;
-						double x = clickd.x;
-						double y = clickd.y;
+						double x = mouse.x;
+						double y = mouse.y;
 
 						// The coefficients of the cubic
 						double n1 = (a - 2 * c + e) * (a - 2 * c + e) + (b - 2 * d + f) * (b - 2 * d + f);
@@ -818,8 +620,8 @@ public class Editor extends JPanel {
 
 						// Determine, out of the candidate points, which is the closest
 						Point2D closestCandidate = Collections.min(candidatePoints,
-																   Comparator.comparingDouble(p -> p.distance(clickd)));
-						closestDist = closestCandidate.distance(clickd);
+																   Comparator.comparingDouble(p -> p.distance(mouse)));
+						closestDist = closestCandidate.distance(mouse);
 						closestPoint = new Point((int) closestCandidate.getX(), (int) closestCandidate.getY());
 					}
 				} else {
@@ -827,9 +629,9 @@ public class Editor extends JPanel {
 					Point2D.Double cen = edge.getArcCenter();
 
 					// Determine closest point on the loop to the cursor
-					double distcen = Point.distance(cen.x, cen.y, clickd.x, clickd.y);
-					double closex = (clickd.x - cen.x) * edge.getRadius() / distcen + cen.x;
-					double closey = (clickd.y - cen.y) * edge.getRadius() / distcen + cen.y;
+					double distcen = Point.distance(cen.x, cen.y, mouse.x, mouse.y);
+					double closex = (mouse.x - cen.x) * edge.getRadius() / distcen + cen.x;
+					double closey = (mouse.y - cen.y) * edge.getRadius() / distcen + cen.y;
 					closestPoint = new Point((int) closex, (int) closey);
 					closestDist = Math.abs(distcen - edge.getRadius());
 				}
@@ -839,93 +641,14 @@ public class Editor extends JPanel {
 				if (closestDist < minDistance) {
 					minDistance = closestDist;
 					closestEdge = edge;
-					closestEdgeSelectPoint = closestPoint;
+					closestEdgePoint = closestPoint;
 				}
 			}
 		}
-	}
 
-	/**
-	 * Check if the given component is currently in the editor's metadata.
-	 *
-	 * @param gc    The component to check for inclusion.
-	 * @param nodes Node metadata.
-	 * @param edges Edge metadata.
-	 * @return true iff the given component is included in the given metadata.
-	 */
-	private static boolean componentBelongsTo(GBComponent gc, Set<GBNode> nodes,
-											  Map<UOPair<GBNode>, List<GBEdge>> edges) {
-		if (gc instanceof GBNode) {
-			return nodes.contains(gc);
-		} else {
-			GBEdge edge = (GBEdge) gc;
-			List<GBEdge> selectedList = edges.get(edge.getUoEndpoints());
-			return selectedList != null && selectedList.contains(edge);
-		}
-	}
-
-	/**
-	 * Add the given graph component to the editor metadata.
-	 *
-	 * @param gc The component to add.
-	 * @param nodes Node metadata.
-	 * @param edges Edge metadata.
-	 */
-	private static void addComponentTo(GBComponent gc, Set<GBNode> nodes, Map<UOPair<GBNode>, List<GBEdge>> edges,
-									   GBContext context) {
-		if (gc instanceof GBNode) {
-			// Node case
-			nodes.add((GBNode) gc);
-		} else {
-			// Edge case
-			GBEdge selectedEdge = (GBEdge) gc;
-			UOPair<GBNode> key = selectedEdge.getUoEndpoints();
-			if (edges.containsKey(key)) {
-				// Insert this edge into the right position
-				List<GBEdge> totalList = context.getGbEdges().get(key);
-				List<GBEdge> selectedList = edges.get(key);
-				int selectionIndex = 0;
-				for (GBEdge existingEdge : totalList) {
-					if (selectedEdge == existingEdge) {
-						selectedList.add(selectionIndex, selectedEdge);
-						break;
-					} else if (selectedList.contains(existingEdge)) {
-						selectionIndex++;
-					}
-				}
-			} else {
-				// Create new entry
-				List<GBEdge> newList = new ArrayList<>();
-				newList.add(selectedEdge);
-				edges.put(key, newList);
-			}
-		}
-	}
-
-	/**
-	 * Remove the given graph component from the editor metadata.
-	 *
-	 * @param gc The component to remove.
-	 * @param nodes Node metadata.
-	 * @param edges Edge metadata.
-	 */
-	private static void removeComponentFrom(GBComponent gc, Set<GBNode> nodes,
-											Map<UOPair<GBNode>, List<GBEdge>> edges) {
-		if (gc instanceof GBNode) {
-			// Deselect node
-			nodes.remove(gc);
-		} else {
-			// Deselect edge
-			GBEdge selectedEdge = (GBEdge) gc;
-			UOPair<GBNode> key = selectedEdge.getUoEndpoints();
-			List<GBEdge> selectedList = edges.get(key);
-			if (selectedList != null) {
-				selectedList.remove(selectedEdge);
-				if (selectedList.isEmpty()) {
-					edges.remove(key);
-				}
-			}
-		}
+		// Update the data
+		data.setClosestEdge(closestEdge);
+		data.setClosestEdgePoint(closestEdgePoint);
 	}
 
 	/**
@@ -935,11 +658,11 @@ public class Editor extends JPanel {
 	 * @return the color of this edge.
 	 */
 	private static Color trueEdgeColor(GBEdge edge) {
-		if (edge.isSelected()) {
-			return Preferences.SELECTION_COLOR;
-		} else if (edge.isHighlighted()) {
+		if (edge.isHighlighted()) {
 			return Preferences.HIGHLIGHT_COLOR;
-		} else {
+		} else if (edge.isSelected()) {
+			return Preferences.SELECTION_COLOR;
+		}  else {
 			return edge.getColor();
 		}
 	}

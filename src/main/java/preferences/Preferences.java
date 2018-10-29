@@ -28,6 +28,7 @@ public final class Preferences {
 
 	public static final double PAN_SENSITIVITY = 1.0;
 
-	public static final Color ACTION_COLOR = Color.ORANGE;
+	public static final Color ACTION_COLOR1 = Color.ORANGE;
+	public static final Color ACTION_COLOR2 = Color.CYAN;
 
 }

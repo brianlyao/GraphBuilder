@@ -5,6 +5,7 @@ import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
 import org.javatuples.Pair;
 import org.javatuples.Quartet;
+import structures.EditorData;
 import structures.UOPair;
 import ui.Editor;
 
@@ -29,9 +30,9 @@ public class ClipboardUtils {
 	 */
 	public static Quartet<Set<GBNode>, Set<GBEdge>, Map<UOPair<GBNode>, List<GBEdge>>,
 		Map<UOPair<GBNode>, List<GBEdge>>> deleteSelections(GBContext ctxt) {
-		Editor editor = ctxt.getGUI().getEditor();
+		EditorData editorData = ctxt.getGUI().getEditor().getData();
 
-		Set<GBNode> deletedNodes = new HashSet<>(editor.getSelections().getValue0());
+		Set<GBNode> deletedNodes = new HashSet<>(editorData.getSelectedNodes());
 		Set<GBEdge> deletedEdges = new HashSet<>();
 		Map<UOPair<GBNode>, List<GBEdge>> originalEdgeMap = new HashMap<>();
 		Map<UOPair<GBNode>, List<GBEdge>> deletedEdgeMap = new HashMap<>();
@@ -43,17 +44,16 @@ public class ClipboardUtils {
 		}
 
 		// Get the selected edges
-		for (Map.Entry<UOPair<GBNode>, List<GBEdge>> edgeEntry : editor.getSelections().getValue1().entrySet()) {
-			UOPair<GBNode> tempPair = edgeEntry.getKey();
-			if (deletedEdgeMap.get(tempPair) == null) {
-				// If the edge we are deleting is not in the edge map of deleted edges, we delete it
-				deletedEdges.addAll(edgeEntry.getValue());
+		editorData.getSelectedEdges().forEach((key, edges) -> {
+			if (deletedEdgeMap.get(key) == null) {
+				// If the edges we are deleting is not in the edge map of
+				// deleted edges, remove them
+				deletedEdges.addAll(edges);
 
-				// Fill the edge map of deleted edges
-				List<GBEdge> originalEdges = new ArrayList<>(ctxt.getGbEdges().get(tempPair));
-				originalEdgeMap.put(tempPair, originalEdges);
+				// Fill data remembering the original edges
+				originalEdgeMap.put(key, new ArrayList<>(ctxt.getGbEdges().get(key)));
 			}
-		}
+		});
 
 		// Delete the selected edges
 		ctxt.removeEdges(deletedEdges);
@@ -75,8 +75,6 @@ public class ClipboardUtils {
 	public static void undoDeleteComponents(GBContext ctxt, Set<GBNode> deletedNodes, Set<GBEdge> deletedEdges,
 											Map<UOPair<GBNode>, List<GBEdge>> originalEdgeMap,
 											Map<UOPair<GBNode>, List<GBEdge>> deletedEdgeMap) {
-		Editor editor = ctxt.getGUI().getEditor();
-
 		// Re-add the deleted nodes
 		ctxt.addNodes(deletedNodes);
 
@@ -85,21 +83,21 @@ public class ClipboardUtils {
 
 		// Add all edges deleted individually (restore original edges)
 		Map<UOPair<GBNode>, List<GBEdge>> gbEdges = ctxt.getGbEdges();
-		for (Map.Entry<UOPair<GBNode>, List<GBEdge>> ogEntry : originalEdgeMap.entrySet()) {
-			List<GBEdge> currentEdgeList = gbEdges.get(ogEntry.getKey());
+		originalEdgeMap.forEach((key, edges) -> {
+			List<GBEdge> currentEdgeList = gbEdges.get(key);
 
 			// If there are edges between these nodes, clear them before adding
 			// the original list of edges
 			if (currentEdgeList != null) {
 				ctxt.removeEdges(currentEdgeList);
 			}
-			ctxt.addEdges(ogEntry.getValue());
-		}
+			ctxt.addEdges(edges);
+		});
 
-		// Re-select deleted nodes
-		editor.addSelections(deletedNodes);
-		// Re-select individually deleted edges
-		editor.addSelections(deletedEdges);
+		// Re-select deleted nodes and individually deleted edges
+		EditorData editorData = ctxt.getGUI().getEditor().getData();
+		editorData.addSelections(deletedNodes);
+		editorData.addSelections(deletedEdges);
 	}
 
 	/**

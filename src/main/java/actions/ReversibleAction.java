@@ -5,7 +5,7 @@ import context.GBContext;
 /**
  * An abstract class for a reversible (undo-able) action, such as placing a node or drawing an edge.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public abstract class ReversibleAction extends SimpleAction {
 

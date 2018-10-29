@@ -1,5 +1,6 @@
 package keybindings;
 
+import actions.SelectAll;
 import actions.SwitchToolAction;
 import actions.edit.*;
 import actions.file.New;
@@ -26,6 +27,7 @@ public class KeyActions {
 	public static final KeyStroke DIRECTED_EDGE_TOOL = KeyStroke.getKeyStroke("typed d");
 	public static final KeyStroke EDGE_TOOL = KeyStroke.getKeyStroke("typed e");
 	public static final KeyStroke PAN_TOOL = KeyStroke.getKeyStroke("typed p");
+
 	public static final KeyStroke UNDO = KeyStroke.getKeyStroke("control Z");
 	public static final KeyStroke REDO = KeyStroke.getKeyStroke("control Y");
 	public static final KeyStroke COPY = KeyStroke.getKeyStroke("control C");
@@ -37,6 +39,8 @@ public class KeyActions {
 	public static final KeyStroke CUT_FULL = KeyStroke.getKeyStroke("control shift X");
 	public static final KeyStroke BACKSPACE = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0);
 	public static final KeyStroke DELETE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
+	public static final KeyStroke SELECT_ALL = KeyStroke.getKeyStroke("control A");
+
 	public static final KeyStroke NEW = KeyStroke.getKeyStroke("control N");
 	public static final KeyStroke OPEN = KeyStroke.getKeyStroke("control O");
 	public static final KeyStroke SAVE = KeyStroke.getKeyStroke("control S");
@@ -65,13 +69,15 @@ public class KeyActions {
 		actionMap.put("undo", new Undo(ctxt));
 		actionMap.put("redo", new Redo(ctxt));
 		actionMap.put("copy", new Copy(ctxt, false));
-		actionMap.put("copyfull", new Copy(ctxt, true));
+		actionMap.put("copy full", new Copy(ctxt, true));
 		actionMap.put("paste", new PushPaste(ctxt));
 		actionMap.put("duplicate", new PushDuplicate(ctxt, false));
-		actionMap.put("duplicatefull", new PushDuplicate(ctxt, true));
+		actionMap.put("duplicate full", new PushDuplicate(ctxt, true));
 		actionMap.put("cut", new PushCut(ctxt, false));
-		actionMap.put("cutfull", new PushCut(ctxt, true));
+		actionMap.put("cut full", new PushCut(ctxt, true));
 		actionMap.put("delete", new PushDelete(ctxt));
+
+		actionMap.put("select all", new SelectAll(ctxt));
 
 		// Actions for file io
 		actionMap.put("new", new New(ctxt));
@@ -95,14 +101,16 @@ public class KeyActions {
 
 		// Keystrokes for operations under the edit menu
 		inputMap.put(COPY, "copy");
-		inputMap.put(COPY_FULL, "copyfull");
+		inputMap.put(COPY_FULL, "copy full");
 		inputMap.put(PASTE, "paste");
 		inputMap.put(DUPLICATE, "duplicate");
-		inputMap.put(DUPLICATE_FULL, "duplicatefull");
+		inputMap.put(DUPLICATE_FULL, "duplicate full");
 		inputMap.put(CUT, "cut");
-		inputMap.put(CUT_FULL, "cutfull");
+		inputMap.put(CUT_FULL, "cut full");
 		inputMap.put(DELETE, "delete");
 		inputMap.put(BACKSPACE, "delete");
+
+		inputMap.put(SELECT_ALL, "select all");
 
 		// Keystrokes for file io
 		inputMap.put(NEW, "new");

@@ -3,7 +3,6 @@ package ui;
 import context.GBContext;
 import graph.Graph;
 import graph.GraphConstraint;
-import graph.components.gb.GBNode;
 import keybindings.KeyActions;
 import logger.Logger;
 import lombok.Getter;
@@ -73,10 +72,6 @@ public class GBFrame extends JFrame {
 		// Set context
 		context = initialContext;
 		context.setGUI(this);
-
-		// Initialize and set menu bar
-		menuBar = new MenuBar(this);
-		setJMenuBar(menuBar);
 
 		// Initialize dialogs
 		gridSettingsDialog = new GridSettingsDialog(this);
@@ -152,6 +147,10 @@ public class GBFrame extends JFrame {
 		scrollPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		add(scrollPane, editorgbc);
 
+		// Initialize and set menu bar
+		menuBar = new MenuBar(this);
+		setJMenuBar(menuBar);
+
 		revalidate();
 
 		// By default, start with the Select tool
@@ -189,17 +188,18 @@ public class GBFrame extends JFrame {
 		Map<Tool, OrderedPair<ImageIcon>> toolIcons = toolBar.getToolIcons();
 		if (currentTool != null) {
 			if (currentTool != t) {
-				toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool).getFirst());
-				toolButtons.get(t).setIcon(toolIcons.get(t).getSecond());
-				currentTool = t;
-			} else {
-				toolButtons.get(t).setIcon(toolIcons.get(t).getFirst());
-				currentTool = null;
+				if (toolIcons.containsKey(currentTool)) {
+					toolButtons.get(currentTool).setIcon(toolIcons.get(currentTool).getFirst());
+				}
+				if (toolIcons.containsKey(t)) {
+					toolButtons.get(t).setIcon(toolIcons.get(t).getSecond());
+				}
 			}
-		} else {
+		} else if (toolIcons.containsKey(t)) {
 			toolButtons.get(t).setIcon(toolIcons.get(t).getSecond());
-			currentTool = t;
 		}
+
+		currentTool = t;
 	}
 
 	/**

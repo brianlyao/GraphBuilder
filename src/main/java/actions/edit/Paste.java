@@ -6,6 +6,7 @@ import context.GBContext;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
 import org.javatuples.Pair;
+import structures.EditorData;
 import structures.OrderedPair;
 import structures.UOPair;
 import ui.Editor;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * An instance is a paste of one or many graph components.
+ * An instance is a paste of graph components.
  *
  * @author Brian Yao
  */
@@ -72,8 +73,6 @@ public class Paste extends ReversibleAction {
 		maxX = lowerRight.x;
 		maxY = lowerRight.y;
 		originalCenterOfMass = CoordinateUtils.centerOfMass(clipboard.getNodes());
-
-
 	}
 
 	@Override
@@ -93,6 +92,7 @@ public class Paste extends ReversibleAction {
 
 		// Make sure the bounding box of pasted nodes is "in bounds"
 		Editor editor = this.getContext().getGUI().getEditor();
+		EditorData editorData = editor.getData();
 		int editorMaxX = editor.getWidth();
 		int editorMaxY = editor.getHeight();
 		int newMaxX = pastePoint.x + maxX - originalCenterOfMass.x;
@@ -106,9 +106,10 @@ public class Paste extends ReversibleAction {
 		pastePoint.y += diffY;
 
 		// Deselect all currently selected
-		previousSelectedNodes = new HashSet<>(editor.getSelections().getValue0());
-		previousSelectedEdges = new HashSet<>(editor.getSelectedEdges());
-		editor.removeAllSelections();
+		previousSelectedNodes = new HashSet<>(editorData.getSelectedNodes());
+		previousSelectedEdges = new HashSet<>();
+		editorData.getSelectedEdges().values().forEach(previousSelectedEdges::addAll);
+		editorData.removeAllSelections();
 
 		// Add the new nodes and edges to the context
 		Map<GBNode, OrderedPair<Integer>> relativePos = this.getContext().getClipboard().getPosFromCenterOfMass();
@@ -121,14 +122,14 @@ public class Paste extends ReversibleAction {
 		}
 
 		// Select pasted nodes
-		editor.addSelections(pastedNodes);
+		editorData.addSelections(pastedNodes);
 
 		// Add pasted edges
 		for (List<GBEdge> edgeList : pastedEdges.values()) {
 			this.getContext().addEdges(edgeList);
 
 			// Select pasted edges
-			editor.addSelections(edgeList);
+			editorData.addSelections(edgeList);
 		}
 
 		if (specifiedCenterOfMass == null) {
@@ -152,9 +153,9 @@ public class Paste extends ReversibleAction {
 
 		// Reselect old selections
 		Editor editor = this.getContext().getGUI().getEditor();
-		editor.removeAllSelections();
-		editor.addSelections(previousSelectedNodes);
-		editor.addSelections(previousSelectedEdges);
+		editor.getData().removeAllSelections();
+		editor.getData().addSelections(previousSelectedNodes);
+		editor.getData().addSelections(previousSelectedEdges);
 
 		editor.repaint();
 	}

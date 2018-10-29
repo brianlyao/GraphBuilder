@@ -3,6 +3,7 @@ package main;
 import context.GBContext;
 import io.FileLoader;
 import logger.Logger;
+import preferences.Preferences;
 import ui.GBFrame;
 import ui.dialogs.NewGraphDialog;
 import ui.dialogs.StartupDialog;
@@ -12,17 +13,15 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * The main top-level class, where the program is initialized.
+ * The main top-level class, where the program starts.
  *
  * @author Brian Yao
  */
 public class GBMain {
 
-	private static final String LOG_FILE = "log.txt";
-
 	public static void main(String[] args) {
 		try {
-			Logger.setLogFile(LOG_FILE);
+			Logger.setLogFile(Preferences.LOG_FILE_PATH);
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, "Unable to initialize logger. This means that any crashes/problems" +
 				"will not be logged! Please ensure that GraphBuilder has sufficient permissions to write files.",

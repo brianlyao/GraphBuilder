@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * An instance is a movement of one or more node(s) on the editor workspace.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class MoveNodesAction extends ReversibleAction {
 

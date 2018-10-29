@@ -8,6 +8,7 @@ import graph.components.gb.GBGraph;
 import graph.components.gb.GBNode;
 import lombok.Getter;
 import lombok.Setter;
+import structures.EditorData;
 import structures.UOPair;
 import ui.Editor;
 import ui.GBFrame;
@@ -24,13 +25,17 @@ import java.util.*;
  */
 public class GBContext {
 
+	// Graph component ID pool; increments for each new component
+	private int idPool;
+	// The action ID in the history on last save
+	private int actionIdOnLastSave;
+	@Getter
+	private Map<Integer, GBComponent> idMap; // A mapping from id to graph component
+
 	private GBFrame gui; // The GBFrame using this context
 
 	@Getter
 	private GBGraph graph;
-
-	@Getter
-	private Map<Integer, GBComponent> idMap; // A mapping from id to graph component
 
 	@Getter
 	private Stack<ReversibleAction> actionHistory; // A collection of the most recent reversible actions
@@ -45,10 +50,6 @@ public class GBContext {
 
 	@Getter @Setter
 	private File currentlyLoadedFile;
-
-	private int actionIdOnLastSave;
-
-	private int idPool;
 
 	/**
 	 * @param graphConstraints The constraints on the graph this context manages.
@@ -162,21 +163,22 @@ public class GBContext {
 		Map<UOPair<GBNode>, List<GBEdge>> removedEdges = StructureUtils.toGbEdges(graph.removeNode(n.getNode()));
 
 		if (gui != null) {
-			Editor editor = gui.getEditor();
+			EditorData editorData = gui.getEditor().getData();
 
 			// If this node was the "base point" for an edge, reset the base point
-			if (editor.getEdgeBasePoint() == n) {
-				editor.clearEdgeBasePoint();
+			if (editorData.getEdgeBasePoint() == n) {
+				editorData.clearEdgeBasePoint();
 			}
 
 			// Remove this node and removed edges from selections
-			editor.removeSelection(n);
-			removedEdges.values().forEach(editor::removeSelections);
+			editorData.removeSelection(n);
+			removedEdges.values().forEach(editorData::removeSelections);
 
 			// Update GBFrame appearance and button states
 			this.getGUI().getMainMenuBar().updateWithSelection();
 
 			// Revalidate the editor panel after removing the panel
+			Editor editor = gui.getEditor();
 			editor.remove(n.getNodePanel());
 			editor.repaint();
 			editor.revalidate();
@@ -225,8 +227,8 @@ public class GBContext {
 		int index = graph.removeEdge(gbe.getEdge());
 
 		// Remove the edge from selections
-		this.getGUI().getEditor().removeSelection(gbe);
-		this.getGUI().getMainMenuBar().updateWithSelection();
+		gui.getEditor().getData().removeSelection(gbe);
+		gui.getMainMenuBar().updateWithSelection();
 
 		return index;
 	}
@@ -273,7 +275,7 @@ public class GBContext {
 	}
 
 	/**
-	 * Updates the "saved" state of the current graph.
+	 * Updates the "saved" state of the current context.
 	 */
 	public void updateSaveState() {
 		if ((actionHistory.isEmpty() && actionIdOnLastSave < 0) ||
@@ -282,6 +284,7 @@ public class GBContext {
 		} else {
 			setAsUnsaved();
 		}
+
 		gui.getMainMenuBar().setUndoEnabled(!actionHistory.isEmpty());
 		gui.getMainMenuBar().setRedoEnabled(!undoHistory.isEmpty());
 	}

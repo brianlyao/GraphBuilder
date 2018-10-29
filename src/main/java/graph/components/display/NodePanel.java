@@ -2,19 +2,24 @@ package graph.components.display;
 
 import actions.MoveNodesAction;
 import actions.PlaceEdgeAction;
+import algorithms.PathAlgorithms;
 import graph.Graph;
 import graph.GraphConstraint;
+import graph.components.Node;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
+import graph.path.Path;
 import lombok.Getter;
 import lombok.Setter;
 import preferences.Preferences;
+import structures.EditorData;
 import structures.OrderedPair;
 import structures.UOPair;
 import tool.Tool;
 import ui.Editor;
 import ui.menus.NodeRightClickMenu;
 import util.CoordinateUtils;
+import util.StructureUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,8 +48,11 @@ public class NodePanel extends JPanel {
 	private static final int PADDING = 1;
 
 	// The node this panel visualizes
-	@Getter @Setter
+	@Getter
 	private GBNode gbNode;
+
+	// For convenience, store the editor this panel is displayed in
+	private Editor editor;
 
 	// Location (of the panel's top left corner) on editor panel. The origin
 	// is at the top left of the editor panel.
@@ -91,7 +99,7 @@ public class NodePanel extends JPanel {
 	public NodePanel(int x, int y, int r) {
 		this.x = x;
 		this.y = y;
-		this.radius = r;
+		this.radius = r - BORDER_THICKNESS / 2;
 
 		this.text = GBNode.DEFAULT_TEXT;
 		this.fillColor = GBNode.DEFAULT_FILL_COLOR;
@@ -108,72 +116,83 @@ public class NodePanel extends JPanel {
 		addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (SwingUtilities.isRightMouseButton(e)) {
-					Editor editor = gbNode.getContext().getGUI().getEditor();
-					if (NodePanel.this.containsPoint(clickPoint) && editor.getEdgeBasePoint() == null) {
-						NodeRightClickMenu.show(NodePanel.this, e.getX(), e.getY());
-					}
-					editor.clearEdgeBasePoint();
-				}
-			}
+			public void mouseClicked(MouseEvent e) {}
 
 			@Override
 			public void mousePressed(MouseEvent e) {
 				// Store the point we clicked on relative to the upper left corner of the panel
 				clickPoint = e.getPoint();
-				NodePanel sinkPanel = NodePanel.this;
-				GBNode sink = sinkPanel.gbNode;
-				boolean contains = sinkPanel.containsPoint(clickPoint);
 
-				// Display the right click menu if the node is right clicked
-				Editor editor = gbNode.getContext().getGUI().getEditor();
+				NodePanel thisPanel = NodePanel.this;
+				boolean contains = thisPanel.containsPoint(clickPoint);
+				EditorData editorData = editor.getData();
+
+				if (SwingUtilities.isRightMouseButton(e)) {
+					// Handle right click events
+					if (editorData.getEdgeBasePoint() != null) {
+						editorData.clearEdgeBasePoint();
+						editorData.clearPreviewEdge();
+					} else if (editorData.getPathBasePoint() != null) {
+						editorData.clearPathBasePoint();
+					} else if (containsPoint(clickPoint)) {
+						if (editorData.getEdgeBasePoint() == null) {
+							// Display the right click menu if the node is right clicked
+							NodeRightClickMenu.show(thisPanel, e.getX(), e.getY());
+						}
+
+						if (!gbNode.isSelected()) {
+							// Right click also selects the node if none of the above occur
+							editorData.addSelection(gbNode);
+						}
+					}
+				}
+
 				if (SwingUtilities.isLeftMouseButton(e)) {
-					Tool tool = editor.getGUI().getCurrentTool();
-					if (!editor.highlightsEmpty()) {
+					// Handle left click events
+					Tool tool = gbNode.getContext().getGUI().getCurrentTool();
+					if (!editorData.highlightsEmpty()) {
 						// Remove all highlights if clicked anywhere on this panel
-						editor.removeAllHighlights();
+						editorData.removeAllHighlights();
 					} else if (contains && tool == Tool.SELECT) {
 						// If this node was clicked while the select tool is held
-						if ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) == InputEvent.CTRL_DOWN_MASK ||
-							(e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK) {
+						if (e.isControlDown() || e.isShiftDown()) {
 							// If the user was holding down the control or shift keys, add or remove
 							// this node from the set of selections
-							if (editor.isSelected(sink)) {
-								editor.removeSelection(sink);
-								editor.removeNodePanelEntry(sinkPanel);
+							if (gbNode.isSelected()) {
+								editorData.removeSelection(gbNode);
+								editorData.removeNodePanelEntry(thisPanel);
 							} else {
-								editor.addSelection(sink);
-								editor.addNodePanelEntry(sinkPanel);
+								editorData.addSelection(gbNode);
+								editorData.addNodePanelEntry(thisPanel);
 							}
-						} else if (!sink.isSelected()) {
+						} else if (!gbNode.isSelected()) {
 							// Otherwise, if this node is not already selected, remove all existing
 							// selections and select this node
-							editor.removeAllSelections();
-							for (GBNode wasSelected : editor.getSelections().getValue0()) {
-								editor.removeNodePanelEntry(wasSelected.getNodePanel());
+							editorData.removeAllSelections();
+							for (GBNode wasSelected : editorData.getSelectedNodes()) {
+								editorData.removeNodePanelEntry(wasSelected.getNodePanel());
 							}
-							editor.repaint();
 
 							// Add this node as a selection
-							editor.addSelection(sink);
-							editor.addNodePanelEntry(sinkPanel);
+							editorData.addSelection(gbNode);
+							editorData.addNodePanelEntry(thisPanel);
 						} else {
 							// If this node is already selected, we don't change the selections
-							for (GBNode selectedNode : editor.getSelections().getValue0()) {
-								editor.addNodePanelEntry(selectedNode.getNodePanel());
+							for (GBNode selectedNode : editorData.getSelectedNodes()) {
+								editorData.addNodePanelEntry(selectedNode.getNodePanel());
 							}
 						}
+
+						// Update the main menu bar item states
 						editor.getGUI().getMainMenuBar().updateWithSelection();
-						repaint(); // Redraw this node panel
 					} else if (contains && tool == Tool.EDGE || tool == Tool.DIRECTED_EDGE) {
 						// If we left click on the node with an edge tool
-						if (editor.getEdgeBasePoint() == null) {
+						if (editorData.getEdgeBasePoint() == null) {
 							// If the base point is not set, set this node as the base point
-							editor.setEdgeBasePoint(gbNode);
+							editorData.setEdgeBasePoint(gbNode);
 						} else {
 							// If the base point is set, draw a new edge
-							GBNode source = editor.getEdgeBasePoint();
+							GBNode source = editorData.getEdgeBasePoint();
 							NodePanel sourcePanel = source.getNodePanel();
 							Color currentLineColor = editor.getGUI().getEdgeOptionsBar().getLineColor();
 							int currentLineWeight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
@@ -181,12 +200,12 @@ public class NodePanel extends JPanel {
 
 							// Check if the edge should be a self-edge, and initialize accordingly
 							GBEdge newEdge;
-							if (sink.getNode() == source.getNode()) {
-								newEdge = new GBEdge(sink, sink, directed);
+							if (gbNode.getNode() == source.getNode()) {
+								newEdge = new GBEdge(gbNode, gbNode, directed);
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
 								newEdge.setAngle(angle);
 							} else {
-								newEdge = new GBEdge(source, sink, directed);
+								newEdge = new GBEdge(source, gbNode, directed);
 							}
 
 							// Set the new edge's appearance
@@ -194,45 +213,62 @@ public class NodePanel extends JPanel {
 							newEdge.setWeight(currentLineWeight);
 
 							// Compute the position of this edge (only matters if it is a simple edge)
-							List<GBEdge> pairEdges = editor.getContext().getGbEdges().get(new UOPair<>(sink, source));
-							int edgePosition = getEdgePosition(sourcePanel, sinkPanel, e.getPoint(), pairEdges);
+							List<GBEdge> pairEdges = gbNode.getContext().getGbEdges().get(new UOPair<>(gbNode, source));
+							int edgePosition = getEdgePosition(sourcePanel, thisPanel, e.getPoint(), pairEdges);
 
 							// Add the new edge between the chosen nodes if no constraints are violated
-							Graph currentGraph = editor.getContext().getGraph();
+							Graph currentGraph = gbNode.getContext().getGraph();
 							boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.MULTIGRAPH) &&
 								newEdge.isSelfEdge();
 							boolean violatesSimple = currentGraph.hasConstraint(GraphConstraint.SIMPLE) &&
 								pairEdges != null;
 							if (!violatesLoops && !violatesSimple) {
-								PlaceEdgeAction placeAction = new PlaceEdgeAction(editor.getContext(),
+								PlaceEdgeAction placeAction = new PlaceEdgeAction(gbNode.getContext(),
 																				  newEdge, edgePosition);
 								placeAction.perform();
-								editor.getContext().pushReversibleAction(placeAction, true, false);
+								gbNode.getContext().pushReversibleAction(placeAction, true, false);
 							}
 
 							// Reset base point, now that the edge has been placed
-							editor.clearEdgeBasePoint();
+							// and clear the preview edge object
+							editorData.clearEdgeBasePoint();
+							editorData.clearPreviewEdge();
+						}
+					} else if (contains && tool == Tool.SHORTEST_PATH) {
+						// If left click on a node with the shortest path tool
+						if (editorData.getPathBasePoint() == null) {
+							// This node is the base point (start)
+							editorData.setPathBasePoint(gbNode);
+						} else {
+							// This node is the destination; highlight the path
+							Node start = editorData.getPathBasePoint().getNode();
+							Node end = gbNode.getNode();
+							Path shortestPath = PathAlgorithms.dijkstra(gbNode.getContext().getGraph(), start, end);
 
-							// Remove any existing preview edge object
-							editor.clearPreviewEdge();
+							if (shortestPath != null) {
+								editorData.addHighlights(StructureUtils.toGbNodes(shortestPath.getNodes()));
+								editorData.addHighlights(StructureUtils.toGbEdges(shortestPath.getEdges()));
+							}
 
-							// Repaint to immediately draw the new edge
-							editor.repaint();
-							editor.revalidate();
+							// Reset base point, now that the path has been found
+							editorData.clearPathBasePoint();
 						}
 					}
 				}
+
+				// Repaint the editor
+				editor.repaint();
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// A mapping from the moved panels to their original position (before the move)
-				Editor editor = gbNode.getContext().getGUI().getEditor();
+				EditorData editorData = editor.getData();
 				HashMap<NodePanel, OrderedPair<Point>> movementMap = new HashMap<>();
 				Point originalPoint;
 				Point currentPoint;
 
-				for (Map.Entry<NodePanel, Point> npEntry : editor.getNodePanelPositionMap().entrySet()) {
+				for (Map.Entry<NodePanel, Point> npEntry : editorData.getNodePanelPositionMap().entrySet()) {
 					originalPoint = npEntry.getValue();
 					currentPoint = npEntry.getKey().getCoords();
 
@@ -245,11 +281,11 @@ public class NodePanel extends JPanel {
 
 				// If the map is not empty, push a move node action
 				if (!movementMap.isEmpty()) {
-					MoveNodesAction moveAction = new MoveNodesAction(editor.getContext(), movementMap);
-					editor.getContext().pushReversibleAction(moveAction, true, false);
+					MoveNodesAction moveAction = new MoveNodesAction(gbNode.getContext(), movementMap);
+					gbNode.getContext().pushReversibleAction(moveAction, true, false);
 
 					// The movement is complete, so we clear the node panel position map
-					editor.getNodePanelPositionMap().clear();
+					editorData.getNodePanelPositionMap().clear();
 				}
 			}
 
@@ -259,8 +295,7 @@ public class NodePanel extends JPanel {
 					hovering = true;
 
 					// Repaint to clear preview edge artifacts
-					Editor editor = gbNode.getContext().getGUI().getEditor();
-					editor.setDrawPreviewUsingObject(true);
+					editor.getData().setPreviewUsingObject(true);
 					editor.repaint();
 				}
 			}
@@ -270,9 +305,8 @@ public class NodePanel extends JPanel {
 				hovering = false;
 
 				// Remove any existing preview edge object
-				Editor editor = gbNode.getContext().getGUI().getEditor();
-				editor.clearPreviewEdge();
-				editor.setDrawPreviewUsingObject(false);
+				editor.getData().clearPreviewEdge();
+				editor.getData().setPreviewUsingObject(false);
 				editor.repaint();
 			}
 
@@ -283,7 +317,6 @@ public class NodePanel extends JPanel {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				Editor editor = gbNode.getContext().getGUI().getEditor();
 				if (editor.getGUI().getCurrentTool() == Tool.SELECT &&
 					containsPoint(clickPoint) && SwingUtilities.isLeftMouseButton(e)) {
 					// If the panel is dragged using left click and the select tool
@@ -319,7 +352,7 @@ public class NodePanel extends JPanel {
 					// Iterate through all selected nodes, and move them the same amount, bypassing
 					// grid snap to maintain the structure
 					GBNode thisPanelNode = thisPanel.gbNode;
-					for (GBNode selectedNode : editor.getSelections().getValue0()) {
+					for (GBNode selectedNode : editor.getData().getSelectedNodes()) {
 						if (selectedNode != thisPanelNode) {
 							// Compute the new coordinates of the selected nodes, and update them
 							NodePanel selectionNodePanel = selectedNode.getNodePanel();
@@ -340,16 +373,16 @@ public class NodePanel extends JPanel {
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				Editor editor = gbNode.getContext().getGUI().getEditor();
+				EditorData editorData = editor.getData();
 				if (containsPoint(e.getPoint())) {
 					hovering = true;
 
 					// Preview edges (if applicable) should be drawn using a preview edge object
-					editor.setDrawPreviewUsingObject(true);
+					editorData.setPreviewUsingObject(true);
 
 					// Draw preview edges
-					if (editor.getEdgeBasePoint() != null) {
-						NodePanel ebpPanel = editor.getEdgeBasePoint().getNodePanel();
+					if (editorData.getEdgeBasePoint() != null) {
+						NodePanel ebpPanel = editorData.getEdgeBasePoint().getNodePanel();
 						Tool ctool = editor.getGUI().getCurrentTool();
 
 						if ((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebpPanel != null) {
@@ -369,22 +402,22 @@ public class NodePanel extends JPanel {
 								preview.isSelfEdge();
 							if (!preview.isSelfEdge() && !violatesSimple) {
 								// Compute preview if edge is not a self edge
-								List<GBEdge> existingEdges = editor.getContext().getGbEdges()
+								List<GBEdge> existingEdges = gbNode.getContext().getGbEdges()
 									.get(new UOPair<>(ebpPanel.gbNode, gbNode));
 
 								// Get the position of this edge within the existing edges
 								int edgePosition = getEdgePosition(ebpPanel, NodePanel.this,
 																   e.getPoint(), existingEdges);
 
-								editor.setPreviewEdge(preview, edgePosition);
+								editorData.setPreviewEdge(preview, edgePosition);
 							} else if (preview.isSelfEdge() && !violatesLoops) {
 								// Draw preview self edge
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
 								preview.setAngle(angle);
-								editor.setPreviewEdge(preview, -1);
+								editorData.setPreviewEdge(preview, -1);
 							} else {
 								// No preview edge to be drawn
-								editor.clearPreviewEdge();
+								editorData.clearPreviewEdge();
 							}
 
 							editor.repaint(); // Repaint editor to update preview edge
@@ -394,22 +427,34 @@ public class NodePanel extends JPanel {
 					hovering = false;
 
 					// Check for movement within this Node's panel but not within the node itself
-					editor.setLastMousePoint(NodePanel.this.x + e.getPoint().x, NodePanel.this.y + e.getPoint().y);
+					editor.getData().setLastMousePoint(NodePanel.this.x + e.getPoint().x,
+													   NodePanel.this.y + e.getPoint().y);
 
 					// Remove any existing preview edge object
-					editor.clearPreviewEdge();
+					editorData.clearPreviewEdge();
 
 					// Preview edges should not be drawn using a preview edge object since the mouse is not hovering
 					// over a second endpoint
-					editor.setDrawPreviewUsingObject(false);
+					editorData.setPreviewUsingObject(false);
 
 					editor.repaint();
 				}
 
-				repaint(); // Redraw things like bounding boxes
+				repaint();
 			}
 
 		});
+	}
+
+	/**
+	 * Set the context data for this node panel. This should be done when the
+	 * corresponding GBNode is initialized.
+	 *
+	 * @param gbn The GBNode associated with this node panel.
+	 */
+	public void setGbData(GBNode gbn) {
+		gbNode = gbn;
+		editor = gbNode.getContext().getGUI().getEditor();
 	}
 
 	/**
@@ -504,16 +549,6 @@ public class NodePanel extends JPanel {
 	}
 
 	/**
-	 * Checks whether the Point object lies within the node's visual boundaries.
-	 *
-	 * @param p The point (on this panel) we want to check.
-	 * @return true if p is within this node's circle.
-	 */
-	public boolean containsPoint(Point p) {
-		return radius >= Math.sqrt((p.x - radius) * (p.x - radius) + (p.y - radius) * (p.y - radius));
-	}
-
-	/**
 	 * Get the x coordinate of this panel's upper left corner (relative to the editor).
 	 *
 	 * @return The integer x-coordinate.
@@ -578,6 +613,16 @@ public class NodePanel extends JPanel {
 		return new Point(x + radius, y + radius);
 	}
 
+	/**
+	 * Checks whether the Point object lies within the node's visual boundaries.
+	 *
+	 * @param p The point (on this panel) we want to check.
+	 * @return true if p is within this node's circle.
+	 */
+	private boolean containsPoint(Point p) {
+		return radius >= Math.sqrt((p.x - radius) * (p.x - radius) + (p.y - radius) * (p.y - radius));
+	}
+
 	@Override
 	public Dimension getPreferredSize() {
 		return new Dimension(2 * (radius + PADDING + SELECTED_BORDER_THICKNESS),
@@ -599,7 +644,9 @@ public class NodePanel extends JPanel {
 		Color trueFillColor = fillColor;
 		Color trueBorderColor = borderColor;
 
-		if (gbNode.isHighlighted()) {
+		if (gbNode == editor.getData().getPathBasePoint()) {
+			trueFillColor = Preferences.ACTION_COLOR1;
+		} if (gbNode.isHighlighted()) {
 			trueFillColor = Preferences.HIGHLIGHT_COLOR;
 			trueBorderColor = Preferences.HIGHLIGHT_COLOR;
 		} else if (gbNode.isSelected()) {
@@ -609,11 +656,14 @@ public class NodePanel extends JPanel {
 
 		if (hovering) {
 			// Set colors for "hover" visual effects
-			Editor editor = gbNode.getContext().getGUI().getEditor();
-			Tool current = gbNode.getContext().getGUI().getCurrentTool();
-			if (current == Tool.EDGE || current == Tool.DIRECTED_EDGE) {
-				trueBorderColor = editor.getEdgeBasePoint() == null ? Preferences.EDGE_BASE_POINT_COLOR :
+			EditorData editorData = editor.getData();
+			Tool tool = gbNode.getContext().getGUI().getCurrentTool();
+			if (tool == Tool.EDGE || tool == Tool.DIRECTED_EDGE) {
+				trueBorderColor = editorData.getEdgeBasePoint() == null ? Preferences.EDGE_BASE_POINT_COLOR :
 					Preferences.EDGE_SECOND_POINT_COLOR;
+			} else if (tool == Tool.SHORTEST_PATH) {
+				trueBorderColor = editorData.getPathBasePoint() == null ? Preferences.ACTION_COLOR1 :
+					Preferences.ACTION_COLOR2;
 			}
 		}
 

@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 /**
  * The action of creating a new graph.
  *
- * @author Brian
+ * @author Brian Yao
  */
 public class New extends SimpleAction {
 

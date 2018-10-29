@@ -7,8 +7,6 @@ import ui.Editor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * The right click menu which appears when the user right clicks on the editor.

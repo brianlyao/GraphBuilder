@@ -7,6 +7,7 @@ import org.javatuples.Pair;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 
 /**
@@ -121,28 +122,6 @@ public class Path {
 
 		nodes.addFirst(prevNode);
 		edges.addFirst(fromPrevNode);
-	}
-
-	/**
-	 * @return the first node in this path.
-	 */
-	public Node getFirstNode() {
-		return nodes.getFirst();
-	}
-
-	/**
-	 * @return the last node in this path.
-	 */
-	public Node getLastNode() {
-		return nodes.getLast();
-	}
-
-	/**
-	 * Remove the last node (and edge) from this path.
-	 */
-	public void removeLast() {
-		nodes.removeLast();
-		edges.removeLast();
 	}
 
 	@Override

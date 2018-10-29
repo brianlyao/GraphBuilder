@@ -4,6 +4,7 @@ import actions.SimpleAction;
 import context.GBContext;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
+import structures.EditorData;
 import structures.UOPair;
 import ui.Editor;
 import util.ClipboardUtils;
@@ -36,13 +37,13 @@ public class Copy extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Editor editor = this.getContext().getGUI().getEditor();
-		Set<GBNode> nodes = editor.getSelections().getValue0();
+		EditorData editorData = this.getContext().getGUI().getEditor().getData();
+		Set<GBNode> nodes = editorData.getSelectedNodes();
 		Map<UOPair<GBNode>, List<GBEdge>> edges;
 		if (full) {
 			edges = ClipboardUtils.getSubEdgeMap(this.getContext(), nodes);
 		} else {
-			edges = editor.getSelections().getValue1();
+			edges = editorData.getSelectedEdges();
 		}
 		this.getContext().getClipboard().setContents(nodes, edges);
 		this.getContext().getGUI().getMainMenuBar().updateWithCopy();

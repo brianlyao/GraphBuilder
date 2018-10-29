@@ -27,7 +27,7 @@ public class PushCut extends SimpleAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if (!this.getContext().getGUI().getEditor().selectionsEmpty()) {
+		if (!this.getContext().getGUI().getEditor().getData().selectionsEmpty()) {
 			Cut cutAction = new Cut(this.getContext(), full);
 			cutAction.perform();
 			this.getContext().pushReversibleAction(cutAction, true, false);

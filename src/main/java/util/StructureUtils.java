@@ -106,10 +106,9 @@ public class StructureUtils {
 	 */
 	public static Map<UOPair<GBNode>, List<GBEdge>> toGbEdges(Map<UOPair<Node>, List<Edge>> edges) {
 		Map<UOPair<GBNode>, List<GBEdge>> gbEdgeMap = new HashMap<>();
-		edges.entrySet().forEach(edgeEntry -> {
-			UOPair<Node> oldPair = edgeEntry.getKey();
+		edges.forEach((oldPair, e) -> {
 			UOPair<GBNode> gbPair = new UOPair<>(oldPair.getFirst().getGbNode(), oldPair.getSecond().getGbNode());
-			List<GBEdge> gbEdges = edgeEntry.getValue().stream().map(Edge::getGbEdge).collect(Collectors.toList());
+			List<GBEdge> gbEdges = e.stream().map(Edge::getGbEdge).collect(Collectors.toList());
 
 			// Fill map
 			gbEdgeMap.put(gbPair, gbEdges);
@@ -136,16 +135,25 @@ public class StructureUtils {
 	 */
 	public static Map<UOPair<Node>, List<Edge>> toEdges(Map<UOPair<GBNode>, List<GBEdge>> gbEdges) {
 		Map<UOPair<Node>, List<Edge>> edgeMap = new HashMap<>();
-		gbEdges.entrySet().forEach(edgeEntry -> {
-			UOPair<GBNode> oldPair = edgeEntry.getKey();
+		gbEdges.forEach((oldPair, gbe) -> {
 			UOPair<Node> nodePair = new UOPair<>(oldPair.getFirst().getNode(), oldPair.getSecond().getNode());
-			List<Edge> edges = edgeEntry.getValue().stream().map(GBEdge::getEdge).collect(Collectors.toList());
+			List<Edge> edges = gbe.stream().map(GBEdge::getEdge).collect(Collectors.toList());
 
 			// Fill map
 			edgeMap.put(nodePair, edges);
 		});
 
 		return edgeMap;
+	}
+
+	/**
+	 * Converts a collection of Edges to GBEdges.
+	 *
+	 * @param edges The collection of edges to convert.
+	 * @return The collection of GBEdges.
+	 */
+	public static Collection<GBEdge> toGbEdges(Collection<Edge> edges) {
+		return edges.stream().map(Edge::getGbEdge).collect(Collectors.toSet());
 	}
 
 }

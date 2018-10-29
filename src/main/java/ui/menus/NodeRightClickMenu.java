@@ -6,6 +6,7 @@ import actions.edit.PushDelete;
 import actions.edit.PushDuplicate;
 import context.GBContext;
 import graph.components.display.NodePanel;
+import structures.EditorData;
 
 import javax.swing.*;
 
@@ -26,7 +27,10 @@ public class NodeRightClickMenu {
 	public static void show(final NodePanel n, final int x, final int y) {
 		final GBContext ctxt = n.getGbNode().getContext();
 		JPopupMenu menu = new JPopupMenu();
-		boolean selectionsNotEmpty = !ctxt.getGUI().getEditor().selectionsEmpty();
+
+		EditorData editorData = ctxt.getGUI().getEditor().getData();
+
+		boolean selectionsNotEmpty = !editorData.selectionsEmpty();
 		JMenuItem properties = new JMenuItem("View/Edit Properties");
 
 		JMenuItem copy = new JMenuItem("Copy");
@@ -34,7 +38,7 @@ public class NodeRightClickMenu {
 		copy.addActionListener(new Copy(ctxt, false));
 
 		JMenuItem copyFull = new JMenuItem("Copy full subgraph");
-		boolean nodeIsSelected = !ctxt.getGUI().getEditor().getSelections().getValue0().isEmpty();
+		boolean nodeIsSelected = !editorData.getSelectedNodes().isEmpty();
 		copyFull.setEnabled(nodeIsSelected);
 		copyFull.addActionListener(new Copy(ctxt, true));
 
