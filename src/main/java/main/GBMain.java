@@ -19,6 +19,11 @@ import java.io.IOException;
  */
 public class GBMain {
 
+	/**
+	 * Main method; args unused. Takes input from a dialog instead.
+	 *
+	 * @param args Main method arguments.
+	 */
 	public static void main(String[] args) {
 		try {
 			Logger.setLogFile(Preferences.LOG_FILE_PATH);

@@ -10,6 +10,7 @@ import util.FileUtils;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 
 /**
  * A GBEdge is a "GraphBuilder Edge". It represents a edge in a graph which is
@@ -58,13 +59,11 @@ public class GBEdge extends GBComponent {
 	 */
 	private GBEdge(GBContext context) {
 		super(context);
-		this.color = new Color(DEFAULT_COLOR.getRGB());
+		this.color = DEFAULT_COLOR;
 		this.weight = DEFAULT_WEIGHT;
 
 		bezierPoints = new Point2D.Double[3];
-		for (int i = 0; i < bezierPoints.length; i++) {
-			bezierPoints[i] = new Point2D.Double();
-		}
+		Arrays.fill(bezierPoints, new Point2D.Double());
 
 		arcCenter = new Point2D.Double();
 	}
@@ -101,6 +100,9 @@ public class GBEdge extends GBComponent {
 
 		GBNode end1 = edge.getFirstEnd().getGbNode();
 		GBNode end2 = edge.getSecondEnd().getGbNode();
+		if (end1.getContext() != end2.getContext()) {
+			throw new IllegalArgumentException("Edge endpoints must belong to the same context.");
+		}
 		this.endpoints = new OrderedPair<>(end1, end2);
 	}
 

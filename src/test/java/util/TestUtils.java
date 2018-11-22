@@ -1,7 +1,13 @@
 package util;
 
+import context.GBContext;
 import graph.components.Edge;
 import graph.components.Node;
+import graph.components.display.NodePanel;
+import graph.components.gb.GBEdge;
+import graph.components.gb.GBNode;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 
@@ -47,12 +53,49 @@ public class TestUtils {
 	public static Edge[] newEdges(int[][] indexPairs, boolean[] directed, Node[] nodes, int startId) {
 		Edge[] edges = new Edge[indexPairs.length];
 		for (int i = 0 ; i < edges.length ; i++) {
-			Node firstEnd = nodes[indexPairs[i][0]];
-			Node secondEnd = nodes[indexPairs[i][1]];
-			edges[i] = new Edge(firstEnd, secondEnd, directed[i]);
+			edges[i] = new Edge(nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i]);
 			edges[i].setId(startId + i);
 		}
 		return edges;
+	}
+
+	/**
+	 * Generate an array of GBNodes with the specified length. They are all
+	 * associated with the same mocked context. They each have their
+	 * own mocked NodePanel.
+	 *
+	 * @param numNodes The number of GBNodes to generate.
+	 * @param startId  The starting ID; consecutive IDs will be assigned to
+	 *                 subsequently generated GBNodes.
+	 * @return the array of GBNodes.
+	 */
+	public static GBNode[] newGbNodes(int numNodes, int startId) {
+		GBContext context = Mockito.mock(GBContext.class);
+		return Arrays.stream(newNodes(numNodes, startId)).map(
+			node -> new GBNode(node, context, Mockito.mock(NodePanel.class))
+		).toArray(GBNode[]::new);
+	}
+
+	/**
+	 * Generate a list of GBEdges. The parameters are nearly identical to
+	 * those of newEdges. They are all associated with the same mocked context.
+	 *
+	 * @param indexPairs An array of index pairs specifying GBNode endpoints.
+	 * @param directed   An array of booleans specifying whether a GBEdge should
+	 *                   be directed.
+	 * @param gbNodes    The list of GBNodes from which endpoints are taken.
+	 * @param startId    The starting ID; consecutive IDs will be assigned to
+	 *                   subsequently generated GBEdges.
+	 * @return the array of GBEdges.
+	 * @see TestUtils#newEdges(int[][], boolean[], Node[], int)
+	 */
+	public static GBEdge[] newGbEdges(int[][] indexPairs, boolean[] directed, GBNode[] gbNodes, int startId) {
+		GBEdge[] gbEdges = new GBEdge[indexPairs.length];
+		for (int i = 0 ; i < gbEdges.length ; i++) {
+			gbEdges[i] = new GBEdge(gbNodes[indexPairs[i][0]], gbNodes[indexPairs[i][1]], directed[i]);
+			gbEdges[i].setId(startId + i);
+		}
+		return gbEdges;
 	}
 
 	/**

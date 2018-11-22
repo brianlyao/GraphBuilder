@@ -99,7 +99,7 @@ public class NodePanel extends JPanel {
 	public NodePanel(int x, int y, int r) {
 		this.x = x;
 		this.y = y;
-		this.radius = r - BORDER_THICKNESS / 2;
+		this.radius = r;
 
 		this.text = GBNode.DEFAULT_TEXT;
 		this.fillColor = GBNode.DEFAULT_FILL_COLOR;
@@ -639,7 +639,8 @@ public class NodePanel extends JPanel {
 		g2d.setColor(fillColor);
 
 		// The circle which depicts this node
-		Ellipse2D.Double circle = new Ellipse2D.Double(PADDING, PADDING, 2 * radius, 2 * radius);
+		Ellipse2D.Double circle = new Ellipse2D.Double(PADDING, PADDING,
+													   2 * radius - BORDER_THICKNESS, 2 * radius - BORDER_THICKNESS);
 
 		Color trueFillColor = fillColor;
 		Color trueBorderColor = borderColor;

@@ -36,14 +36,16 @@ public class CoordinateUtils {
 
 		// Return the closest point
 		Point newPoint;
-		if (minDist == dist1)
+		if (minDist == dist1) {
 			newPoint = new Point(lowX, lowY);
-		else if (minDist == dist2)
+		} else if (minDist == dist2) {
 			newPoint = new Point(lowX, highY);
-		else if (minDist == dist3)
+		} else if (minDist == dist3) {
 			newPoint = new Point(highX, lowY);
-		else
+		} else {
 			newPoint = new Point(highX, highY);
+		}
+
 		return newPoint;
 	}
 

@@ -3,12 +3,12 @@ package graph.path;
 import graph.components.Edge;
 import graph.components.Node;
 import lombok.Getter;
-import org.javatuples.Pair;
+import structures.UOPair;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.stream.IntStream;
 
 /**
  * An instance represents a path within a graph. A non-empty path contains at
@@ -50,8 +50,43 @@ public class Path {
 	 * @param path The path to copy.
 	 */
 	public Path(Path path) {
-		nodes = path.nodes;
-		edges = path.edges;
+		nodes = new LinkedList<>(path.nodes);
+		edges = new LinkedList<>(path.edges);
+	}
+
+	/**
+	 * Construct a path with the given nodes and edges. The provided edges
+	 * must connect the nodes in the order as provided in the list. There
+	 * should be exactly one more node than edge provided, and any directed
+	 * edge's sink node must have a higher index in the node list than its
+	 * source node.
+	 *
+	 * @param nodeList The nodes in this path.
+	 * @param edgeList The edges in this path.
+	 */
+	public Path(List<Node> nodeList, List<Edge> edgeList) {
+		if (edgeList.size() + 1 != nodeList.size()) {
+			throw new IllegalArgumentException(String.format("The number of nodes must be exactly one more than the " +
+																 "number of edges. Provided: %d nodes, %d edges.",
+															 nodeList.size(), edgeList.size()));
+		}
+
+		// Validate the input
+		IntStream.range(0, edgeList.size()).forEach(i -> {
+			Node node1 = nodeList.get(i);
+			Node node2 = nodeList.get(i + 1);
+			Edge edge = edgeList.get(i);
+			if (!edge.getUoEndpoints().equals(new UOPair<>(node1, node2))) {
+				throw new IllegalArgumentException(String.format("The edge joining %s and %s does not have the " +
+																	 "nodes as endpoints: %s", node1, node2, edge));
+			} else if (edge.isDirected() && edge.getFirstEnd() != node1) {
+				throw new IllegalArgumentException(String.format("The directed edge joining %s and %s is backwards.",
+																 node1, node2));
+			}
+		});
+
+		nodes = new LinkedList<>(nodeList);
+		edges = new LinkedList<>(edgeList);
 	}
 
 	/**
@@ -66,10 +101,19 @@ public class Path {
 	}
 
 	/**
+	 * Returns the length (the number of edges) of this path.
+	 *
+	 * @return The number of edges in this path.
+	 */
+	public int edgeLength() {
+		return edges.size();
+	}
+
+	/**
 	 * @return true iff this path represents a cycle.
 	 */
 	public boolean isCycle() {
-		return nodes.getFirst() == nodes.getLast();
+		return !edges.isEmpty() && nodes.getFirst() == nodes.getLast();
 	}
 
 	/**
@@ -78,10 +122,13 @@ public class Path {
 	 * null and the next node is not, that item contains the last node in the
 	 * path.
 	 *
+	 * @param incomingEdges Whether we want to iterate over nodes and their
+	 *                      incoming edges (as opposed to outgoing edges).
 	 * @return A path iterator for this path.
+	 * @see PathIterator
 	 */
-	public Iterator<Pair<Node, Edge>> iterator() {
-		return new PathIterator(this);
+	public PathIterator iterator(boolean incomingEdges) {
+		return new PathIterator(this, incomingEdges);
 	}
 
 	/**
@@ -96,8 +143,12 @@ public class Path {
 	public void appendNode(Node nextNode, Edge toNextNode) {
 		if (!toNextNode.hasEndpoint(nextNode)) {
 			throw new IllegalArgumentException("The provided edge must contain the provided node as an endpoint.");
+		} else if (!toNextNode.hasEndpoint(nodes.getLast())) {
+			throw new IllegalArgumentException("The provided edge must contain the path's current last node " +
+												   "as an endpoint.");
 		} else if (toNextNode.isDirected() && toNextNode.getSecondEnd() != nextNode) {
-			throw new IllegalArgumentException("The provided directed edge must end in the provided node.");
+			throw new IllegalArgumentException("The provided directed edge must be directed toward " +
+												   "the provided node.");
 		}
 
 		nodes.addLast(nextNode);
@@ -116,8 +167,12 @@ public class Path {
 	public void prependNode(Node prevNode, Edge fromPrevNode) {
 		if (!fromPrevNode.hasEndpoint(prevNode)) {
 			throw new IllegalArgumentException("The provided edge must contain the provided node as an endpoint.");
+		} else if (!fromPrevNode.hasEndpoint(nodes.getFirst())) {
+			throw new IllegalArgumentException("The provided edge must contain the path's current first node " +
+												   "as an endpoint.");
 		} else if (fromPrevNode.isDirected() && fromPrevNode.getFirstEnd() != prevNode) {
-			throw new IllegalArgumentException("The provided directed edge must start in the provided node.");
+			throw new IllegalArgumentException("The provided directed edge must be directed away from " +
+												   "the provided node.");
 		}
 
 		nodes.addFirst(prevNode);

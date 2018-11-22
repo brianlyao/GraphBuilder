@@ -24,6 +24,8 @@ public class EdgeTest {
 		assertFalse(edge.isDirected());
 		assertEquals(new OrderedPair<>(node1, node2), edge.getEndpoints());
 
+		assertNull(edge.getGbEdge());
+
 		Edge edgeWithId = new Edge(123, node2, node1, true);
 
 		assertEquals(123, edgeWithId.getId());

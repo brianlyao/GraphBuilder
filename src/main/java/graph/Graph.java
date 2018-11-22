@@ -167,9 +167,7 @@ public class Graph {
 	 * @param nodes The nodes to add.
 	 */
 	public void addNodes(Node... nodes) {
-		for (Node node : nodes) {
-			this.addNode(node);
-		}
+		Arrays.stream(nodes).forEach(this::addNode);
 	}
 
 	/**
@@ -192,6 +190,7 @@ public class Graph {
 			if (edges.get(key) != null) {
 				List<Edge> removedEdgeList = edges.remove(key);
 				removedEdgeList.forEach(Edge::removeSelfFromNodeData);
+
 				removedEdgeMap.put(key, removedEdgeList);
 			}
 		}
@@ -335,15 +334,12 @@ public class Graph {
 		Set<Node> subsetNodes = new HashSet<>(nodes);
 		Map<UOPair<Node>, List<Edge>> subsetEdges = new HashMap<>();
 
-		for (Map.Entry<UOPair<Node>, List<Edge>> edgeEntry : edges.entrySet()) {
-			Node first = edgeEntry.getKey().getFirst();
-			Node second = edgeEntry.getKey().getSecond();
-
-			// Add edges included in subgraph
-			if (nodes.contains(first) && nodes.contains(second)) {
-				subsetEdges.put(edgeEntry.getKey(), edgeEntry.getValue());
+		// Add edges included in subgraph
+		edges.forEach((pair, edgeList) -> {
+			if (nodes.contains(pair.getFirst()) && nodes.contains(pair.getSecond())) {
+				subsetEdges.put(pair, edgeList);
 			}
-		}
+		});
 
 		return new Graph(constraints, subsetNodes, subsetEdges);
 	}

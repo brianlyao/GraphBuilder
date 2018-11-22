@@ -25,6 +25,8 @@ public class NodeTest {
 		assertNotNull(node1.getIncomingDirectedEdges());
 		assertNotNull(node1.getOutgoingDirectedEdges());
 
+		assertNull(node1.getGbNode());
+
 		Node node2 = new Node(123);
 		assertEquals(123, node2.getId());
 	}

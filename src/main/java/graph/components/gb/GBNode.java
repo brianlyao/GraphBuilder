@@ -64,7 +64,7 @@ public class GBNode extends GBComponent {
 	@Override
 	public String toStorageString() {
 		Point coords = nodePanel.getCoords();
-		return String.format("%s%d,%d,%d,%d,%s,%d,%d,%d", FileUtils.NODE_PREFIX, getId(), coords.x,
+		return String.format("%s%d,%d,%d,%d,%s,%d,%d,%d", FileUtils.NODE_PREFIX, node.getId(), coords.x,
 							 coords.y, nodePanel.getRadius(), nodePanel.getText(),
 							 nodePanel.getFillColor().getRGB(), nodePanel.getBorderColor().getRGB(),
 							 nodePanel.getTextColor().getRGB());

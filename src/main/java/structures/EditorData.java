@@ -27,25 +27,31 @@ public class EditorData {
 	@Getter @Setter
 	private Point lastMousePoint;
 
+	// The first node that's selected when drawing an edge
 	@Getter @Setter
-	private GBNode edgeBasePoint; // The first node that's selected when drawing an edge
+	private GBNode edgeBasePoint;
 
+	// The first node that's selected when computing a path
 	@Getter @Setter
-	private GBNode pathBasePoint; // The first node that's selected when computing a path
+	private GBNode pathBasePoint;
 
+	// Selected components
 	@Getter
 	private Set<GBNode> selectedNodes;
 	@Getter
 	private Map<UOPair<GBNode>, List<GBEdge>> selectedEdges;
 
+	// Highlighted components
 	@Getter
 	private Set<GBNode> highlightedNodes;
 	@Getter
 	private Map<UOPair<GBNode>, List<GBEdge>> highlightedEdges;
 
+	// Map from panel to position on editor
 	@Getter
-	private Map<NodePanel, Point> nodePanelPositionMap; // Map from panel to upper left corner position on editor
+	private Map<NodePanel, Point> nodePanelPositionMap;
 
+	// Data for drawing preview edges
 	@Getter @Setter
 	private GBEdge previewEdge;
 	@Getter @Setter
@@ -321,10 +327,10 @@ public class EditorData {
 	private static void removeComponentFrom(GBComponent gc, Set<GBNode> nodes,
 											Map<UOPair<GBNode>, List<GBEdge>> edges) {
 		if (gc instanceof GBNode) {
-			// Deselect node
+			// Remove node
 			nodes.remove(gc);
 		} else {
-			// Deselect edge
+			// Remove edge
 			GBEdge selectedEdge = (GBEdge) gc;
 			UOPair<GBNode> key = selectedEdge.getUoEndpoints();
 			List<GBEdge> selectedList = edges.get(key);
