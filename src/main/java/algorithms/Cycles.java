@@ -7,24 +7,25 @@ import graph.components.Node;
 import graph.path.Cycle;
 import graph.path.Path;
 import structures.UOPair;
+import util.GraphUtils;
 import util.StructureUtils;
 
 import java.util.*;
 
 /**
- * A class containing implementations of algorithms pertaining to cycles.
+ * Implementation of acyclicity algorithms.
  *
  * @author Brian Yao
  */
-public class CycleAlgorithms {
+public class Cycles {
 
 	/**
 	 * Check whether a particular graph is acyclic (contains no cycle). This is
 	 * applicable to undirected, directed, and mixed graphs. The definition of
 	 * acyclic for a mixed graph is: if there is no way to change undirected
 	 * edges into directed edges such that there is a directed cycle formed as
-	 * a result (and there are no undirected or directed cycles), then the graph
-	 * is acyclic.
+	 * a result (and there are no undirected or directed cycles), then the
+	 * graph is acyclic.
 	 *
 	 * @param graph The graph to search in for cycles.
 	 * @return true iff the graph contains no cycles.
@@ -41,7 +42,7 @@ public class CycleAlgorithms {
 	 * @return a cycle contained in the given graph, or null if none exist.
 	 */
 	public static Cycle findCycle(Graph graph) {
-		Cycle potential2Cycle = CycleAlgorithms.findSmallCycle(graph);
+		Cycle potential2Cycle = Cycles.findSmallCycle(graph);
 		if (potential2Cycle != null) {
 			return potential2Cycle;
 		}
@@ -64,72 +65,62 @@ public class CycleAlgorithms {
 	 */
 	private static Cycle findSmallCycle(Graph graph) {
 		if (graph.hasConstraint(GraphConstraint.MULTIGRAPH)) {
+			for (Node node : graph.getNodes()) {
+				if (!node.getSelfEdges().isEmpty()) {
+					Path cycle = new Path(node);
+					cycle.appendNode(node, StructureUtils.arbitraryElement(node.getSelfEdges()));
+					return new Cycle(cycle);
+				}
+			}
+
+			UOPair<Node> ends = null;
 			for (Map.Entry<UOPair<Node>, List<Edge>> edgeEntry : graph.getEdges().entrySet()) {
+				Node firstEnd = edgeEntry.getKey().getFirst();
 				int undirected = 0;
 				int outgoingDirected = 0;
 				int incomingDirected = 0;
 
 				for (Edge edge : edgeEntry.getValue()) {
-					Node firstEnd = edgeEntry.getKey().getFirst();
-
-					if (edge.isSelfEdge()) {
-						// Self-edge creates a cycle
-						Path cycle = new Path(firstEnd);
-						cycle.appendNode(firstEnd, edge);
-						return new Cycle(cycle);
-					} else if (!edge.isDirected()) {
-						if (++undirected > 1) {
-							// Undirected 2-cycle
-							Node secondEnd = edge.getOtherEndpoint(firstEnd);
-							Path cycle = new Path(firstEnd);
-							Set<Edge> undirectedEdges = firstEnd.getUndirectedEdges().get(secondEnd);
-							Iterator<Edge> undirectedIterator = undirectedEdges.iterator();
-							cycle.appendNode(secondEnd, undirectedIterator.next());
-							cycle.appendNode(firstEnd, undirectedIterator.next());
-							return new Cycle(cycle);
-						} else if (outgoingDirected > 0 || incomingDirected > 0) {
-							// Mixed 2-cycle
-							Node secondEnd = edge.getOtherEndpoint(firstEnd);
-							Path cycle = new Path(firstEnd);
-							Set<Edge> toSecond = outgoingDirected > 0 ?
-								firstEnd.getOutgoingDirectedEdges().get(secondEnd) :
-								firstEnd.getUndirectedEdges().get(secondEnd);
-							Set<Edge> fromSecond = outgoingDirected > 0 ?
-								firstEnd.getUndirectedEdges().get(secondEnd) :
-								firstEnd.getIncomingDirectedEdges().get(secondEnd);
-							cycle.appendNode(secondEnd, StructureUtils.arbitraryElement(toSecond));
-							cycle.appendNode(firstEnd, StructureUtils.arbitraryElement(fromSecond));
-							return new Cycle(cycle);
-						}
-					} else {
-						// See if directed 2-cycle found
-						boolean cycleFound = false;
+					if (!edge.isDirected() &&
+						(++undirected > 1 || outgoingDirected > 0 || incomingDirected > 0)) {
+						// Undirected or mixed 2-cycle
+						ends = edgeEntry.getKey();
+						break;
+					} else if (edge.isDirected()) {
 						if (edge.getFirstEnd() == firstEnd) {
 							outgoingDirected++;
-							if (incomingDirected > 0) {
-								cycleFound = true;
-							}
 						} else {
 							incomingDirected++;
-							if (outgoingDirected > 0) {
-								cycleFound = true;
-							}
 						}
 
-						if (cycleFound) {
+						if (incomingDirected > 0 && outgoingDirected > 0) {
 							// Directed 2-cycle
-							Node secondEnd = edge.getOtherEndpoint(firstEnd);
-							Path cycle = new Path(firstEnd);
-							Set<Edge> toSecond = firstEnd.getOutgoingDirectedEdges().get(secondEnd);
-							Set<Edge> fromSecond = firstEnd.getIncomingDirectedEdges().get(secondEnd);
-							Edge fromFirst = StructureUtils.arbitraryElement(toSecond);
-							Edge toFirst = StructureUtils.arbitraryElement(fromSecond);
-							cycle.appendNode(secondEnd, fromFirst);
-							cycle.appendNode(firstEnd, toFirst);
-							return new Cycle(cycle);
+							ends = edgeEntry.getKey();
+							break;
 						}
 					}
 				}
+
+				if (ends != null) {
+					break;
+				}
+			}
+
+			if (ends != null) {
+				// Construct 2-cycle
+				Node first = ends.getFirst();
+				Node second = ends.getSecond();
+
+				Path cycle = new Path(first);
+				Edge toSecond = GraphUtils.arbitraryEdge(first, second, true);
+
+				// Avoid using the same undirected edge in both directions
+				Set<Edge> toFirst = second.getEdgesToNeighbor(first, true);
+				toFirst.remove(toSecond);
+				cycle.appendNode(second, toSecond);
+				cycle.appendNode(first, StructureUtils.arbitraryElement(toFirst));
+
+				return new Cycle(cycle);
 			}
 		}
 

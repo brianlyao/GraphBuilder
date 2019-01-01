@@ -2,7 +2,7 @@ package graph.components.display;
 
 import actions.MoveNodesAction;
 import actions.PlaceEdgeAction;
-import algorithms.PathAlgorithms;
+import algorithms.Dijkstra;
 import graph.Graph;
 import graph.GraphConstraint;
 import graph.components.Node;
@@ -23,7 +23,6 @@ import util.StructureUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -243,7 +242,7 @@ public class NodePanel extends JPanel {
 							// This node is the destination; highlight the path
 							Node start = editorData.getPathBasePoint().getNode();
 							Node end = gbNode.getNode();
-							Path shortestPath = PathAlgorithms.dijkstra(gbNode.getContext().getGraph(), start, end);
+							Path shortestPath = Dijkstra.execute(gbNode.getContext().getGraph(), start, end);
 
 							if (shortestPath != null) {
 								editorData.addHighlights(StructureUtils.toGbNodes(shortestPath.getNodes()));

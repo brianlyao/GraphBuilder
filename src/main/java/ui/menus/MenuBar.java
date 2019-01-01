@@ -6,8 +6,9 @@ import actions.file.New;
 import actions.file.Open;
 import actions.file.Save;
 import actions.file.SaveAs;
-import algorithms.CycleAlgorithms;
-import algorithms.Traversals;
+import algorithms.BFS;
+import algorithms.Cycles;
+import algorithms.DFS;
 import graph.components.Node;
 import graph.path.Cycle;
 import keybindings.KeyActions;
@@ -193,28 +194,28 @@ public class MenuBar extends JMenuBar {
 		EditorData editorData = gui.getEditor().getData();
 		bfs.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = Traversals.breadthFirstSearchAll(selectedNodes, true);
+			Set<Node> traversed = BFS.exploreAll(selectedNodes, true);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
 
 		dfs.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, true);
+			Set<Node> traversed = DFS.exploreAll(selectedNodes, true);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
 
 		bfsUndirected.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = Traversals.breadthFirstSearchAll(selectedNodes, false);
+			Set<Node> traversed = BFS.exploreAll(selectedNodes, false);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
 
 		dfsUndirected.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = Traversals.depthFirstSearchAll(selectedNodes, false);
+			Set<Node> traversed = DFS.exploreAll(selectedNodes, false);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
@@ -235,7 +236,7 @@ public class MenuBar extends JMenuBar {
 
 		dijkstra.addActionListener(new SwitchToolAction(gui.getContext(), Tool.SHORTEST_PATH));
 		findCycle.addActionListener($ -> {
-			Cycle cycle = CycleAlgorithms.findCycle(gui.getContext().getGraph());
+			Cycle cycle = Cycles.findCycle(gui.getContext().getGraph());
 			if (cycle != null) {
 				gui.getEditor().getData().addHighlights(StructureUtils.toGbNodes(cycle.getNodes()));
 				gui.getEditor().getData().addHighlights(StructureUtils.toGbEdges(cycle.getEdges()));

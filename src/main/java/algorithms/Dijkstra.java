@@ -3,7 +3,6 @@ package algorithms;
 import graph.Graph;
 import graph.components.Edge;
 import graph.components.Node;
-import graph.components.WeightedEdge;
 import graph.path.Path;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,11 +12,11 @@ import util.GraphUtils;
 import java.util.*;
 
 /**
- * Contains algorithms relating to finding paths with certain properties.
+ * An implementation of Dijkstra's algorithm.
  *
  * @author Brian Yao
  */
-public class PathAlgorithms {
+public final class Dijkstra {
 
 	/**
 	 * An instance is a item containing the necessary information for
@@ -47,6 +46,12 @@ public class PathAlgorithms {
 			this.fromPreviousNode = null;
 		}
 
+		/**
+		 * Set previous node and edge.
+		 *
+		 * @param newNode   New previous node.
+		 * @param toNewNode New previous edge.
+		 */
 		public void setPrevious(Node newNode, Edge toNewNode) {
 			previousNode = newNode;
 			fromPreviousNode = toNewNode;
@@ -56,8 +61,9 @@ public class PathAlgorithms {
 
 	/**
 	 * An implementation of Dijkstra's algorithm, which computes the shortest
-	 * path from the starting node to the destination node. This is only useful
-	 * on graphs with edges that all have positive numeric weights.
+	 * path from the starting node to the destination node. This is only
+	 * guaranteed to yield the correct shortest path on graphs with edges that
+	 * have only non-negative numeric weights.
 	 *
 	 * @param graph       The graph to search for the path in.
 	 * @param start       The start of our path.
@@ -65,11 +71,16 @@ public class PathAlgorithms {
 	 * @return The shortest path from start to destination in graph, or null if
 	 *         no connecting path exists.
 	 */
-	public static Path dijkstra(Graph graph, Node start, Node destination) {
-		if (!graph.containsNode(start) || !graph.containsNode(destination)) {
-			// If start and destination nodes are not in the same graph
-			throw new IllegalArgumentException("Start and destination nodes must belong to the provided graph.");
-		} else if (start == destination) {
+	public static Path execute(Graph graph, Node start, Node destination) {
+		Set<Node> reachableFromStart = DFS.explore(start, true);
+		validateDijkstraInput(graph, start, destination);
+
+		if (!reachableFromStart.contains(destination)) {
+			// If there is no connecting path from start to destination
+			return null;
+		}
+
+		if (start == destination) {
 			// If the start and end are the same node
 			return new Path(start);
 		}
@@ -80,17 +91,11 @@ public class PathAlgorithms {
 		Comparator<DijkstraItem> comparator = Comparator.comparingDouble(DijkstraItem::getPriority);
 		PriorityQueue<DijkstraItem> priorityQueue = new PriorityQueue<>(comparator);
 
-		Set<Node> subGraph = Traversals.breadthFirstSearch(start, true);
-		if (!subGraph.contains(destination)) {
-			// If there is no connected path from start to end
-			return null;
-		}
-
-		// Add the starting node the the priority queue
+		// Populate the priority queue
 		DijkstraItem startItem = new DijkstraItem(0., start);
 		priorityQueue.add(startItem);
 		nodeToItem.put(start, startItem);
-		for (Node node : subGraph) {
+		for (Node node : reachableFromStart) {
 			if (node != start) {
 				DijkstraItem nodeItem = new DijkstraItem(Double.POSITIVE_INFINITY, node);
 				priorityQueue.add(nodeItem);
@@ -98,7 +103,7 @@ public class PathAlgorithms {
 			}
 		}
 
-		// Visit nodes until we visit the destination node
+		// Visit neighbors until we visit the destination node
 		while (!priorityQueue.isEmpty()) {
 			DijkstraItem currentItem = priorityQueue.poll();
 			Node currentNode = currentItem.currentNode;
@@ -128,7 +133,7 @@ public class PathAlgorithms {
 			}
 		}
 
-		// Construct the minimum path
+		// Construct the shortest path
 		Path shortestPath = new Path(destination);
 		Node current = destination;
 		while (current != start) {
@@ -136,7 +141,28 @@ public class PathAlgorithms {
 			shortestPath.prependNode(currItem.previousNode, currItem.fromPreviousNode);
 			current = currItem.previousNode;
 		}
+
 		return shortestPath;
+	}
+
+	/**
+	 * Helper function for validating the input of Dijkstra's algorithm.
+	 *
+	 * @param graph       Input graph.
+	 * @param start       Input start node.
+	 * @param destination Input destination node.
+	 */
+	private static void validateDijkstraInput(Graph graph, Node start, Node destination) {
+		if (!graph.containsNode(start) || !graph.containsNode(destination)) {
+			throw new IllegalArgumentException("Start and destination nodes must belong to the provided graph.");
+		}
+
+		graph.getEdges().values().forEach(edgeList -> edgeList.forEach(edge -> {
+			if (edge.getNumericWeight() < 0.) {
+				throw new IllegalArgumentException("Cannot use Dijkstra's algorithm on a graph with negative " +
+													   "weights. Use Bellman-Ford instead.");
+			}
+		}));
 	}
 
 }

@@ -157,11 +157,11 @@ public class Node extends GraphComponent {
 	}
 
 	/**
-	 * Get a map of the edges from this node to this neighbors. We may disregard
-	 * incoming directed edges if we want. The returned map will not contain any
-	 * self edges.
+	 * Get a map of the edges from this node to this neighbors. We may
+	 * disregard incoming directed edges if we want. The returned map will
+	 * not contain any self edges.
 	 *
-	 * @param followDirected true iff we want to disregard incoming directed edges.
+	 * @param followDirected true if we wish to exclude incoming edges.
 	 * @return A map of edges from this node to its neighbors.
 	 */
 	public Map<Node, Set<Edge>> getNeighboringEdges(boolean followDirected) {
@@ -188,21 +188,32 @@ public class Node extends GraphComponent {
 	 * set will exclude all edges incoming toward this node.
 	 *
 	 * @param neighbor       The node neigboring this one (second endpoint).
-	 * @param followDirected True if we wish to exclude incoming edges.
+	 * @param followDirected true if we wish to exclude incoming edges.
 	 * @return A set of neigboring edges whose second endpoint is the provided
 	 * neighbor node.
 	 */
 	public Set<Edge> getEdgesToNeighbor(Node neighbor, boolean followDirected) {
-		return getNeighboringEdges(followDirected).get(neighbor);
+		Set<Edge> toNeighbor = new HashSet<>();
+		if (undirectedEdges.containsKey(neighbor)) {
+			toNeighbor.addAll(undirectedEdges.get(neighbor));
+		}
+		if (outgoingDirectedEdges.containsKey(neighbor)) {
+			toNeighbor.addAll(outgoingDirectedEdges.get(neighbor));
+		}
+		if (!followDirected && incomingDirectedEdges.containsKey(neighbor)) {
+			toNeighbor.addAll(incomingDirectedEdges.get(neighbor));
+		}
+
+		return toNeighbor;
 	}
 
 	/**
-	 * Get the set of nodes directly connected to this node via an edge. If we want, we
-	 * may choose to disregard neighbors linked only by a directed edge pointing toward
-	 * this node.
+	 * Get the set of nodes directly connected to this node via an edge. If we
+	 * want, we may choose to disregard neighbors linked only by a directed
+	 * edge pointing toward this node.
 	 *
-	 * @param followDirected true if we want to disregard neighbors with only directed edges
-	 *                       toward this node, false otherwise.
+	 * @param followDirected true if we want to exclude neighbors with only
+	 *                       directed edges toward this node, false otherwise.
 	 * @return The set of neighbor nodes.
 	 */
 	public Set<Node> getNeighbors(boolean followDirected) {
