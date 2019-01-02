@@ -37,10 +37,11 @@ public class StructureUtils {
 	 *
 	 * @param collection The collection to retrieve an element from.
 	 * @return An arbitrary element of the collection.
+	 * @throws IllegalArgumentException if the collection is empty.
 	 */
 	public static <E> E arbitraryElement(Collection<E> collection) {
 		if (collection.isEmpty()) {
-			return null;
+			throw new IllegalArgumentException("Collection must be non-empty.");
 		}
 		return collection.iterator().next();
 	}
@@ -49,12 +50,15 @@ public class StructureUtils {
 	 * Return k arbitrary elements from a set.
 	 *
 	 * @param set The set to retrieve elements from.
+	 * @param k   The number of arbitrary elements to retrieve.
 	 * @return A set containing k arbitrary elements of the given set.
+	 * @throws IllegalArgumentException if the collection is has fewer than k
+	 *                                  elements, or if k is negative.
 	 */
 	public static <E> Set<E> arbitraryKElements(Collection<E> set, int k) {
 		if (k > set.size() || k < 0) {
 			throw new IllegalArgumentException("Number of arbitrary elements k must be non-negative and at most " +
-												   "the size of the collection");
+												   "the size of the collection.");
 		}
 
 		Set<E> elements = new HashSet<>();

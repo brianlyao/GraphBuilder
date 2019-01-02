@@ -2,9 +2,11 @@ package graph.path;
 
 import graph.components.Edge;
 import graph.components.Node;
+import lombok.AccessLevel;
 import lombok.Getter;
 import structures.UOPair;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -117,18 +119,16 @@ public class Path {
 	}
 
 	/**
-	 * Get an iterator for this path. Each iterated item is a node and the
-	 * edge from that node to the next node in the path. If the next edge is
-	 * null and the next node is not, that item contains the last node in the
-	 * path.
+	 * Get an iterator for this path. Each iterated item is a pair of a node
+	 * and an edge with that node as an endpoint.
 	 *
-	 * @param incomingEdges Whether we want to iterate over nodes and their
-	 *                      incoming edges (as opposed to outgoing edges).
+	 * @param outgoingEdges Whether we want to iterate over nodes and their
+	 *                      outgoing edges (as opposed to incoming edges).
 	 * @return A path iterator for this path.
 	 * @see PathIterator
 	 */
-	public PathIterator iterator(boolean incomingEdges) {
-		return new PathIterator(this, incomingEdges);
+	public PathIterator iterator(boolean outgoingEdges) {
+		return new PathIterator(this, outgoingEdges);
 	}
 
 	/**

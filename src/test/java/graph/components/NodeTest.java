@@ -210,11 +210,11 @@ public class NodeTest {
 		assertTrue(n1edges2.contains(e[0]));
 		assertTrue(n1edges2.contains(e[2]));
 		Set<Edge> n3edges2 = n[0].getEdgesToNeighbor(n[3], true);
-		assertNull(n3edges2);
+		assertTrue(n3edges2.isEmpty());
 
 		assertTrue(n[0].getEdgesToNeighbor(n[2], true).contains(e[3]));
 		assertTrue(n[0].getEdgesToNeighbor(n[4], true).contains(e[4]));
-		assertNull(n[0].getEdgesToNeighbor(n[5], true));
+		assertTrue(n[0].getEdgesToNeighbor(n[5], true).isEmpty());
 	}
 
 	@Test

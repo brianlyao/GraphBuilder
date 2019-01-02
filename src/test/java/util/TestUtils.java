@@ -3,6 +3,7 @@ package util;
 import context.GBContext;
 import graph.components.Edge;
 import graph.components.Node;
+import graph.components.WeightedEdge;
 import graph.components.display.NodePanel;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
@@ -54,6 +55,29 @@ public class TestUtils {
 		Edge[] edges = new Edge[indexPairs.length];
 		for (int i = 0 ; i < edges.length ; i++) {
 			edges[i] = new Edge(nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i]);
+			edges[i].setId(startId + i);
+		}
+		return edges;
+	}
+
+	/**
+	 * Same as {@link TestUtils#newEdges(int[][], boolean[], Node[], int)},
+	 * but generates weighted edges using the given array of weights.
+	 *
+	 * @param indexPairs An array of index pairs specifying node endpoints.
+	 * @param directed   An array of booleans specifying whether an edge should
+	 *                   be directed.
+	 * @param weights    An array of numerical weights.
+	 * @param nodes      The list of nodes from which endpoints are taken.
+	 * @param startId    The starting ID; consecutive IDs will be assigned to
+	 *                   subsequently generated edges.
+	 * @return the array of new weighted edges.
+	 */
+	public static Edge[] newWeightedEdges(int[][] indexPairs, boolean[] directed, double[] weights,
+										  Node[] nodes, int startId) {
+		Edge[] edges = new Edge[indexPairs.length];
+		for (int i = 0 ; i < edges.length ; i++) {
+			edges[i] = new WeightedEdge(nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i], weights[i]);
 			edges[i].setId(startId + i);
 		}
 		return edges;

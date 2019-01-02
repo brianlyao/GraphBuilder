@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class UOPairTest {
 
 	@Test
-	public void orderDoesNotMatterTest() {
+	public void testOrderDoesNotMatter() {
 		UOPair<Integer> pair1 = new UOPair<>(0, 1);
 		UOPair<Integer> pair2 = new UOPair<>(1, 0);
 
@@ -24,7 +24,7 @@ public class UOPairTest {
 	}
 
 	@Test
-	public void hashCodeTest() {
+	public void testHashCode() {
 		UOPair<Integer> pair1 = new UOPair<>(0, 1);
 		UOPair<Integer> pair2 = new UOPair<>(1, 0);
 
@@ -32,7 +32,7 @@ public class UOPairTest {
 	}
 
 	@Test
-	public void getterTest() {
+	public void testGetters() {
 		UOPair<Integer> pair = new UOPair<>(0, 1);
 
 		assertEquals(Integer.valueOf(0), pair.getFirst());
@@ -40,7 +40,7 @@ public class UOPairTest {
 	}
 
 	@Test
-	public void mapTest() {
+	public void testMap() {
 		UOPair<Integer> pair = new UOPair<>(3, 7);
 		UOPair<Integer> pair2 = pair.map(n -> n * n);
 		UOPair<String> pair3 = pair.map(String::valueOf);

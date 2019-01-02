@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestUtilsTest {
 
 	@Test
-	public void newNodesTest() {
+	public void testNewNodes() {
 		Node[] n = TestUtils.newNodes(20, 4321);
 		for (int i = 0 ; i < n.length ; i++) {
 			assertEquals(4321 + i, n[i].getId());
@@ -22,7 +22,7 @@ public class TestUtilsTest {
 	}
 
 	@Test
-	public void newEdgesTest() {
+	public void testNewEdges() {
 		Node[] n = TestUtils.newNodes(10, 0);
 		int[][] ends = {{0, 1}, {1, 2}, {5, 4}, {6, 7}, {9, 3}};
 		boolean[] dirs = {false, false, true, true, false};
@@ -37,7 +37,24 @@ public class TestUtilsTest {
 	}
 
 	@Test
-	public void filledBooleanArrayTest() {
+	public void testNewWeightedEdges() {
+		Node[] n = TestUtils.newNodes(10, 0);
+		int[][] ends = {{0, 1}, {1, 2}, {5, 4}, {6, 7}, {9, 3}};
+		boolean[] dirs = {false, false, true, true, false};
+		double[] weights = {0, 1, 2, 3, 4, 5};
+		Edge[] e = TestUtils.newWeightedEdges(ends, dirs, weights, n, 5678);
+
+		for (int i = 0 ; i < e.length ; i++) {
+			assertEquals(5678 + i, e[i].getId());
+			assertEquals(i, e[i].getNumericWeight());
+			assertEquals(n[ends[i][0]], e[i].getFirstEnd());
+			assertEquals(n[ends[i][1]], e[i].getSecondEnd());
+			assertEquals(dirs[i], e[i].isDirected());
+		}
+	}
+
+	@Test
+	public void testBooleans() {
 		boolean[] b1 = TestUtils.booleans(30, true);
 		boolean[] b2 = TestUtils.booleans(40, false);
 

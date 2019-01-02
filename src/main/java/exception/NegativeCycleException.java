@@ -56,19 +56,26 @@ public class NegativeCycleException extends RuntimeException {
 	 * @return A negative cycle which caused this exception.
 	 */
 	public Cycle getNegativeCycle() {
-		Set<Node> seen = new HashSet<>();
-		seen.add(pathStart);
+		if (pathStart == null) {
+			return null;
+		}
 
-		Path negativeCycle = new Path(pathStart);
-		Node current = next.get(pathStart).getOtherEndpoint(pathStart);
-		while (current != null) {
-			negativeCycle.appendNode(current, next.get(current));
-			if (seen.contains(current)) {
-				break;
-			}
+		// Iterate through the path until a node is seen for a second time
+		Set<Node> seen = new HashSet<>();
+		Node current = pathStart;
+		while (!seen.contains(current)) {
 			seen.add(current);
 			current = next.get(current).getOtherEndpoint(current);
 		}
+
+		// Follow the cycle again and return it
+		Node cycleStart = current;
+		Path negativeCycle = new Path(current);
+		do {
+			Node nextNode = next.get(current).getOtherEndpoint(current);
+			negativeCycle.appendNode(nextNode, next.get(current));
+			current = nextNode;
+		} while (current != cycleStart);
 
 		return new Cycle(negativeCycle);
 	}

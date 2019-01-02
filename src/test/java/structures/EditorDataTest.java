@@ -1,7 +1,5 @@
 package structures;
 
-import graph.components.Edge;
-import graph.components.Node;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
 import org.javatuples.Pair;

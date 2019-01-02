@@ -67,9 +67,7 @@ public class Cycles {
 		if (graph.hasConstraint(GraphConstraint.MULTIGRAPH)) {
 			for (Node node : graph.getNodes()) {
 				if (!node.getSelfEdges().isEmpty()) {
-					Path cycle = new Path(node);
-					cycle.appendNode(node, StructureUtils.arbitraryElement(node.getSelfEdges()));
-					return new Cycle(cycle);
+					return new Cycle(List.of(node), List.of(StructureUtils.arbitraryElement(node.getSelfEdges())));
 				}
 			}
 
@@ -111,16 +109,13 @@ public class Cycles {
 				Node first = ends.getFirst();
 				Node second = ends.getSecond();
 
-				Path cycle = new Path(first);
 				Edge toSecond = GraphUtils.arbitraryEdge(first, second, true);
 
 				// Avoid using the same undirected edge in both directions
 				Set<Edge> toFirst = second.getEdgesToNeighbor(first, true);
 				toFirst.remove(toSecond);
-				cycle.appendNode(second, toSecond);
-				cycle.appendNode(first, StructureUtils.arbitraryElement(toFirst));
 
-				return new Cycle(cycle);
+				return new Cycle(List.of(first, second), List.of(toSecond, StructureUtils.arbitraryElement(toFirst)));
 			}
 		}
 
@@ -186,8 +181,7 @@ public class Cycles {
 				Node currentNode = neighbor;
 				Node prevNode = n;
 				do {
-					Set<Edge> prevToCurrent = prevNode.getEdgesToNeighbor(currentNode, true);
-					Edge edgeToCurrent = StructureUtils.arbitraryElement(prevToCurrent);
+					Edge edgeToCurrent = GraphUtils.arbitraryEdge(prevNode, currentNode, true);
 					cycle.prependNode(prevNode, edgeToCurrent);
 					currentNode = prevNode;
 					prevNode = parents.get(currentNode);
