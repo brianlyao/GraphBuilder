@@ -12,7 +12,7 @@ import util.GraphUtils;
 import java.util.*;
 
 /**
- * An implementation of Dijkstra's algorithm.
+ * An implementation of Dijkstra's algorithm for finding shortest paths.
  *
  * @author Brian Yao
  */
@@ -72,9 +72,9 @@ public final class Dijkstra {
 	 *         no connecting path exists.
 	 */
 	public static Path execute(Graph graph, Node start, Node destination) {
-		Set<Node> reachableFromStart = DFS.explore(start, true);
 		validateDijkstraInput(graph, start, destination);
 
+		Set<Node> reachableFromStart = DFS.explore(graph, start, true);
 		if (!reachableFromStart.contains(destination)) {
 			// If there is no connecting path from start to destination
 			return null;
@@ -114,8 +114,8 @@ public final class Dijkstra {
 			}
 
 			// Calculate tentative distance for each neighbor
-			for (Node neighbor : currentNode.getNeighbors(true)) {
-				Edge minEdge = GraphUtils.minWeightEdge(currentNode, neighbor, true);
+			for (Node neighbor : graph.getAdjListOf(currentNode).getNeighbors(true)) {
+				Edge minEdge = GraphUtils.minWeightEdge(graph, currentNode, neighbor, true);
 				double minEdgeWeight = minEdge.getNumericWeight();
 
 				// Check if tentative priority is lower than existing priority
@@ -157,12 +157,12 @@ public final class Dijkstra {
 			throw new IllegalArgumentException("Start and destination nodes must belong to the provided graph.");
 		}
 
-		graph.getEdges().values().forEach(edgeList -> edgeList.forEach(edge -> {
+		graph.getEdgeSet().forEach(edge -> {
 			if (edge.getNumericWeight() < 0.) {
 				throw new IllegalArgumentException("Cannot use Dijkstra's algorithm on a graph with negative " +
 													   "weights. Use Bellman-Ford instead.");
 			}
-		}));
+		});
 	}
 
 }

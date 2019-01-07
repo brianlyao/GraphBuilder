@@ -35,8 +35,8 @@ public class FileSaver {
 			writeln(writer, String.valueOf(context.getNextId())); // Write id pool
 			writeln(writer, String.valueOf(context.getGraph().getConstraints())); // Write graph constraints
 			context.getGraph().getNodes().forEach(node -> writeln(writer, node.getGbNode().toStorageString()));
-			context.getGraph().getEdges().values().forEach(
-				edgeList -> edgeList.forEach(edge -> writeln(writer, edge.getGbEdge().toStorageString()))
+			context.getGraph().getEdgeSet().forEach(
+				edge -> writeln(writer, edge.getGbEdge().toStorageString())
 			);
 			writer.close();
 

@@ -18,7 +18,7 @@ public abstract class GBComponent extends GraphComponent {
 	 * @param context The context this belongs to.
 	 */
 	protected GBComponent(GBContext context) {
-		super(context.getNextIdAndInc());
+		super();
 		this.context = context;
 	}
 
@@ -41,6 +41,11 @@ public abstract class GBComponent extends GraphComponent {
 	public boolean isHighlighted() {
 		return context.getGUI().getEditor().getData().isHighlighted(this);
 	}
+
+	/**
+	 * @return The ID of the underlying graph component.
+	 */
+	public abstract int getId();
 
 	/**
 	 * A method for converting GBComponents into strings. This is how

@@ -2,21 +2,27 @@ package graph.components.display;
 
 import actions.MoveNodesAction;
 import actions.PlaceEdgeAction;
+import algorithms.BFS;
+import algorithms.BellmanFord;
 import algorithms.Dijkstra;
+import exception.NegativeCycleException;
 import graph.Graph;
 import graph.GraphConstraint;
+import graph.components.Edge;
 import graph.components.Node;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
+import graph.path.Cycle;
 import graph.path.Path;
 import lombok.Getter;
 import lombok.Setter;
-import preferences.Preferences;
+import config.Preferences;
 import structures.EditorData;
 import structures.OrderedPair;
 import structures.UOPair;
 import tool.Tool;
 import ui.Editor;
+import ui.GBFrame;
 import ui.menus.NodeRightClickMenu;
 import util.CoordinateUtils;
 import util.StructureUtils;
@@ -197,33 +203,33 @@ public class NodePanel extends JPanel {
 							int currentLineWeight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
 							boolean directed = tool == Tool.DIRECTED_EDGE;
 
-							// Check if the edge should be a self-edge, and initialize accordingly
-							GBEdge newEdge;
+							// Create the new edge object
+							Edge newEdge = new Edge(gbNode.getContext().getNextIdAndInc(), source.getNode(),
+													gbNode.getNode(), directed);
+							GBEdge newGbEdge = new GBEdge(newEdge);
 							if (gbNode.getNode() == source.getNode()) {
-								newEdge = new GBEdge(gbNode, gbNode, directed);
+								// Additional field if new edge is a self-edge
 								double angle = getSelfEdgeOffsetAngle(NodePanel.this, e.getPoint());
-								newEdge.setAngle(angle);
-							} else {
-								newEdge = new GBEdge(source, gbNode, directed);
+								newGbEdge.setAngle(angle);
 							}
 
 							// Set the new edge's appearance
-							newEdge.setColor(currentLineColor);
-							newEdge.setWeight(currentLineWeight);
+							newGbEdge.setColor(currentLineColor);
+							newGbEdge.setWeight(currentLineWeight);
 
-							// Compute the position of this edge (only matters if it is a simple edge)
+							// Compute the position of this edge (only matters if not a self edge)
 							List<GBEdge> pairEdges = gbNode.getContext().getGbEdges().get(new UOPair<>(gbNode, source));
 							int edgePosition = getEdgePosition(sourcePanel, thisPanel, e.getPoint(), pairEdges);
 
 							// Add the new edge between the chosen nodes if no constraints are violated
 							Graph currentGraph = gbNode.getContext().getGraph();
 							boolean violatesLoops = !currentGraph.hasConstraint(GraphConstraint.MULTIGRAPH) &&
-								newEdge.isSelfEdge();
+								newGbEdge.isSelfEdge();
 							boolean violatesSimple = currentGraph.hasConstraint(GraphConstraint.SIMPLE) &&
 								pairEdges != null;
 							if (!violatesLoops && !violatesSimple) {
 								PlaceEdgeAction placeAction = new PlaceEdgeAction(gbNode.getContext(),
-																				  newEdge, edgePosition);
+																				  newGbEdge, edgePosition);
 								placeAction.perform();
 								gbNode.getContext().pushReversibleAction(placeAction, true, false);
 							}
@@ -242,14 +248,49 @@ public class NodePanel extends JPanel {
 							// This node is the destination; highlight the path
 							Node start = editorData.getPathBasePoint().getNode();
 							Node end = gbNode.getNode();
-							Path shortestPath = Dijkstra.execute(gbNode.getContext().getGraph(), start, end);
+
+							Graph graph = gbNode.getContext().getGraph();
+							GBFrame frame = gbNode.getContext().getGUI();
+
+							Path shortestPath = null;
+							if (graph.hasConstraint(GraphConstraint.UNWEIGHTED)) {
+								// In unweighted graphs, BFS yields the shortest path
+								shortestPath = BFS.search(graph, start, end, true);
+							} else {
+								// Attempt to run Dijkstra's algorithm
+								try {
+									shortestPath = Dijkstra.execute(graph, start, end);
+								} catch (IllegalArgumentException iae) {
+									// Dijkstra's algorithm could not be executed
+								}
+
+								// Attempt to run the Bellman-Ford algorithm
+								try {
+									shortestPath = BellmanFord.execute(graph, start, end);
+								} catch (NegativeCycleException nce) {
+									// Bellman-Ford failed due to negative cycle(s)
+									if (nce.getNegativeEdges() != null) {
+										editorData.addHighlights(StructureUtils.toGbEdges(nce.getNegativeEdges()));
+										JOptionPane.showMessageDialog(frame, nce.getMessage() + " The negative " +
+											"edges are highlighted.", "Shortest Path", JOptionPane.ERROR_MESSAGE);
+									} else {
+										Cycle negCycle = nce.getNegativeCycle();
+										if (negCycle != null) {
+											editorData.addHighlights(StructureUtils.toGbNodes(negCycle.getNodes()));
+											editorData.addHighlights(StructureUtils.toGbEdges(negCycle.getEdges()));
+											JOptionPane.showMessageDialog(frame, nce.getMessage() + " The negative " +
+												"cycle is highlighted.", "Shortest Path", JOptionPane.ERROR_MESSAGE);
+										}
+									}
+								}
+							}
 
 							if (shortestPath != null) {
 								editorData.addHighlights(StructureUtils.toGbNodes(shortestPath.getNodes()));
 								editorData.addHighlights(StructureUtils.toGbEdges(shortestPath.getEdges()));
 							}
 
-							// Reset base point, now that the path has been found
+							// Reset base point of the shortest path tool
 							editorData.clearPathBasePoint();
 						}
 					}

@@ -1,5 +1,6 @@
 package algorithms.util;
 
+import graph.Graph;
 import graph.components.Edge;
 import graph.components.Node;
 import graph.path.Path;
@@ -20,6 +21,7 @@ public class Search {
 	 * Search from the start node to the target node, and return a path
 	 * connecting them if one exists.
 	 *
+	 * @param graph           The graph to search in.
 	 * @param start           The node at which the search starts.
 	 * @param target          The target node.
 	 * @param followDirected  false if we want to ignore edge direction.
@@ -29,7 +31,7 @@ public class Search {
 	 *                        was found, false otherwise.
 	 * @return A path from start to target, or null if none exists.
 	 */
-	public static Path search(Node start, Node target, boolean followDirected,
+	public static Path search(Graph graph, Node start, Node target, boolean followDirected,
 							  Function<Map<Node, Node>, Boolean> searchAlgorithm) {
 		if (start == target) {
 			return new Path(start);
@@ -49,7 +51,7 @@ public class Search {
 		Node currentNode = target;
 		while (currentNode != start) {
 			Node previousNode = parentMap.get(currentNode);
-			Edge toCurrent = GraphUtils.arbitraryEdge(previousNode, currentNode, followDirected);
+			Edge toCurrent = GraphUtils.arbitraryEdge(graph, previousNode, currentNode, followDirected);
 
 			connectingPath.prependNode(previousNode, toCurrent);
 			currentNode = previousNode;

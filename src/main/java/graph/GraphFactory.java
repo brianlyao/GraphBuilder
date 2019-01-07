@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author Brian Yao
  */
-public class GraphFactory {
+public final class GraphFactory {
 
 	/**
 	 * Generate a symmetric complete graph with the provided number of nodes. The

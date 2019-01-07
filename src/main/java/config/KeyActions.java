@@ -1,4 +1,4 @@
-package keybindings;
+package config;
 
 import actions.SelectAll;
 import actions.SwitchToolAction;

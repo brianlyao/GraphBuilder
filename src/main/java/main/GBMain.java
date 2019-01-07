@@ -1,9 +1,9 @@
 package main;
 
+import config.Preferences;
 import context.GBContext;
 import io.FileLoader;
 import logger.Logger;
-import preferences.Preferences;
 import ui.GBFrame;
 import ui.dialogs.NewGraphDialog;
 import ui.dialogs.StartupDialog;

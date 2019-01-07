@@ -7,12 +7,16 @@ import graph.components.Node;
 import graph.path.Path;
 import util.GraphUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 
 /**
- * An implementation of the Bellman-Ford algorithm.
+ * An implementation of the Bellman-Ford algorithm for finding single-source
+ * shortest paths.
  *
  * @author Brian Yao
  */
@@ -30,8 +34,7 @@ public final class BellmanFord {
 	 *                                so that the shortest path does not exist.
 	 */
 	public static Path execute(Graph graph, Node start, Node destination) {
-		Set<Node> reachableFromStart = DFS.explore(start, true);
-		validateBellmanFordInput(graph, start, destination, reachableFromStart);
+		Set<Node> reachableFromStart = validateBellmanFordInput(graph, start, destination);
 
 		if (!reachableFromStart.contains(destination)) {
 			return null;
@@ -98,9 +101,9 @@ public final class BellmanFord {
 	private static void forEachEdge(Graph graph, Map<Node, Double> distances,
 									BiConsumer<Node, Edge> onUpdate) {
 		for (Node node : graph.getNodes()) {
-			for (Node neighbor : node.getNeighbors(true)) {
+			for (Node neighbor : graph.getAdjListOf(node).getNeighbors(true)) {
 				// Use the minimum weight edge between node and neighbor
-				Edge minWeightEdge = GraphUtils.minWeightEdge(node, neighbor, true);
+				Edge minWeightEdge = GraphUtils.minWeightEdge(graph, node, neighbor, true);
 
 				// Compute the new value to put in the memo map
 				Double currentDist = distances.get(node);
@@ -115,35 +118,36 @@ public final class BellmanFord {
 	/**
 	 * Helper function for validating the input of the Bellman-Ford algorithm.
 	 *
-	 * @param graph              Input graph.
-	 * @param start              Input start node.
-	 * @param destination        Input destination node.
-	 * @param reachableFromStart Set of nodes reachable from the start node
-	 *                           with a path.
+	 * @param graph       Input graph.
+	 * @param start       Input start node.
+	 * @param destination Input destination node.
+	 * @return the set of nodes reachable from the start node.
 	 */
-	private static void validateBellmanFordInput(Graph graph, Node start, Node destination,
-												 Set<Node> reachableFromStart) {
+	private static Set<Node> validateBellmanFordInput(Graph graph, Node start, Node destination) {
 		if (!graph.containsNode(start) || !graph.containsNode(destination)) {
 			throw new IllegalArgumentException("Start and destination nodes must belong to the provided graph.");
 		}
 
 		// Check if there are any negative undirected edges which could be on
 		// a path from the start to the destination
+		Set<Node> reachableFromStart = DFS.explore(graph, start, true);
 		Set<Edge> negativeEdges = new HashSet<>();
-		graph.getEdges().values().forEach(edgeList -> edgeList.forEach(edge -> {
+		graph.getEdgeSet().forEach(edge -> {
 			if (!edge.isDirected() &&
 				reachableFromStart.contains(edge.getFirstEnd()) &&
 				edge.getNumericWeight() < 0. &&
-				BFS.connected(edge.getFirstEnd(), destination, true)) {
+				BFS.connected(graph, edge.getFirstEnd(), destination, true)) {
 				negativeEdges.add(edge);
 			}
-		}));
+		});
 
 		if (!negativeEdges.isEmpty()) {
 			throw new NegativeCycleException("Contains negative 2-cycle(s) (undirected edges with negative " +
 												 "weights) reachable from the start that can reach the " +
 												 "destination. Bellman-Ford cannot be executed.", negativeEdges);
 		}
+
+		return reachableFromStart;
 	}
 
 }

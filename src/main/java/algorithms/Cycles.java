@@ -13,11 +13,11 @@ import util.StructureUtils;
 import java.util.*;
 
 /**
- * Implementation of acyclicity algorithms.
+ * Implementation of algorithms for finding cycles and determining acyclicity.
  *
  * @author Brian Yao
  */
-public class Cycles {
+public final class Cycles {
 
 	/**
 	 * Check whether a particular graph is acyclic (contains no cycle). This is
@@ -66,8 +66,9 @@ public class Cycles {
 	private static Cycle findSmallCycle(Graph graph) {
 		if (graph.hasConstraint(GraphConstraint.MULTIGRAPH)) {
 			for (Node node : graph.getNodes()) {
-				if (!node.getSelfEdges().isEmpty()) {
-					return new Cycle(List.of(node), List.of(StructureUtils.arbitraryElement(node.getSelfEdges())));
+				Set<Edge> selfEdges = graph.getAdjListOf(node).getSelfEdges();
+				if (!selfEdges.isEmpty()) {
+					return new Cycle(List.of(node), List.of(StructureUtils.arbitraryElement(selfEdges)));
 				}
 			}
 
@@ -109,10 +110,10 @@ public class Cycles {
 				Node first = ends.getFirst();
 				Node second = ends.getSecond();
 
-				Edge toSecond = GraphUtils.arbitraryEdge(first, second, true);
+				Edge toSecond = GraphUtils.arbitraryEdge(graph, first, second, true);
 
 				// Avoid using the same undirected edge in both directions
-				Set<Edge> toFirst = second.getEdgesToNeighbor(first, true);
+				Set<Edge> toFirst = graph.getAdjListOf(second).getEdgesToNeighbor(first, true);
 				toFirst.remove(toSecond);
 
 				return new Cycle(List.of(first, second), List.of(toSecond, StructureUtils.arbitraryElement(toFirst)));
@@ -142,7 +143,7 @@ public class Cycles {
 			parents.put(start, null);
 
 			// Perform depth first search
-			Cycle potentialCycle = visitNotMixed(start, unvisited, visiting, visited, parents);
+			Cycle potentialCycle = visitNotMixed(graph, start, unvisited, visiting, visited, parents);
 			if (potentialCycle != null) {
 				return potentialCycle;
 			}
@@ -158,6 +159,7 @@ public class Cycles {
 	 * whose length is <= 2) since this is done when findSmallCycle is called
 	 * on this graph.
 	 *
+	 * @param graph     The graph containing the node being visited
 	 * @param n         The node being visited.
 	 * @param unvisited The set of unvisited nodes.
 	 * @param visiting  The set of nodes being visited.
@@ -166,11 +168,11 @@ public class Cycles {
 	 *                  the node was visited.
 	 * @return The first cycle found, or null if no cycle was found.
 	 */
-	private static Cycle visitNotMixed(Node n, Set<Node> unvisited, Set<Node> visiting,
-									  Set<Node> visited, Map<Node, Node> parents) {
+	private static Cycle visitNotMixed(Graph graph, Node n, Set<Node> unvisited, Set<Node> visiting,
+									   Set<Node> visited, Map<Node, Node> parents) {
 		unvisited.remove(n);
 		visiting.add(n);
-		for (Node neighbor : n.getNeighbors(true)) {
+		for (Node neighbor : graph.getAdjListOf(n).getNeighbors(true)) {
 			if (!parents.containsKey(neighbor)) {
 				parents.put(neighbor, n);
 			}
@@ -181,7 +183,7 @@ public class Cycles {
 				Node currentNode = neighbor;
 				Node prevNode = n;
 				do {
-					Edge edgeToCurrent = GraphUtils.arbitraryEdge(prevNode, currentNode, true);
+					Edge edgeToCurrent = GraphUtils.arbitraryEdge(graph, prevNode, currentNode, true);
 					cycle.prependNode(prevNode, edgeToCurrent);
 					currentNode = prevNode;
 					prevNode = parents.get(currentNode);
@@ -191,7 +193,7 @@ public class Cycles {
 
 			if (!visiting.contains(neighbor) && !visited.contains(neighbor)) {
 				// Only visit neighbor if it's unvisited
-				Cycle possibleCycle = visitNotMixed(neighbor, unvisited, visiting, visited, parents);
+				Cycle possibleCycle = visitNotMixed(graph, neighbor, unvisited, visiting, visited, parents);
 				if (possibleCycle != null) {
 					// Encountered a cycle
 					return possibleCycle;
@@ -217,7 +219,7 @@ public class Cycles {
 		Map<UOPair<Node>, Node> redirected = new HashMap<>();
 
 		// Remove irrelevant nodes until there are none left
-		while (removeIrrelevantNodes(relevantNodes, redirected));
+		while (removeIrrelevantNodes(graph, relevantNodes, redirected));
 		if (relevantNodes.isEmpty()) {
 			// No cycle exists
 			return null;
@@ -226,7 +228,7 @@ public class Cycles {
 			Node start = StructureUtils.arbitraryElement(relevantNodes);
 			Set<Node> traversed = new HashSet<>();
 			Map<Node, Edge> parentEdges = new HashMap<>();
-			return visitMixed(start, relevantNodes, traversed, parentEdges);
+			return visitMixed(graph, start, relevantNodes, traversed, parentEdges);
 		}
 	}
 
@@ -235,18 +237,19 @@ public class Cycles {
 	 * DFS. This is used specifically for mixed graphs. This will not check
 	 * for "small" cycles (any cycles whose length are <= 2).
 	 *
+	 * @param graph         The graph containing the node being visited.
 	 * @param n             The node to visit.
 	 * @param relevantNodes The set of relevant nodes (from findCycleMixed).
 	 * @param traversed     The set of all nodes already traversed.
 	 * @param parentEdges   The mapping from nodes to the edge leading to it.
 	 * @return The first cycle found as a Path object, or null if no cycle was found.
 	 */
-	private static Cycle visitMixed(Node n, Set<Node> relevantNodes,
+	private static Cycle visitMixed(Graph graph, Node n, Set<Node> relevantNodes,
 								   Set<Node> traversed, Map<Node, Edge> parentEdges) {
 		if (!traversed.contains(n)) {
 			// Compute the set of edges we consider traversing
 			Set<Edge> relevantEdges = new HashSet<>();
-			for (Map.Entry<Node, Set<Edge>> incEntry : n.getIncomingDirectedEdges().entrySet()) {
+			for (Map.Entry<Node, Set<Edge>> incEntry : graph.getAdjListOf(n).getIncomingDirectedEdges().entrySet()) {
 				Node incNeighbor = incEntry.getKey();
 				if (relevantNodes.contains(incNeighbor)) {
 					Edge incEdge = StructureUtils.arbitraryElement(incEntry.getValue());
@@ -255,7 +258,7 @@ public class Cycles {
 					}
 				}
 			}
-			for (Map.Entry<Node, Set<Edge>> undEntry : n.getUndirectedEdges().entrySet()) {
+			for (Map.Entry<Node, Set<Edge>> undEntry : graph.getAdjListOf(n).getUndirectedEdges().entrySet()) {
 				Node undNeighbor = undEntry.getKey();
 				Edge parentEdge = parentEdges.get(n);
 				boolean diffParent = parentEdge == null ||
@@ -278,7 +281,7 @@ public class Cycles {
 			for (Edge neighborEdge : relevantEdges) {
 				Node otherEnd = neighborEdge.getOtherEndpoint(n);
 				parentEdges.put(otherEnd, neighborEdge);
-				Cycle result = visitMixed(otherEnd, relevantNodes, traversed, parentEdges);
+				Cycle result = visitMixed(graph, otherEnd, relevantNodes, traversed, parentEdges);
 				if (result != null) {
 					// Found a cycle in recursion
 					return result;
@@ -314,11 +317,12 @@ public class Cycles {
 	 * - If there is a node N with exactly one neighbor with whom it shares an
 	 *   undirected edge, direct these undirected edges to point to N.
 	 *
+	 * @param graph         The graph to remove irrelevant nodes from.
 	 * @param relevantNodes The set of relevant nodes.
 	 * @param redirected    A mapping representing which edges are redirected.
 	 * @return false iff no modifications to the graph were made.
 	 */
-	private static boolean removeIrrelevantNodes(Set<Node> relevantNodes,
+	private static boolean removeIrrelevantNodes(Graph graph, Set<Node> relevantNodes,
 												 Map<UOPair<Node>, Node> redirected) {
 		Map<UOPair<Node>, Node> tempRedirected = new HashMap<>();
 		Set<Node> tempIrrelevantNodes = new HashSet<>();
@@ -330,7 +334,7 @@ public class Cycles {
 			boolean noneRedirected = true;
 			boolean allRedirected = true;
 			Set<Node> undirectedNeighbors = new HashSet<>();
-			for (Node undirectedNeighbor : current.getUndirectedEdges().keySet()) {
+			for (Node undirectedNeighbor : graph.getAdjListOf(current).getUndirectedEdges().keySet()) {
 				if (relevantNodes.contains(undirectedNeighbor)) {
 					UOPair<Node> key = new UOPair<>(current, undirectedNeighbor);
 					if (!redirected.containsKey(key)) {
@@ -348,7 +352,7 @@ public class Cycles {
 			// Check if there exist incoming edges from nodes which are still
 			// relevant
 			boolean noDirectedIncoming = true;
-			for (Node incomingNeighbor : current.getIncomingDirectedEdges().keySet()) {
+			for (Node incomingNeighbor : graph.getAdjListOf(current).getIncomingDirectedEdges().keySet()) {
 				if (relevantNodes.contains(incomingNeighbor)) {
 					noDirectedIncoming = false;
 					break;

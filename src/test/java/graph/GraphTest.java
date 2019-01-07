@@ -38,7 +38,7 @@ public class GraphTest {
 	}
 
 	@Test
-	public void testInitializationState() {
+	public void testInitialization() {
 		Graph graph = new Graph(0);
 
 		assertTrue(graph.isEmpty());
@@ -50,9 +50,7 @@ public class GraphTest {
 	public void testAddNode() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
 		Graph graph = new Graph(constraints);
-
 		Node node = new Node();
-
 		graph.addNode(node);
 
 		assertTrue(graph.containsNode(node));
@@ -65,15 +63,16 @@ public class GraphTest {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(5, 0);
-		graph.addNodes(n);
-
 		Edge edge = new Edge(n[4], n[1], false);
 
-		graph.addEdge(edge);
+		assertThrows(IllegalArgumentException.class, () -> graph.addEdge(edge));
+
+		graph.addNodes(n);
+		assertTrue(graph.addEdge(edge));
 
 		assertTrue(graph.containsEdge(edge));
-		assertTrue(n[1].hasEdge(edge));
-		assertTrue(n[4].hasEdge(edge));
+		assertTrue(graph.getAdjListOf(n[1]).hasEdge(edge));
+		assertTrue(graph.getAdjListOf(n[4]).hasEdge(edge));
 
 		assertThrows(IllegalArgumentException.class, () -> graph.addEdge(edge));
 	}
@@ -86,7 +85,7 @@ public class GraphTest {
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 2}, {0, 3}, {1, 2}, {1, 3}},
 									  TestUtils.booleans(4, false), n, 0);
 		graph.addNodes(n);
-		graph.addEdges(e);
+		assertTrue(graph.addEdges(e));
 
 		Map<UOPair<Node>, List<Edge>> removedEdges = graph.removeNode(n[0]);
 		assertFalse(graph.containsNode(n[0]));
@@ -109,13 +108,13 @@ public class GraphTest {
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 2}, {0, 3}, {1, 2}, {3, 4}},
 									  TestUtils.booleans(4, false), n, 0);
 		graph.addNodes(n);
-		graph.addEdges(e);
+		assertTrue(graph.addEdges(e));
 
 		int index = graph.removeEdge(e[1]);
 
 		assertFalse(graph.containsEdge(e[1]));
-		assertFalse(e[1].getFirstEnd().hasEdge(e[1]));
-		assertFalse(e[1].getSecondEnd().hasEdge(e[1]));
+		assertFalse(graph.getAdjListOf(e[1].getFirstEnd()).hasEdge(e[1]));
+		assertFalse(graph.getAdjListOf(e[1].getSecondEnd()).hasEdge(e[1]));
 		assertEquals(0, index);
 		assertFalse(graph.getEdges().containsKey(e[1].getUoEndpoints()));
 
@@ -159,12 +158,12 @@ public class GraphTest {
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {0, 1}, {0, 1}, {0, 1}},
 									  TestUtils.booleans(4, false), n, 0);
 		graph.addNodes(n);
-		graph.addEdges(e);
+		assertTrue(graph.addEdges(e));
 
 		int index = graph.removeEdge(e[2]);
 		assertFalse(graph.containsEdge(e[2]));
-		assertFalse(n[0].hasEdge(e[2]));
-		assertFalse(n[1].hasEdge(e[2]));
+		assertFalse(graph.getAdjListOf(n[0]).hasEdge(e[2]));
+		assertFalse(graph.getAdjListOf(n[1]).hasEdge(e[2]));
 		assertEquals(2, index);
 
 		UOPair<Node> ends = new UOPair<>(n[0], n[1]);
@@ -183,7 +182,7 @@ public class GraphTest {
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {0, 3}, {1, 4}, {1, 3}, {1, 3}, {3, 4}, {2, 4}},
 									  TestUtils.booleans(7, false), n, 0);
 		graph.addNodes(n);
-		graph.addEdges(e);
+		assertTrue(graph.addEdges(e));
 
 		Set<Node> subset = new HashSet<>(Arrays.asList(n[0], n[1], n[3], n[5]));
 		Graph subgraph = graph.inducedSubgraph(subset);
@@ -209,11 +208,50 @@ public class GraphTest {
 		Edge edge = new Edge(n[0], n[1], false);
 		Edge edgeDupe = new Edge(n[0], n[1], false);
 		Edge selfEdge = new Edge(n[0], n[0], false);
-
-		graph.addEdge(edge);
+		graph.addNodes(n);
+		assertTrue(graph.addEdge(edge));
 
 		assertThrows(IllegalArgumentException.class, () -> graph.addEdge(edgeDupe));
 		assertThrows(IllegalArgumentException.class, () -> graph.addEdge(selfEdge));
+	}
+
+	@Test
+	public void testEdgeSet() {
+		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
+		Graph graph = new Graph(constraints);
+		Node[] n = TestUtils.newNodes(10, 0);
+		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {3, 5}, {6, 7}, {3, 9}, {0, 4}, {7, 8}, {5, 7}, {1, 2}},
+									  TestUtils.booleans(8, false), n, n.length);
+		graph.addNodes(n);
+		assertTrue(graph.addEdges(e));
+
+		assertEquals(Set.of(e), graph.getEdgeSet());
+	}
+
+	@Test
+	public void testEquals() {
+		int constraints1 = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
+		int constraints2 = GraphConstraint.SIMPLE | GraphConstraint.DIRECTED | GraphConstraint.UNWEIGHTED;
+		Graph graph1 = new Graph(constraints1);
+		Graph graph2 = new Graph(constraints2);
+
+		assertEquals(graph1, graph2);
+
+		Node[] n = TestUtils.newNodes(10, 0);
+		graph1.addNodes(n);
+		assertNotEquals(graph1, graph2);
+		graph2.addNodes(n);
+		assertEquals(graph1, graph2);
+
+		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {2, 5}, {3, 6}, {4, 9}, {6, 8}, {7, 8}, {8, 9}},
+									  TestUtils.booleans(7, false), n, n.length);
+		graph1.addEdges(e);
+		assertNotEquals(graph1, graph2);
+		graph2.addEdges(e);
+		assertEquals(graph1, graph2);
+
+		graph1.removeEdge(e[0]);
+		assertNotEquals(graph1, graph2);
 	}
 
 }

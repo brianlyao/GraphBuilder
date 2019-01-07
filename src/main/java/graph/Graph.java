@@ -3,6 +3,7 @@ package graph;
 import graph.components.Edge;
 import graph.components.Node;
 import lombok.Getter;
+import structures.AdjListData;
 import structures.UOPair;
 
 import java.util.*;
@@ -27,8 +28,14 @@ public class Graph {
 
 	@Getter
 	private Set<Node> nodes;
+
+	// An adjacency matrix representation
 	@Getter
 	private Map<UOPair<Node>, List<Edge>> edges;
+
+	// An adjacency list representation
+	@Getter
+	private Map<Node, AdjListData> adjList;
 
 	/**
 	 * Copy constructor.
@@ -38,19 +45,29 @@ public class Graph {
 	public Graph(Graph graph) {
 		this.constraints = graph.constraints;
 
-		// Make copies of the components from the given graph
+		// Copy nodes
 		Map<Node, Node> oldToNew = graph.getNodes().stream()
 			.collect(Collectors.toMap(Function.identity(), $ -> new Node()));
 		this.nodes = new HashSet<>(oldToNew.values());
 
+		// Initialize adjacency list
+		this.adjList = new HashMap<>();
+		this.nodes.forEach(node -> adjList.put(node, new AdjListData(node)));
+
 		this.edges = new HashMap<>();
 		for (Map.Entry<UOPair<Node>, List<Edge>> oldEntry : graph.getEdges().entrySet()) {
+			// Copy edges
 			Node newNode1 = oldToNew.get(oldEntry.getKey().getFirst());
 			Node newNode2 = oldToNew.get(oldEntry.getKey().getSecond());
 			List<Edge> newEdgeList = oldEntry.getValue().stream()
 				.map(e -> new Edge(oldToNew.get(e.getFirstEnd()), oldToNew.get(e.getSecondEnd()), e.isDirected()))
 				.collect(Collectors.toList());
+
+			// Add copied edges
 			this.edges.put(new UOPair<>(newNode1, newNode2), newEdgeList);
+
+			// Update adjacency list
+			newEdgeList.forEach(this::addEdgeToAdjList);
 		}
 	}
 
@@ -61,9 +78,7 @@ public class Graph {
 	 * @see GraphConstraint
 	 */
 	public Graph(int constraints) {
-		this.constraints = constraints;
-		this.nodes = new HashSet<>();
-		this.edges = new HashMap<>();
+		this(constraints, new HashSet<>(), new HashMap<>());
 	}
 
 	/**
@@ -78,6 +93,7 @@ public class Graph {
 		this.constraints = constraints;
 		this.nodes = nodes;
 		this.edges = edges;
+		this.adjList = new HashMap<>();
 	}
 
 	/**
@@ -140,6 +156,21 @@ public class Graph {
 	}
 
 	/**
+	 * @return A set containing all edges in this graph.
+	 */
+	public Set<Edge> getEdgeSet() {
+		return edges.values().stream().flatMap(List::stream).collect(Collectors.toSet());
+	}
+
+	/**
+	 * @param n The node to get adjacency list data of.
+	 * @return the adjacency list data for the given node.
+	 */
+	public AdjListData getAdjListOf(Node n) {
+		return adjList.get(n);
+	}
+
+	/**
 	 * Add the provided node to this graph.
 	 *
 	 * @param n The node to add.
@@ -150,6 +181,7 @@ public class Graph {
 		}
 
 		nodes.add(n);
+		adjList.put(n, new AdjListData(n));
 	}
 
 	/**
@@ -183,13 +215,13 @@ public class Graph {
 		}
 
 		Map<UOPair<Node>, List<Edge>> removedEdgeMap = new HashMap<>();
-		for (Node neighbor : n.getNeighbors(false)) {
+		for (Node neighbor : adjList.get(n).getNeighbors(false)) {
 			UOPair<Node> key = new UOPair<>(neighbor, n);
 
 			// Remove edges connected to the deleted node
 			if (edges.get(key) != null) {
 				List<Edge> removedEdgeList = edges.remove(key);
-				removedEdgeList.forEach(Edge::removeSelfFromNodeData);
+				removedEdgeList.forEach(this::removeEdgeFromAdjList);
 
 				removedEdgeMap.put(key, removedEdgeList);
 			}
@@ -197,6 +229,7 @@ public class Graph {
 
 		// Remove node
 		nodes.remove(n);
+		adjList.remove(n);
 
 		return removedEdgeMap;
 	}
@@ -230,6 +263,8 @@ public class Graph {
 	public boolean addEdge(Edge e, int index) {
 		if (this.containsEdge(e)) {
 			throw new IllegalArgumentException("Cannot add an edge to this graph more than once.");
+		} else if (!this.containsNode(e.getFirstEnd()) || !this.containsNode(e.getSecondEnd())) {
+			throw new IllegalArgumentException("Cannot add an edge whose endpoints are not in the graph.");
 		}
 
 		UOPair<Node> key = e.getUoEndpoints();
@@ -257,7 +292,7 @@ public class Graph {
 		}
 
 		// Add this edge to its endpoints' data
-		e.addSelfToNodeData();
+		this.addEdgeToAdjList(e);
 
 		return true;
 	}
@@ -300,7 +335,7 @@ public class Graph {
 	 */
 	public int removeEdge(Edge e) {
 		// Remove this edge from its endpoints' data
-		e.removeSelfFromNodeData();
+		this.removeEdgeFromAdjList(e);
 
 		UOPair<Node> key = e.getUoEndpoints();
 		List<Edge> pairEdges = edges.get(key);
@@ -342,6 +377,38 @@ public class Graph {
 		});
 
 		return new Graph(constraints, subsetNodes, subsetEdges);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || !(o instanceof Graph)) {
+			return false;
+		}
+
+		Graph other = (Graph) o;
+		return nodes.equals(other.nodes) && this.getEdgeSet().equals(other.getEdgeSet());
+	}
+
+	// Private methods
+
+	/**
+	 * @param e the edge to add to this graph's adjacency list data.
+	 */
+	private void addEdgeToAdjList(Edge e) {
+		adjList.get(e.getFirstEnd()).addEdge(e);
+		if (!e.isSelfEdge()) {
+			adjList.get(e.getSecondEnd()).addEdge(e);
+		}
+	}
+
+	/**
+	 * @param e the edge to remove from this graph's adjacency list data.
+	 */
+	private void removeEdgeFromAdjList(Edge e) {
+		adjList.get(e.getFirstEnd()).removeEdge(e);
+		if (!e.isSelfEdge()) {
+			adjList.get(e.getSecondEnd()).removeEdge(e);
+		}
 	}
 
 }

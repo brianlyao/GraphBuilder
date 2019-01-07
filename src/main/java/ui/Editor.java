@@ -11,7 +11,8 @@ import graph.components.gb.GBNode;
 import lombok.Getter;
 import math.Complex;
 import math.CubicFormula;
-import preferences.Preferences;
+import org.javatuples.Triplet;
+import config.Preferences;
 import structures.EditorData;
 import structures.UOPair;
 import tool.Tool;
@@ -68,11 +69,13 @@ public class Editor extends JPanel {
 
 			@Override
 			public void mouseEntered(MouseEvent evt) {
+				data.setLastMousePoint(evt.getX(), evt.getY());
 				repaint();
 			}
 
 			@Override
 			public void mouseExited(MouseEvent evt) {
+				data.setLastMousePoint(evt.getX(), evt.getY());
 				repaint();
 			}
 
@@ -138,7 +141,7 @@ public class Editor extends JPanel {
 						newPanel.setTextColor(colors[2]);
 
 						// The new node being added to the graph
-						GBNode newNode = new GBNode(new Node(), getContext(), newPanel);
+						GBNode newNode = new GBNode(new Node(getContext().getNextIdAndInc()), getContext(), newPanel);
 
 						// Perform the action for placing a node
 						PlaceNodeAction placeAction = new PlaceNodeAction(getContext(), newNode);
@@ -182,22 +185,25 @@ public class Editor extends JPanel {
 					JScrollBar horiz = sp.getHorizontalScrollBar();
 					JScrollBar vert = sp.getVerticalScrollBar();
 					double multiplier = Preferences.PAN_SENSITIVITY;
-					int newHorizVal = (int) Math.min(horiz.getMaximum(),
-													 Math.max(horiz.getMinimum(),
-															  horiz.getValue() - multiplier * changeX));
-					int newVertVal = (int) Math.min(vert.getMaximum(),
-													Math.max(vert.getMinimum(),
-															 vert.getValue() - multiplier * changeY));
+					int newHorizVal = (int) Math.min(
+						horiz.getMaximum(),
+						Math.max(horiz.getMinimum(), horiz.getValue() - multiplier * changeX)
+					);
+					int newVertVal = (int) Math.min(
+						vert.getMaximum(),
+						Math.max(vert.getMinimum(), vert.getValue() - multiplier * changeY)
+					);
 					horiz.setValue(newHorizVal);
 					vert.setValue(newVertVal);
 				}
-				data.setLastMousePoint(evt.getPoint());
+
+				data.setLastMousePoint(evt.getX(), evt.getY());
 				repaint();
 			}
 
 			@Override
 			public void mouseMoved(MouseEvent evt) {
-				data.setLastMousePoint(evt.getPoint());
+				data.setLastMousePoint(evt.getX(), evt.getY());
 				Tool currentTool = gui.getCurrentTool();
 
 				if (currentTool == Tool.EDGE_SELECT) {
@@ -363,6 +369,27 @@ public class Editor extends JPanel {
 		}
 	}
 
+	// Private instance methods
+
+	/**
+	 * Finds the edge closest to the cursor position, and sets the closestEdge
+	 * and closestEdgePoint fields.
+	 */
+	private void findClosestEdge() {
+		Point2D.Double mouse = new Point2D.Double(data.getLastMousePoint().x, data.getLastMousePoint().y);
+
+		// Get the closest edge and
+		gui.getContext().getGbEdgeSet().stream()
+			.map(e -> distanceToEdge(e, mouse))
+			.min(Comparator.comparingDouble(Triplet::getValue2))
+			.ifPresent(triplet -> {
+				data.setClosestEdge(triplet.getValue0());
+				data.setClosestEdgePoint(triplet.getValue1());
+			});
+	}
+
+	// Private static methods
+
 	/**
 	 * A helper method for drawing the edges between a pair of nodes.
 	 *
@@ -390,39 +417,7 @@ public class Editor extends JPanel {
 
 			// Split cases by the type of edge
 			if (e.isSelfEdge()) {
-				// Draw this self edge (looks like a loop)
-				double offsetAngle = e.getAngle();
-
-				Point nodeCenter = n1.getNodePanel().getCenter();
-
-				// The radius of n1's circle
-				int n1r = n1.getNodePanel().getRadius();
-
-				double centralAngle = Preferences.SELF_EDGE_SUBTENDED_ANGLE;
-				double edgeAngle = Preferences.SELF_EDGE_ARC_ANGLE;
-
-				double edgeRadius = Math.sin(centralAngle / 2) * n1r / Math.sin(edgeAngle / 2);
-				double unitX = Math.cos(offsetAngle);
-				double unitY = Math.sin(offsetAngle);
-				double centralDist = edgeRadius * Math.cos(edgeAngle / 2) + n1r * Math.cos(centralAngle / 2);
-				double edgeCenterX = centralDist * unitX + nodeCenter.x;
-				double edgeCenterY = centralDist * unitY + nodeCenter.y;
-				g2d.drawOval((int) (edgeCenterX - edgeRadius), (int) (edgeCenterY - edgeRadius),
-							 (int) (2 * edgeRadius), (int) (2 * edgeRadius));
-
-				// If the edge is directed, draw the arrow tip
-				if (e.isDirected()) {
-					double toEndX = n1r * unitX * Math.cos(centralAngle / 2) -
-						n1r * unitY * Math.sin(centralAngle / 2);
-					double toEndY = n1r * unitX * Math.sin(centralAngle / 2) +
-						n1r * unitY * Math.cos(centralAngle / 2);
-
-					drawArrowTip(g2d, -toEndX, -toEndY,
-								 new Point((int) toEndX + nodeCenter.x, (int) toEndY + nodeCenter.y), weight);
-				}
-
-				e.setArcCenter(new Point2D.Double(edgeCenterX, edgeCenterY));
-				e.setRadius(edgeRadius);
+				drawSelfEdge(e, n1, g2d);
 				count++;
 			} else {
 				// The edge is either a line or bezier curve; either way, they get drawn the same way
@@ -433,8 +428,8 @@ public class Editor extends JPanel {
 				Point p1 = e.getFirstEnd().getNodePanel().getCenter();
 				Point p2 = e.getSecondEnd().getNodePanel().getCenter();
 
-				// Reciprocal of distance between the centers of the nodes
-				double dist = 1.0 / Math.sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+				// Distance between the centers of the nodes
+				double dist = p1.distance(p2);
 
 				// Get the radii of both ends
 				int p1r = e.getFirstEnd().getNodePanel().getRadius();
@@ -442,10 +437,10 @@ public class Editor extends JPanel {
 
 				// Compute components of vectors pointing from one node to the other
 				// The length of the vectors is the radius of the node they point from
-				double radiusVectorX1 = p1r * dist * (p2.x - p1.x);
-				double radiusVectorY1 = p1r * dist * (p2.y - p1.y);
-				double radiusVectorX2 = p2r * dist * (p1.x - p2.x);
-				double radiusVectorY2 = p2r * dist * (p1.y - p2.y);
+				double radiusVectorX1 = p1r * (p2.x - p1.x) / dist;
+				double radiusVectorY1 = p1r * (p2.y - p1.y) / dist;
+				double radiusVectorX2 = p2r * (p1.x - p2.x) / dist;
+				double radiusVectorY2 = p2r * (p1.y - p2.y) / dist;
 
 				if (edges.size() % 2 == 1 && i == edges.size() / 2) {
 					// If the index corresponds to the "center" edge, it is drawn as a straight line.
@@ -455,11 +450,11 @@ public class Editor extends JPanel {
 					double linep1Y = radiusVectorY1 + p1.y;
 					double linep2X = radiusVectorX2 + p2.x;
 					double linep2Y = radiusVectorY2 + p2.y;
-					g2d.drawLine((int) linep2X, (int) linep2Y, (int) linep1X, (int) linep1Y);
+					g2d.drawLine((int) linep1X, (int) linep1Y, (int) linep2X, (int) linep2Y);
 
-					// Set the control point to a negative value to indicate it does not exist
+					// Set the endpoints and the control point to null
 					if (noPreview) {
-						e.setBezierPoints(linep1X, linep1Y, -1.0, -1.0, linep2X, linep2Y);
+						e.setLineEnds(linep1X, linep1Y, linep2X, linep2Y);
 					}
 
 					// If this edge is directed, draw the arrow
@@ -511,144 +506,147 @@ public class Editor extends JPanel {
 	}
 
 	/**
-	 * Finds the edge closest to the cursor position, and sets the closestEdge
-	 * and closestEdgePoint fields.
+	 * Computes the distance from the given mouse point to the given edge.
+	 *
+	 * @param edge  The edge whose distance from the mouse is measured.
+	 * @param mouse The position of the mouse.
+	 * @return A triple containing: the given edge, the closest point on the
+	 *         edge to the mouse point, and the distance to the closest point.
 	 */
-	private void findClosestEdge() {
-		// Compute the line and distance to the closest edge
-		Point mousePoint = data.getLastMousePoint();
-		Point2D.Double mouse = new Point2D.Double(mousePoint.x, mousePoint.y);
+	private static Triplet<GBEdge, Point, Double> distanceToEdge(GBEdge edge, Point2D.Double mouse) {
+		Point closestPoint;
+		double closestDist;
+		if (edge.isSelfEdge()) {
+			// Case where edge is a self edge
+			Point2D.Double cen = edge.getArcCenter();
 
-		// Iteratively updated variables for determining the closest edge
-		Point closestEdgePoint = null;
-		GBEdge closestEdge = null;
-		double minDistance = Double.MAX_VALUE;
+			// Determine closest point on the loop to the cursor
+			double distcen = Point.distance(cen.x, cen.y, mouse.x, mouse.y);
+			double closex = (mouse.x - cen.x) * edge.getRadius() / distcen + cen.x;
+			double closey = (mouse.y - cen.y) * edge.getRadius() / distcen + cen.y;
+			closestPoint = new Point((int) closex, (int) closey);
+			closestDist = Math.abs(distcen - edge.getRadius());
+		} else {
+			Point2D.Double[] bcp = edge.getBezierPoints();
+			if (bcp[0] == bcp[2]) {
+				// Ends coincide
+				closestPoint = new Point((int) bcp[0].x, (int) bcp[0].y);
+				closestDist = bcp[0].distance(mouse);
+			} else if (bcp[1] == null) {
+				// Only 3 candidates: both endpoints and the intersection of the edge and the
+				// line perpendicular to the edge which passes through the cursor
+				List<Point2D.Double> candidatePoints = new ArrayList<>();
+				candidatePoints.add(bcp[0]);
+				candidatePoints.add(bcp[2]);
 
-		// Get the edges in the graph
-		Map<UOPair<GBNode>, List<GBEdge>> em = gui.getContext().getGbEdges();
+				// Find closest point to line using a parametric line
+				Point2D.Double toMouse = new Point2D.Double(mouse.x - bcp[0].x, mouse.y - bcp[0].y);
+				Point2D.Double b0b2 = new Point2D.Double(bcp[2].x - bcp[0].x, bcp[2].y - bcp[0].y);
+				double t = (toMouse.x * b0b2.x + toMouse.y * b0b2.y) / (b0b2.x * b0b2.x + b0b2.y * b0b2.y);
 
-		// Iterate through the edges
-		for (UOPair<GBNode> endpoints : em.keySet()) {
-			// Get set of edges between first and second
-			List<GBEdge> betweenTwo = em.get(endpoints);
+				// Only a candidate if the intersection lies on the line segment
+				if (t > 0 && t < 1) {
+					candidatePoints.add(new Point2D.Double(bcp[0].x + b0b2.x * t, bcp[0].y + b0b2.y * t));
+				}
 
-			// Iterate through edges between the nodes "first" and "second"
-			// For each edge, find the closest distance from the current mouse position to the edge
-			// The Edge Select tool requires this to find the edge closest to the mouse
-			for (GBEdge edge : betweenTwo) {
-				double closestDist;
-				Point closestPoint;
-				if (!edge.isSelfEdge()) {
-					Point2D.Double[] bcp = edge.getBezierPoints();
-					if (bcp[1].x < 0 && bcp[1].y < 0) {
-						// Only the endpoints of the line are stored...
-						Point2D.Double c1 = bcp[0];
-						Point2D.Double c2 = bcp[2];
+				// Determine the closest point among the candidates
+				Point2D.Double closestCandidate = Collections.min(
+					candidatePoints,
+					Comparator.comparingDouble(p -> p.distanceSq(mouse))
+				);
 
-						// Only 3 candidates: both endpoints and the intersection of the edge and the
-						// line perpendicular to the edge which passes through the cursor
-						List<Point2D> candidatePoints = new ArrayList<>();
-						candidatePoints.add(c1);
-						candidatePoints.add(c2);
+				closestDist = closestCandidate.distance(mouse);
+				closestPoint = new Point((int) closestCandidate.x, (int) closestCandidate.y);
+			} else {
+				// To get the closest point on a bezier curve... solve a cubic
+				double a = bcp[0].x;
+				double b = bcp[0].y;
+				double c = bcp[1].x;
+				double d = bcp[1].y;
+				double e = bcp[2].x;
+				double f = bcp[2].y;
+				double x = mouse.x;
+				double y = mouse.y;
 
-						// Find the intersection point
-						Point2D intersection = null;
-						if (c2.x != c1.x && c2.y != c1.y) {
-							// Find closest point to line using a parametric line
-							Point2D.Double c1click = new Point2D.Double(mouse.x - c1.x, mouse.y - c1.y);
-							Point2D.Double c1c2 = new Point2D.Double(c2.x - c1.x, c2.y - c1.y);
-							double dot = c1click.x * c1c2.x + c1click.y * c1c2.y;
-							double t = dot / (c1c2.x * c1c2.x + c1c2.y * c1c2.y);
+				// The coefficients of the cubic
+				double n1 = (a - 2 * c + e) * (a - 2 * c + e) + (b - 2 * d + f) * (b - 2 * d + f);
+				double n2 = -3 * ((a - c) * (a - 2 * c + e) + (b - d) * (b - 2 * d + f));
+				double n3 = a * (3 * a - x + e) - 2 * c * (3 * a - c - x) - e * x +
+					b * (3 * b - y + f) - 2 * d * (3 * b - d - y) - f * y;
+				double n4 = (c - a) * (a - x) + (d - b) * (b - y);
 
-							// Only a candidate if the intersection lies on the line segment
-							if (t > 0 && t < 1) {
-								intersection = new Point2D.Double(c1.x + c1c2.x * t, c1.y + c1c2.y * t);
-							}
-						} else if (c2.x == c1.x) {
-							// If the line happens to be vertical
-							intersection = new Point((int) c1.x, mousePoint.y);
+				// Compute the roots of the equation n1x^3 + n2x^2 + n3x + n4 = 0
+				Complex[] roots = CubicFormula.getRoots(n1, n2, n3, n4);
 
-						} else {
-							// If the line happens to be horizontal
-							intersection = new Point(mousePoint.x, (int) c1.y);
-						}
+				// Temporary holder of the points corresponding to the REAL roots of the cubic
+				List<Point2D.Double> candidatePoints = new ArrayList<>();
 
-						if (intersection != null) {
-							candidatePoints.add(intersection);
-						}
-
-						// Determine the closest point among the candidates
-						Point2D closestCandidate = Collections.min(candidatePoints,
-																   Comparator.comparingDouble(p -> p.distance(mouse)));
-						closestDist = closestCandidate.distance(mouse);
-						closestPoint = new Point((int) closestCandidate.getX(), (int) closestCandidate.getY());
-					} else {
-						// To get the closest point on a bezier curve... solve a cubic
-						double a = bcp[0].x;
-						double b = bcp[0].y;
-						double c = bcp[1].x;
-						double d = bcp[1].y;
-						double e = bcp[2].x;
-						double f = bcp[2].y;
-						double x = mouse.x;
-						double y = mouse.y;
-
-						// The coefficients of the cubic
-						double n1 = (a - 2 * c + e) * (a - 2 * c + e) + (b - 2 * d + f) * (b - 2 * d + f);
-						double n2 = -3 * ((a - c) * (a - 2 * c + e) + (b - d) * (b - 2 * d + f));
-						double n3 = a * (3 * a - x + e) - 2 * c * (3 * a - c - x) - e * x +
-							b * (3 * b - y + f) - 2 * d * (3 * b - d - y) - f * y;
-						double n4 = (c - a) * (a - x) + (d - b) * (b - y);
-
-						// Compute the roots of the equation n1x^3 + n2x^2 + n3x + n4 = 0
-						Complex[] roots = CubicFormula.getRoots(n1, n2, n3, n4);
-
-						// Temporary holder of the points corresponding to the REAL roots of the cubic
-						List<Point2D> candidatePoints = new ArrayList<>();
-
-						// Determine which roots are real; use these values of t to determine
-						// the candidate "closest" points
-						for (Complex rt : roots) {
-							if (rt.isReal() && rt.getReal() >= 0 && rt.getReal() <= 1) {
-								candidatePoints.add(getBezierPoint(bcp, rt.getReal()));
-							}
-						}
-
-						// Make sure to include the endpoints of the bezier curve
-						candidatePoints.add(bcp[0]);
-						candidatePoints.add(bcp[2]);
-
-						// Determine, out of the candidate points, which is the closest
-						Point2D closestCandidate = Collections.min(candidatePoints,
-																   Comparator.comparingDouble(p -> p.distance(mouse)));
-						closestDist = closestCandidate.distance(mouse);
-						closestPoint = new Point((int) closestCandidate.getX(), (int) closestCandidate.getY());
+				// Determine which roots are real; use these values of t to determine
+				// the candidate "closest" points
+				for (Complex rt : roots) {
+					if (rt.isReal() && rt.getReal() > 0 && rt.getReal() < 1) {
+						candidatePoints.add(getBezierPoint(bcp, rt.getReal()));
 					}
-				} else {
-					// Case where edge is a self edge
-					Point2D.Double cen = edge.getArcCenter();
-
-					// Determine closest point on the loop to the cursor
-					double distcen = Point.distance(cen.x, cen.y, mouse.x, mouse.y);
-					double closex = (mouse.x - cen.x) * edge.getRadius() / distcen + cen.x;
-					double closey = (mouse.y - cen.y) * edge.getRadius() / distcen + cen.y;
-					closestPoint = new Point((int) closex, (int) closey);
-					closestDist = Math.abs(distcen - edge.getRadius());
 				}
 
-				// Update the closest edge; once the distance to each edge is computed,
-				// closestEdge will contain the closest edge
-				if (closestDist < minDistance) {
-					minDistance = closestDist;
-					closestEdge = edge;
-					closestEdgePoint = closestPoint;
-				}
+				// Make sure to include the endpoints of the bezier curve
+				candidatePoints.add(bcp[0]);
+				candidatePoints.add(bcp[2]);
+
+				// Determine, out of the candidate points, which is the closest
+				Point2D.Double closestCandidate = Collections.min(
+					candidatePoints,
+					Comparator.comparingDouble(p -> p.distanceSq(mouse))
+				);
+
+				closestDist = closestCandidate.distance(mouse);
+				closestPoint = new Point((int) closestCandidate.x, (int) closestCandidate.y);
 			}
 		}
 
-		// Update the data
-		data.setClosestEdge(closestEdge);
-		data.setClosestEdgePoint(closestEdgePoint);
+		return new Triplet<>(edge, closestPoint, closestDist);
+	}
+
+	/**
+	 * Private helper method for drawing a self edge.
+	 *
+	 * @param e   The self edge.
+	 * @param n   The node of the self edge.
+	 * @param g2d The graphics object to draw with.
+	 */
+	private static void drawSelfEdge(GBEdge e, GBNode n, Graphics2D g2d) {
+		double offsetAngle = e.getAngle();
+
+		Point nodeCenter = n.getNodePanel().getCenter();
+
+		// The radius of n1's circle
+		int n1r = n.getNodePanel().getRadius();
+
+		double centralAngle = Preferences.SELF_EDGE_SUBTENDED_ANGLE;
+		double edgeAngle = Preferences.SELF_EDGE_ARC_ANGLE;
+
+		double edgeRadius = Math.sin(centralAngle / 2) * n1r / Math.sin(edgeAngle / 2);
+		double unitX = Math.cos(offsetAngle);
+		double unitY = Math.sin(offsetAngle);
+		double centralDist = edgeRadius * Math.cos(edgeAngle / 2) + n1r * Math.cos(centralAngle / 2);
+		double edgeCenterX = centralDist * unitX + nodeCenter.x;
+		double edgeCenterY = centralDist * unitY + nodeCenter.y;
+		g2d.drawOval((int) (edgeCenterX - edgeRadius), (int) (edgeCenterY - edgeRadius),
+					 (int) (2 * edgeRadius), (int) (2 * edgeRadius));
+
+		// If the edge is directed, draw the arrow tip
+		if (e.isDirected()) {
+			double toEndX = n1r * unitX * Math.cos(centralAngle / 2) -
+				n1r * unitY * Math.sin(centralAngle / 2);
+			double toEndY = n1r * unitX * Math.sin(centralAngle / 2) +
+				n1r * unitY * Math.cos(centralAngle / 2);
+
+			drawArrowTip(g2d, -toEndX, -toEndY,
+						 new Point((int) toEndX + nodeCenter.x, (int) toEndY + nodeCenter.y), e.getWeight());
+		}
+
+		e.setArcCenter(new Point2D.Double(edgeCenterX, edgeCenterY));
+		e.setRadius(edgeRadius);
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package algorithms;
 
+import graph.Graph;
+import graph.GraphConstraint;
 import graph.components.Node;
 import org.junit.jupiter.api.Test;
 import util.SearchTemplates;
@@ -30,15 +32,19 @@ public class DFSTest {
 
 	@Test
 	public void testConnected() {
-		SearchTemplates.testConnected((start, target) -> fd -> DFS.connected(start, target, fd));
+		SearchTemplates.testConnected(DFS::connected);
 	}
 
 	@Test
 	public void testSearchStartEqualsTarget() {
+		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
+		Graph graph = new Graph(constraints);
 		Node n = new Node(0);
 
-		assertEquals("Path[0]", String.valueOf(DFS.search(n, n, true)));
-		assertEquals("Path[0]", String.valueOf(DFS.search(n, n, false)));
+		graph.addNode(n);
+
+		assertEquals("Path[0]", String.valueOf(DFS.search(graph, n, n, true)));
+		assertEquals("Path[0]", String.valueOf(DFS.search(graph, n, n, false)));
 	}
 
 }

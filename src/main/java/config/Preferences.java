@@ -1,4 +1,4 @@
-package preferences;
+package config;
 
 import java.awt.Color;
 

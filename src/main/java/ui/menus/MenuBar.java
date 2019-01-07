@@ -9,9 +9,11 @@ import actions.file.SaveAs;
 import algorithms.BFS;
 import algorithms.Cycles;
 import algorithms.DFS;
+import algorithms.Kruskal;
+import graph.Graph;
 import graph.components.Node;
 import graph.path.Cycle;
-import keybindings.KeyActions;
+import config.KeyActions;
 import structures.EditorData;
 import tool.Tool;
 import ui.GBFrame;
@@ -68,14 +70,13 @@ public class MenuBar extends JMenuBar {
 	private JMenuItem dfsUndirected;
 	private JMenuItem classify;
 
-	private JMenu path;
-	private JMenuItem dijkstra;
+	private JMenu compute;
+	private JMenuItem shortestPath;
 	private JMenuItem findCycle;
-
+	private JMenuItem minSpanningTree;
 
 	private JMenu generate;
 	private JMenuItem completeGraph;
-	private JMenuItem fromSeed;
 
 	public MenuBar(final GBFrame g) {
 		super();
@@ -192,30 +193,31 @@ public class MenuBar extends JMenuBar {
 		dfsUndirected.setToolTipText("Same as DFS, but ignore the directionality of edges while searching.");
 
 		EditorData editorData = gui.getEditor().getData();
+
 		bfs.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = BFS.exploreAll(selectedNodes, true);
+			Set<Node> traversed = BFS.exploreAll(gui.getContext().getGraph(), selectedNodes, true);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
 
 		dfs.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = DFS.exploreAll(selectedNodes, true);
+			Set<Node> traversed = DFS.exploreAll(gui.getContext().getGraph(), selectedNodes, true);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
 
 		bfsUndirected.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = BFS.exploreAll(selectedNodes, false);
+			Set<Node> traversed = BFS.exploreAll(gui.getContext().getGraph(), selectedNodes, false);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
 
 		dfsUndirected.addActionListener($ -> {
 			Set<Node> selectedNodes = StructureUtils.toNodes(editorData.getSelectedNodes());
-			Set<Node> traversed = DFS.exploreAll(selectedNodes, false);
+			Set<Node> traversed = DFS.exploreAll(gui.getContext().getGraph(), selectedNodes, false);
 			editorData.addHighlights(StructureUtils.toGbNodes(traversed));
 			gui.getEditor().repaint();
 		});
@@ -225,27 +227,40 @@ public class MenuBar extends JMenuBar {
 		search.add(bfsUndirected);
 		search.add(dfsUndirected);
 
-		path = new JMenu("Path");
-		dijkstra = new JMenuItem("Dijkstra");
-		dijkstra.setToolTipText("Perform Dijkstra's shortest path algorithm. After clicking this menu item, click " +
-									"the start and destination nodes in your graph. The shortest path (if any) from " +
-									"the start to the end will be highlighted.");
+		compute = new JMenu("Compute");
+		shortestPath = new JMenuItem("Shortest Path");
+		shortestPath.setToolTipText("Compute the shortest path. After clicking this menu item, click the start and " +
+										"destination nodes in your graph. The shortest path (if any) from the start " +
+										"to the end will be highlighted.");
 		findCycle = new JMenuItem("Find Cycle");
 		findCycle.setToolTipText("Find an arbitrary cycle in the graph. The cycle must follow edge directionality. " +
 									 "If a cycle exists, it will be highlighted.");
+		minSpanningTree = new JMenuItem("Minimum Spanning Tree");
+		minSpanningTree.setToolTipText("Compute a minimum spanning tree of the graph (Kruskal's algorithm). If the " +
+										   "graph has more than one connected component, each component will have " +
+										   "its minimum spanning tree computed.");
 
-		dijkstra.addActionListener(new SwitchToolAction(gui.getContext(), Tool.SHORTEST_PATH));
+		shortestPath.addActionListener(new SwitchToolAction(gui.getContext(), Tool.SHORTEST_PATH));
 		findCycle.addActionListener($ -> {
 			Cycle cycle = Cycles.findCycle(gui.getContext().getGraph());
 			if (cycle != null) {
-				gui.getEditor().getData().addHighlights(StructureUtils.toGbNodes(cycle.getNodes()));
-				gui.getEditor().getData().addHighlights(StructureUtils.toGbEdges(cycle.getEdges()));
+				editorData.addHighlights(StructureUtils.toGbNodes(cycle.getNodes()));
+				editorData.addHighlights(StructureUtils.toGbEdges(cycle.getEdges()));
 				gui.getEditor().repaint();
+			} else {
+				JOptionPane.showMessageDialog(gui, "No cycle exists.", "Find Cycle", JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
+		minSpanningTree.addActionListener($ -> {
+			Graph spanningTree = Kruskal.execute(gui.getContext().getGraph());
+			editorData.addHighlights(StructureUtils.toGbNodes(spanningTree.getNodes()));
+			editorData.addHighlights(StructureUtils.toGbEdges(spanningTree.getEdgeSet()));
+			gui.getEditor().repaint();
+		});
 
-		path.add(dijkstra);
-		path.add(findCycle);
+		compute.add(shortestPath);
+		compute.add(findCycle);
+		compute.add(minSpanningTree);
 
 		classify = new JMenuItem("Classify");
 		generate = new JMenu("Generate");
@@ -254,13 +269,10 @@ public class MenuBar extends JMenuBar {
 		completeGraph.setToolTipText("Generate a complete graph with the prompted number of nodes.");
 		completeGraph.addActionListener($ -> new CompleteGraphDialog(gui));
 
-		fromSeed = new JMenuItem("From Seed");
-
 		generate.add(completeGraph);
-		generate.add(fromSeed);
 
 		graph.add(search);
-		graph.add(path);
+		graph.add(compute);
 		graph.add(classify);
 		graph.add(generate);
 

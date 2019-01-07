@@ -25,12 +25,10 @@ public class BellmanFordTest {
 	@Test
 	public void testInvalidInput() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(3, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {0, 2}}, new boolean[] {false, false}, n, n.length);
 		Node z = new Node();
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -41,13 +39,11 @@ public class BellmanFordTest {
 	@Test
 	public void testNegativeUndirectedEdges() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.MIXED | GraphConstraint.WEIGHTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(9, 0);
 		Edge[] e = TestUtils.newWeightedEdges(new int[][] {{0, 1}, {0, 3}, {1, 2}, {2, 8}, {3, 5}, {4, 3}, {4, 6},
 			{4, 7}, {5, 6}}, new boolean[] {true, true, false, false, false, true, true, false, false}, new double[]
 			{2, 3, -1, 1, 1, 2, 3, -1, 5}, n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -71,13 +67,11 @@ public class BellmanFordTest {
 	@Test
 	public void testNegativeCycle() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.DIRECTED | GraphConstraint.WEIGHTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(9, 0);
 		Edge[] e = TestUtils.newWeightedEdges(new int[][] {{0, 2}, {2, 3}, {3, 4}, {3, 5}, {4, 2}, {4, 6}, {5, 7},
 			{6, 1}, {6, 8}, {7, 6}, {8, 1}, {8, 5}}, TestUtils.booleans(12, true), new double[] {2, 3, -8, 1, 4, 2,
 			1, 5, 1, -4, 6, 3}, n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -94,11 +88,9 @@ public class BellmanFordTest {
 	@Test
 	public void testNoConnectingPath() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(5, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {1, 2}, {3, 4}}, TestUtils.booleans(3, false), n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -109,10 +101,8 @@ public class BellmanFordTest {
 	@Test
 	public void testStartEqualsDest() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(5, 0);
-
 		graph.addNodes(n);
 
 		assertEquals("Path[2]", String.valueOf(BellmanFord.execute(graph, n[2], n[2])));
@@ -120,32 +110,32 @@ public class BellmanFordTest {
 
 	@Test
 	public void testSSUU() {
-		ShortestPathTemplates.testSSUU(graph -> (start, dest) -> BellmanFord.execute(graph, start, dest));
+		ShortestPathTemplates.testSSUU(BellmanFord::execute);
 	}
 
 	@Test
 	public void testSSUD() {
-		ShortestPathTemplates.testSSUD(graph -> (start, dest) -> BellmanFord.execute(graph, start, dest));
+		ShortestPathTemplates.testSSUD(BellmanFord::execute);
 	}
 
 	@Test
 	public void testSSUM() {
-		ShortestPathTemplates.testSSUM(graph -> (start, dest) -> BellmanFord.execute(graph, start, dest));
+		ShortestPathTemplates.testSSUM(BellmanFord::execute);
 	}
 
 	@Test
 	public void testMSUU() {
-		ShortestPathTemplates.testMSUU(graph -> (start, dest) -> BellmanFord.execute(graph, start, dest));
+		ShortestPathTemplates.testMSUU(BellmanFord::execute);
 	}
 
 	@Test
 	public void testMSUD() {
-		ShortestPathTemplates.testMSUD(graph -> (start, dest) -> BellmanFord.execute(graph, start, dest));
+		ShortestPathTemplates.testMSUD(BellmanFord::execute);
 	}
 
 	@Test
 	public void testMSUM() {
-		ShortestPathTemplates.testMSUM(graph -> (start, dest) -> BellmanFord.execute(graph, start, dest));
+		ShortestPathTemplates.testMSUM(BellmanFord::execute);
 	}
 
 }

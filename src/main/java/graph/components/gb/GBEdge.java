@@ -10,7 +10,7 @@ import util.FileUtils;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
-import java.util.Arrays;
+import java.util.stream.IntStream;
 
 /**
  * A GBEdge is a "GraphBuilder Edge". It represents a edge in a graph which is
@@ -63,7 +63,7 @@ public class GBEdge extends GBComponent {
 		this.weight = DEFAULT_WEIGHT;
 
 		bezierPoints = new Point2D.Double[3];
-		Arrays.fill(bezierPoints, new Point2D.Double());
+		IntStream.range(0, 3).forEach(i -> bezierPoints[i] = new Point2D.Double());
 
 		arcCenter = new Point2D.Double();
 	}
@@ -153,17 +153,37 @@ public class GBEdge extends GBComponent {
 	 */
 	public void setBezierPoints(double startX, double startY, double contrX, double contrY, double endX, double endY) {
 		bezierPoints[0].setLocation(startX, startY);
-		bezierPoints[1].setLocation(contrX, contrY);
+		if (bezierPoints[1] == null) {
+			bezierPoints[1] = new Point2D.Double(contrX, contrY);
+		} else {
+			bezierPoints[1].setLocation(contrX, contrY);
+		}
+		bezierPoints[2].setLocation(endX, endY);
+	}
+
+	/**
+	 * Set the endpoints of the edge's line. This is a quadratic bezier
+	 * without a control point.
+	 *
+	 * @param startX The x-coordinate of the point at t = 0.
+	 * @param startY The y-coordinate of the point at t = 0.
+	 * @param endX   The x-coordinate of the point at t = 1.
+	 * @param endY   The y-coordinate of the point at t = 1.
+	 */
+	public void setLineEnds(double startX, double startY, double endX, double endY) {
+		bezierPoints[0].setLocation(startX, startY);
+		bezierPoints[1] = null;
 		bezierPoints[2].setLocation(endX, endY);
 	}
 
 	@Override
 	public String toString() {
-		GBNode n1 = endpoints.getFirst();
-		GBNode n2 = endpoints.getSecond();
-		return String.format("GBEdge[id=%d,n1=%d,n2=%d,color=%s,"
-								 + "weight=%d,directed=%s]", this.getId(), n1.getId(),
-							 n2.getId(), color, weight, edge.isDirected());
+		return String.format("GBEdge[%s,id=%d,col=%s,wgt=%d]", edge, edge.getId(), color, weight);
+	}
+
+	@Override
+	public int getId() {
+		return edge.getId();
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
 import org.javatuples.Pair;
 import ui.GBFrame;
+import util.StructureUtils;
 
 import java.awt.*;
 import java.util.HashSet;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
  *
  * @author Brian Yao
  */
-public class GraphDisplayFactory {
+public final class GraphDisplayFactory {
 
 	private static final double SIDE_LENGTH = 100;
 	private static final double OFFSET = 0.01;
@@ -35,7 +36,6 @@ public class GraphDisplayFactory {
 		Point center = gui.getEditorCenter();
 
 		Set<GBNode> gbNodes = new HashSet<>();
-		Set<GBEdge> gbEdges = new HashSet<>();
 
 		int k = 0;
 		double centralAngle = 2 * Math.PI / graph.getNodes().size();
@@ -52,9 +52,8 @@ public class GraphDisplayFactory {
 			k++;
 		}
 
-		graph.getEdges().values().forEach(list -> gbEdges.addAll(
-			list.stream().map(GBEdge::new).collect(Collectors.toList()))
-		);
+		Set<GBEdge> gbEdges = new HashSet<>();
+		graph.getEdgeSet().forEach(edge -> gbEdges.add(new GBEdge(edge)));
 
 		return new Pair<>(gbNodes, gbEdges);
 	}

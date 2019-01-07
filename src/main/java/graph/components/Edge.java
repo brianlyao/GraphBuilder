@@ -110,26 +110,6 @@ public class Edge extends GraphComponent {
 	}
 
 	/**
-	 * Adds this edge to each endpoint's metadata.
-	 */
-	public void addSelfToNodeData() {
-		this.getFirstEnd().addEdge(this);
-		if (!this.isSelfEdge()) {
-			this.getSecondEnd().addEdge(this);
-		}
-	}
-
-	/**
-	 * Removes this edge from each endpoint's metadata.
-	 */
-	public void removeSelfFromNodeData() {
-		this.getFirstEnd().removeEdge(this);
-		if (!this.isSelfEdge()) {
-			this.getSecondEnd().removeEdge(this);
-		}
-	}
-
-	/**
 	 * Gets the numeric weight assigned to this edge. If this edge is not an
 	 * instance of WeightedEdge, then the weight is 1.0 by default.
 	 *
@@ -145,7 +125,8 @@ public class Edge extends GraphComponent {
 
 	@Override
 	public String toString() {
-		return String.format("%s(%d,%d)", directed ? 'd' : 'u', this.getFirstEnd().getId(), this.getSecondEnd().getId());
+		return String.format("%s(%d,%d)", directed ? 'd' : 'u',
+							 this.getFirstEnd().getId(), this.getSecondEnd().getId());
 	}
 
 }

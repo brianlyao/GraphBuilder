@@ -3,6 +3,7 @@ package graph.components;
 import org.junit.jupiter.api.Test;
 import structures.OrderedPair;
 import structures.UOPair;
+import util.TestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,30 +49,6 @@ public class EdgeTest {
 		Node node3 = new Node();
 		assertFalse(edge.hasEndpoint(node3));
 		assertThrows(IllegalArgumentException.class, () -> edge.getOtherEndpoint(node3));
-	}
-
-	@Test
-	public void testNodeMetadata() {
-		Node node1 = new Node();
-		Node node2 = new Node();
-		Edge edge = new Edge(node1, node2, false);
-
-		assertFalse(node1.hasEdge(edge));
-		assertFalse(node2.hasEdge(edge));
-
-		assertThrows(IllegalArgumentException.class, edge::removeSelfFromNodeData);
-
-		edge.addSelfToNodeData();
-
-		assertTrue(node1.hasEdge(edge));
-		assertTrue(node2.hasEdge(edge));
-
-		assertThrows(IllegalArgumentException.class, edge::addSelfToNodeData);
-
-		edge.removeSelfFromNodeData();
-
-		assertFalse(node1.hasEdge(edge));
-		assertFalse(node2.hasEdge(edge));
 	}
 
 }

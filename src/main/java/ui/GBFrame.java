@@ -3,7 +3,7 @@ package ui;
 import context.GBContext;
 import graph.Graph;
 import graph.GraphConstraint;
-import keybindings.KeyActions;
+import config.KeyActions;
 import logger.Logger;
 import lombok.Getter;
 import structures.OrderedPair;

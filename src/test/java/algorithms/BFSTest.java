@@ -1,5 +1,7 @@
 package algorithms;
 
+import graph.Graph;
+import graph.GraphConstraint;
 import graph.components.Node;
 import org.junit.jupiter.api.Test;
 import util.SearchTemplates;
@@ -31,47 +33,51 @@ public class BFSTest {
 
 	@Test
 	public void testConnected() {
-		SearchTemplates.testConnected((start, target) -> fd -> BFS.connected(start, target, fd));
+		SearchTemplates.testConnected(BFS::connected);
 	}
 
 	@Test
 	public void testSearchStartEqualsTarget() {
+		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
+		Graph graph = new Graph(constraints);
 		Node n = new Node(0);
 
-		assertEquals("Path[0]", String.valueOf(BFS.search(n, n, true)));
-		assertEquals("Path[0]", String.valueOf(BFS.search(n, n, false)));
+		graph.addNode(n);
+
+		assertEquals("Path[0]", String.valueOf(BFS.search(graph, n, n, true)));
+		assertEquals("Path[0]", String.valueOf(BFS.search(graph, n, n, false)));
 	}
 
 	// Shortest path in unweighted graphs
 
 	@Test
 	public void testSearchSSUU() {
-		ShortestPathTemplates.testSSUU(graph -> (start, dest) -> BFS.search(start, dest, true));
+		ShortestPathTemplates.testSSUU((graph, start, dest) -> BFS.search(graph, start, dest, true));
 	}
 
 	@Test
 	public void testSearchSSUD() {
-		ShortestPathTemplates.testSSUD(graph -> (start, dest) -> BFS.search(start, dest, true));
+		ShortestPathTemplates.testSSUD((graph, start, dest) -> BFS.search(graph, start, dest, true));
 	}
 
 	@Test
 	public void testSearchSSUM() {
-		ShortestPathTemplates.testSSUM(graph -> (start, dest) -> BFS.search(start, dest, true));
+		ShortestPathTemplates.testSSUM((graph, start, dest) -> BFS.search(graph, start, dest, true));
 	}
 
 	@Test
 	public void testSearchMSUU() {
-		ShortestPathTemplates.testMSUU(graph -> (start, dest) -> BFS.search(start, dest, true));
+		ShortestPathTemplates.testMSUU((graph, start, dest) -> BFS.search(graph, start, dest, true));
 	}
 
 	@Test
 	public void testSearchMSUD() {
-		ShortestPathTemplates.testMSUD(graph -> (start, dest) -> BFS.search(start, dest, true));
+		ShortestPathTemplates.testMSUD((graph, start, dest) -> BFS.search(graph, start, dest, true));
 	}
 
 	@Test
 	public void testSearchMSUM() {
-		ShortestPathTemplates.testMSUM(graph -> (start, dest) -> BFS.search(start, dest, true));
+		ShortestPathTemplates.testMSUM((graph, start, dest) -> BFS.search(graph, start, dest, true));
 	}
 
 }

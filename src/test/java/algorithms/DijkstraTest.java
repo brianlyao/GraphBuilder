@@ -80,32 +80,32 @@ public class DijkstraTest {
 
 	@Test
 	public void testSSUU() {
-		ShortestPathTemplates.testSSUU(graph -> (start, dest) -> Dijkstra.execute(graph, start, dest));
+		ShortestPathTemplates.testSSUU(Dijkstra::execute);
 	}
 
 	@Test
 	public void testSSUD() {
-		ShortestPathTemplates.testSSUD(graph -> (start, dest) -> Dijkstra.execute(graph, start, dest));
+		ShortestPathTemplates.testSSUD(Dijkstra::execute);
 	}
 
 	@Test
 	public void testSSUM() {
-		ShortestPathTemplates.testSSUM(graph -> (start, dest) -> Dijkstra.execute(graph, start, dest));
+		ShortestPathTemplates.testSSUM(Dijkstra::execute);
 	}
 
 	@Test
 	public void testMSUU() {
-		ShortestPathTemplates.testMSUU(graph -> (start, dest) -> Dijkstra.execute(graph, start, dest));
+		ShortestPathTemplates.testMSUU(Dijkstra::execute);
 	}
 
 	@Test
 	public void testMSUD() {
-		ShortestPathTemplates.testMSUD(graph -> (start, dest) -> Dijkstra.execute(graph, start, dest));
+		ShortestPathTemplates.testMSUD(Dijkstra::execute);
 	}
 
 	@Test
 	public void testMSUM() {
-		ShortestPathTemplates.testMSUM(graph -> (start, dest) -> Dijkstra.execute(graph, start, dest));
+		ShortestPathTemplates.testMSUM(Dijkstra::execute);
 	}
 
 }

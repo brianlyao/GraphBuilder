@@ -20,7 +20,6 @@ public class AcyclicTest {
 	@Test
 	public void testEmptyGraph() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.UNDIRECTED;
-
 		Graph graph = new Graph(constraints);
 
 		assertTrue(Cycles.isAcyclic(graph));
@@ -29,7 +28,6 @@ public class AcyclicTest {
 	@Test
 	public void testNullGraph() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.UNDIRECTED;
-
 		Graph graph = new Graph(constraints);
 		graph.addNodes(TestUtils.newNodes(10, 0));
 
@@ -39,7 +37,6 @@ public class AcyclicTest {
 	@Test
 	public void testSelfEdge() {
 		int constraints = GraphConstraint.MULTIGRAPH | GraphConstraint.UNWEIGHTED | GraphConstraint.MIXED;
-
 		Graph graph = new Graph(constraints);
 		Node n = new Node(0);
 		Edge e = new Edge(1, n, n, false);
@@ -56,14 +53,33 @@ public class AcyclicTest {
 	}
 
 	@Test
+	public void testDisconnected() {
+		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
+		Graph graph = new Graph(constraints);
+		Node[] n = TestUtils.newNodes(8, 0);
+		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {0, 3}, {1, 3}, {2, 5}, {2, 7}, {4, 5}, {4, 6}, {5, 7}},
+									  TestUtils.booleans(8, false), n, n.length);
+		graph.addNodes(n);
+		assertTrue(graph.addEdges(e));
+
+		assertFalse(Cycles.isAcyclic(graph));
+
+		graph.removeEdge(e[3]);
+
+		assertFalse(Cycles.isAcyclic(graph));
+
+		graph.removeEdge(e[0]);
+
+		assertTrue(Cycles.isAcyclic(graph));
+	}
+
+	@Test
 	public void testSmallSimpleUndirected() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.UNDIRECTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(3, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {1, 2}, {0, 2}},
 									  TestUtils.booleans(3, false), n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -77,7 +93,6 @@ public class AcyclicTest {
 	@Test
 	public void testSmallSimpleDirected() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.DIRECTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(3, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {1, 2}, {2, 0}},
@@ -113,12 +128,10 @@ public class AcyclicTest {
 	@Test
 	public void testSmallSimpleMixed() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.MIXED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(4, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {2, 1}, {2, 3}, {0, 3}},
 									  new boolean[] {true, true, false, false}, n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -160,12 +173,10 @@ public class AcyclicTest {
 	@Test
 	public void testMediumSimpleUndirected() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.UNDIRECTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(11, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {1, 2}, {2, 3}, {1, 5}, {4, 5}, {5, 8}, {5, 6}, {6, 9},
 			{6, 7}, {7, 10}}, TestUtils.booleans(10, false), n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -206,12 +217,10 @@ public class AcyclicTest {
 	@Test
 	public void testMediumSimpleDirected() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.DIRECTED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(11, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{0, 1}, {1, 2}, {2, 3}, {5, 1}, {4, 5}, {5, 8}, {6, 5}, {6, 9},
 			{6, 7}, {7, 10}}, TestUtils.booleans(10, true), n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 
@@ -243,14 +252,12 @@ public class AcyclicTest {
 	@Test
 	public void testMediumSimpleMixed() {
 		int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNWEIGHTED | GraphConstraint.MIXED;
-
 		Graph graph = new Graph(constraints);
 		Node[] n = TestUtils.newNodes(12, 0);
 		Edge[] e = TestUtils.newEdges(new int[][] {{1, 0}, {1, 2}, {3, 2}, {4, 3}, {5, 4}, {5, 6}, {6, 7}, {5, 0},
 										  {3, 8}, {2, 11}, {8, 11}, {1, 9}, {5, 7}, {9, 10}, {11, 10}},
 									  new boolean[] {true, false, true, true, true, false, true, true, true, false,
 										  false, false, true, true, true}, n, n.length);
-
 		graph.addNodes(n);
 		assertTrue(graph.addEdges(e));
 

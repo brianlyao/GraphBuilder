@@ -191,7 +191,8 @@ public class GBContext {
 	 * Add an edge to the graph. Insert the edge at the provided position.
 	 *
 	 * @param e        The edge we want to add to the graph.
-	 * @param position The position (from the left) of the edge relative to other edges sharing e's endpoints.
+	 * @param position The position (from the left) of the edge relative to
+	 *                 other edges sharing e's endpoints.
 	 */
 	public void addEdge(GBEdge e, int position) {
 		idMap.put(e.getId(), e);
@@ -389,6 +390,13 @@ public class GBContext {
 	 */
 	public Map<UOPair<GBNode>, List<GBEdge>> getGbEdges() {
 		return StructureUtils.toGbEdges(graph.getEdges());
+	}
+
+	/**
+	 * @return a collection of the GBEdges in this context.
+	 */
+	public Collection<GBEdge> getGbEdgeSet() {
+		return StructureUtils.toGbEdges(graph.getEdgeSet());
 	}
 
 	/**
