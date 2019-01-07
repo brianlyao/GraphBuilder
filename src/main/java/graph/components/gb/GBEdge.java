@@ -22,6 +22,7 @@ public class GBEdge extends GBComponent {
 
 	public static final Color DEFAULT_COLOR = Color.BLACK;
 	public static final int DEFAULT_WEIGHT = 2;
+	private static final String DEFAULT_TEXT = "";
 
 	@Getter @Setter
 	private Color color; // Edge color
@@ -61,6 +62,7 @@ public class GBEdge extends GBComponent {
 		super(context);
 		this.color = DEFAULT_COLOR;
 		this.weight = DEFAULT_WEIGHT;
+		this.text = DEFAULT_TEXT;
 
 		bezierPoints = new Point2D.Double[3];
 		IntStream.range(0, 3).forEach(i -> bezierPoints[i] = new Point2D.Double());
@@ -72,16 +74,17 @@ public class GBEdge extends GBComponent {
 	 * Create a new GBEdge. The underlying Edge is newly created, with the
 	 * provided endpoints.
 	 *
+	 * @param id       The ID of the new underlying edge.
 	 * @param node1    The first endpoint.
 	 * @param node2    The second endpoint.
 	 * @param directed Whether the edge is directed.
 	 */
-	public GBEdge(GBNode node1, GBNode node2, boolean directed) {
+	public GBEdge(int id, GBNode node1, GBNode node2, boolean directed) {
 		this(node1.getContext());
 		if (node1.getContext() != node2.getContext()) {
 			throw new IllegalArgumentException("Edge endpoints must belong to the same context.");
 		}
-		this.edge = new Edge(node1.getNode(), node2.getNode(), directed);
+		this.edge = new Edge(id, node1.getNode(), node2.getNode(), directed);
 		this.edge.setGbEdge(this);
 		this.endpoints = new OrderedPair<>(node1, node2);
 	}
@@ -190,7 +193,7 @@ public class GBEdge extends GBComponent {
 	public String toStorageString() {
 		GBNode n1 = endpoints.getFirst();
 		GBNode n2 = endpoints.getSecond();
-		return String.format("%s%d,%d,%d,%d,%d,%d,%s,%s", FileUtils.EDGE_PREFIX, getId(), n1.getId(),
+		return String.format("%s%d,%d,%d,%d,%d,%d,%s,%s", FileUtils.EDGE_PREFIX, this.getId(), n1.getId(),
 							 n2.getId(), color.getRGB(), weight, edge.isDirected() ? 1 : 0, text, angle);
 	}
 

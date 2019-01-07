@@ -7,7 +7,6 @@ import graph.components.WeightedEdge;
 import graph.components.display.NodePanel;
 import graph.components.gb.GBEdge;
 import graph.components.gb.GBNode;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
@@ -30,8 +29,7 @@ public class TestUtils {
 	public static Node[] newNodes(int numNodes, int startId) {
 		Node[] nodes = new Node[numNodes];
 		for (int i = 0; i < numNodes; i++) {
-			nodes[i] = new Node();
-			nodes[i].setId(startId + i);
+			nodes[i] = new Node(startId + i);
 		}
 		return nodes;
 	}
@@ -54,8 +52,7 @@ public class TestUtils {
 	public static Edge[] newEdges(int[][] indexPairs, boolean[] directed, Node[] nodes, int startId) {
 		Edge[] edges = new Edge[indexPairs.length];
 		for (int i = 0 ; i < edges.length ; i++) {
-			edges[i] = new Edge(nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i]);
-			edges[i].setId(startId + i);
+			edges[i] = new Edge(startId + i, nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i]);
 		}
 		return edges;
 	}
@@ -77,8 +74,8 @@ public class TestUtils {
 										  Node[] nodes, int startId) {
 		Edge[] edges = new Edge[indexPairs.length];
 		for (int i = 0 ; i < edges.length ; i++) {
-			edges[i] = new WeightedEdge(nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i], weights[i]);
-			edges[i].setId(startId + i);
+			edges[i] = new WeightedEdge(startId + i, nodes[indexPairs[i][0]], nodes[indexPairs[i][1]], directed[i],
+										weights[i]);
 		}
 		return edges;
 	}
@@ -116,8 +113,7 @@ public class TestUtils {
 	public static GBEdge[] newGbEdges(int[][] indexPairs, boolean[] directed, GBNode[] gbNodes, int startId) {
 		GBEdge[] gbEdges = new GBEdge[indexPairs.length];
 		for (int i = 0 ; i < gbEdges.length ; i++) {
-			gbEdges[i] = new GBEdge(gbNodes[indexPairs[i][0]], gbNodes[indexPairs[i][1]], directed[i]);
-			gbEdges[i].setId(startId + i);
+			gbEdges[i] = new GBEdge(startId + i, gbNodes[indexPairs[i][0]], gbNodes[indexPairs[i][1]], directed[i]);
 		}
 		return gbEdges;
 	}

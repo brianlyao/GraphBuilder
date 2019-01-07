@@ -99,9 +99,7 @@ public class FileLoader {
 		panel.setBorderColor(borderColor);
 		panel.setTextColor(textColor);
 
-		GBNode loadedNode = new GBNode(new Node(), context, panel);
-		loadedNode.setId(id);
-		return loadedNode;
+		return new GBNode(new Node(id), context, panel);
 	}
 
 	/**
@@ -125,14 +123,13 @@ public class FileLoader {
 		GBNode node1 = (GBNode) context.getFromId(idnode1);
 		GBNode node2 = (GBNode) context.getFromId(idnode2);
 
-		GBEdge loadedEdge = new GBEdge(node1, node2, directed);
+		GBEdge loadedEdge = new GBEdge(id, node1, node2, directed);
 		if (idnode1 == idnode2) {
 			loadedEdge.setAngle(Double.parseDouble(vals[7]));
 		}
 		loadedEdge.setColor(color);
 		loadedEdge.setWeight(weight);
 		loadedEdge.setText(text);
-		loadedEdge.setId(id);
 
 		return loadedEdge;
 	}

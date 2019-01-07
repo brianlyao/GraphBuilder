@@ -82,8 +82,8 @@ public class Clipboard {
 		Point centerOfMass = CoordinateUtils.centerOfMass(copiedNodes);
 		posFromCenterOfMass = copiedNodes.stream().collect(Collectors.toMap(
 			Function.identity(),
-			node -> new OrderedPair<>(node.getNodePanel().getXCoord() - centerOfMass.x,
-									  node.getNodePanel().getYCoord() - centerOfMass.y)
+			node -> new OrderedPair<>(node.getPanel().getXCoord() - centerOfMass.x,
+									  node.getPanel().getYCoord() - centerOfMass.y)
 		));
 	}
 

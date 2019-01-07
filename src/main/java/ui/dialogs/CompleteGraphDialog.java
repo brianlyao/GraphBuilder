@@ -1,10 +1,11 @@
 package ui.dialogs;
 
-import actions.GenerateRadialGraphAction;
+import actions.AddRadialGraphAction;
 import graph.Graph;
 import graph.GraphConstraint;
 import graph.GraphFactory;
 import graph.components.gb.GBGraph;
+import org.javatuples.Pair;
 import ui.GBFrame;
 
 import javax.swing.*;
@@ -20,8 +21,6 @@ public class CompleteGraphDialog extends JDialog {
 
 	private static final long serialVersionUID = 4902159817122953301L;
 
-	private final JPanel contentPanel = new JPanel();
-
 	/**
 	 * Create the dialog.
 	 */
@@ -35,6 +34,8 @@ public class CompleteGraphDialog extends JDialog {
 
 		setSize(153, 122);
 		getContentPane().setLayout(new BorderLayout());
+
+		JPanel contentPanel = new JPanel();
 		contentPanel.setLayout(new FlowLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -54,11 +55,14 @@ public class CompleteGraphDialog extends JDialog {
 
 		JButton okButton = new JButton("OK");
 		okButton.addActionListener($ -> {
-			int constraints = GraphConstraint.SIMPLE | GraphConstraint.UNDIRECTED | GraphConstraint.UNWEIGHTED;
-			Graph completeGraph = GraphFactory.completeGraph((int) spinner.getValue(), constraints);
-			GenerateRadialGraphAction genAction = new GenerateRadialGraphAction(new GBGraph(g.getContext(), completeGraph));
+			Pair<Graph, Integer> result = GraphFactory.completeGraph((int) spinner.getValue(),
+																	 g.getContext().getNextId());
+			g.getContext().setNextId(result.getValue1());
+
+			AddRadialGraphAction genAction = new AddRadialGraphAction(new GBGraph(g.getContext(), result.getValue0()));
 			genAction.perform();
 			g.getContext().pushReversibleAction(genAction, true, false);
+
 			dispose();
 		});
 

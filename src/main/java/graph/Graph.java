@@ -5,6 +5,8 @@ import graph.components.Node;
 import lombok.Getter;
 import structures.AdjListData;
 import structures.UOPair;
+import util.GraphUtils;
+import util.StructureUtils;
 
 import java.util.*;
 import java.util.function.Function;
@@ -387,6 +389,11 @@ public class Graph {
 
 		Graph other = (Graph) o;
 		return nodes.equals(other.nodes) && this.getEdgeSet().equals(other.getEdgeSet());
+	}
+
+	@Override
+	public String toString() {
+		return nodes.toString() + '\n' + this.getEdgeSet().toString();
 	}
 
 	// Private methods

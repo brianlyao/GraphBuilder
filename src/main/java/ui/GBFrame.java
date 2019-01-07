@@ -158,7 +158,7 @@ public class GBFrame extends JFrame {
 		updateByConstraint();
 
 		// Add all node panels to the editor panel
-		context.getGbNodes().forEach(gn -> editor.add(gn.getNodePanel()));
+		context.getGbNodes().forEach(gn -> editor.add(gn.getPanel()));
 
 		// Update GBFrame title
 		setTitle(FileUtils.getGuiTitle(this));

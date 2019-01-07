@@ -44,7 +44,7 @@ public class GBNodeTest {
 		GBNode gbNode = new GBNode(node, mockedContext, np);
 
 		assertEquals(node, gbNode.getNode());
-		assertEquals(np, gbNode.getNodePanel());
+		assertEquals(np, gbNode.getPanel());
 
 		// Initialization of GBNode should set some NodePanel data
 		assertEquals(gbNode, np.getGbNode());
@@ -56,11 +56,11 @@ public class GBNodeTest {
 		Node node = new Node();
 		GBNode gbNode = new GBNode(node, mockedContext, np);
 
-		GBNode copy = new GBNode(gbNode);
+		GBNode copy = new GBNode(0, gbNode);
 
 		assertNotEquals(node, copy.getNode());
 		assertEquals(mockedContext, copy.getContext());
-		assertNotEquals(np, copy.getNodePanel());
+		assertNotEquals(np, copy.getPanel());
 	}
 
 }

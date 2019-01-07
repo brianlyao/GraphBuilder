@@ -94,9 +94,9 @@ public class Duplicate extends ReversibleAction {
 
 		// Add the new nodes and edges to the context
 		for (GBNode oldNode : nodesToDuplicate) {
-			Point oldLocation = oldNode.getNodePanel().getCoords();
+			Point oldLocation = oldNode.getPanel().getCoords();
 			GBNode newNode = oldToNew.get(oldNode);
-			newNode.getNodePanel().setCoords(oldLocation.x + diffX, oldLocation.y + diffY);
+			newNode.getPanel().setCoords(oldLocation.x + diffX, oldLocation.y + diffY);
 			this.getContext().addNode(newNode);
 		}
 

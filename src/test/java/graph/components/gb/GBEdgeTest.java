@@ -48,7 +48,7 @@ public class GBEdgeTest {
 
 	@Test
 	public void testInitialization() {
-		GBEdge gbEdge1 = new GBEdge(gbNodes[0], gbNodes[1], true);
+		GBEdge gbEdge1 = new GBEdge(0, gbNodes[0], gbNodes[1], true);
 
 		assertEquals(gbEdge1, gbEdge1.getEdge().getGbEdge());
 		assertEquals(gbNodes[0], gbEdge1.getFirstEnd());
@@ -68,13 +68,13 @@ public class GBEdgeTest {
 		assertEquals(gbNodes[1], gbEdge2.getSecondEnd());
 		assertTrue(gbEdge2.isDirected());
 
-		assertThrows(IllegalArgumentException.class, () -> new GBEdge(gbNodes[0], gbNodes[2], false));
+		assertThrows(IllegalArgumentException.class, () -> new GBEdge(0, gbNodes[0], gbNodes[2], false));
 		assertThrows(IllegalArgumentException.class, () -> new GBEdge(new Edge(nodes[1], nodes[2], true)));
 	}
 
 	@Test
 	public void testInstanceMethods() {
-		GBEdge gbEdge = new GBEdge(gbNodes[0], gbNodes[1], true);
+		GBEdge gbEdge = new GBEdge(0, gbNodes[0], gbNodes[1], true);
 
 		assertEquals(new UOPair<>(gbNodes[0], gbNodes[1]), gbEdge.getUoEndpoints());
 	}

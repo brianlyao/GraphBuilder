@@ -45,6 +45,7 @@ public abstract class GBComponent extends GraphComponent {
 	/**
 	 * @return The ID of the underlying graph component.
 	 */
+	@Override
 	public abstract int getId();
 
 	/**

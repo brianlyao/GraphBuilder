@@ -76,7 +76,7 @@ public class CoordinateUtils {
 		int xSum = 0;
 		int ySum = 0;
 		for (GBNode node : nodes) {
-			Point center = node.getNodePanel().getCenter();
+			Point center = node.getPanel().getCenter();
 			xSum += center.x;
 			ySum += center.y;
 		}

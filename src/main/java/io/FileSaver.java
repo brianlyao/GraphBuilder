@@ -34,10 +34,8 @@ public class FileSaver {
 			PrintWriter writer = new PrintWriter(target);
 			writeln(writer, String.valueOf(context.getNextId())); // Write id pool
 			writeln(writer, String.valueOf(context.getGraph().getConstraints())); // Write graph constraints
-			context.getGraph().getNodes().forEach(node -> writeln(writer, node.getGbNode().toStorageString()));
-			context.getGraph().getEdgeSet().forEach(
-				edge -> writeln(writer, edge.getGbEdge().toStorageString())
-			);
+			context.getGbNodes().forEach(gbNode -> writeln(writer, gbNode.toStorageString()));
+			context.getGbEdgeSet().forEach(gbEdge -> writeln(writer, gbEdge.toStorageString()));
 			writer.close();
 
 			// Update the context to indicate it is saved

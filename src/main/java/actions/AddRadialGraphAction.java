@@ -17,7 +17,7 @@ import java.util.Set;
  *
  * @author Brian Yao
  */
-public class GenerateRadialGraphAction extends ReversibleAction {
+public class AddRadialGraphAction extends ReversibleAction {
 
 	private static final long serialVersionUID = 8152429205865815337L;
 
@@ -29,7 +29,7 @@ public class GenerateRadialGraphAction extends ReversibleAction {
 	 *
 	 * @param graph The graph to add.
 	 */
-	public GenerateRadialGraphAction(GBGraph graph) {
+	public AddRadialGraphAction(GBGraph graph) {
 		super(graph.getContext());
 		generatedComponents = GraphDisplayFactory.generateRadialNodePanels(graph.getContext().getGUI(), graph);
 	}

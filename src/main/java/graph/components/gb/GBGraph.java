@@ -29,14 +29,16 @@ public class GBGraph extends Graph {
 	}
 
 	/**
-	 * Essentially a copy constructor. Copies the given graph and the copy is
-	 * attached to the given context.
+	 * Essentially a copy constructor. Adds all components of the
+	 * graph
 	 *
 	 * @param context The context this copy of the graph belongs to.
 	 * @param graph   The graph to copy.
 	 */
 	public GBGraph(GBContext context, Graph graph) {
-		super(graph);
+		super(graph.getConstraints());
+		this.addNodes(graph.getNodes());
+		this.addEdges(graph.getEdgeSet());
 		this.context = context;
 	}
 

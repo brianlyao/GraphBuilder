@@ -137,7 +137,7 @@ public class GBContext {
 		// Add to the editor panel
 		if (gui != null) {
 			Editor editor = gui.getEditor();
-			editor.add(n.getNodePanel());
+			editor.add(n.getPanel());
 			editor.repaint();
 			editor.revalidate();
 		}
@@ -179,7 +179,7 @@ public class GBContext {
 
 			// Revalidate the editor panel after removing the panel
 			Editor editor = gui.getEditor();
-			editor.remove(n.getNodePanel());
+			editor.remove(n.getPanel());
 			editor.repaint();
 			editor.revalidate();
 		}

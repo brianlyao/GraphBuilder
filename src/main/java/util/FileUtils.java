@@ -72,7 +72,7 @@ public class FileUtils {
 			GBContext newContext = FileLoader.loadGraph(toOpen);
 			gui.updateContext(newContext);
 			for (GBNode n : newContext.getGbNodes()) {
-				gui.getEditor().add(n.getNodePanel());
+				gui.getEditor().add(n.getPanel());
 			}
 			gui.getEditor().repaint();
 			gui.getEditor().revalidate();

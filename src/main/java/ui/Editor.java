@@ -252,7 +252,7 @@ public class Editor extends JPanel {
 
 		// Explicitly set the position of the nodes; this allows the pane to be scrollable while
 		// retaining the position of the circles relative to the top left corner of the editor panel
-		this.getContext().getGbNodes().forEach(node -> node.getNodePanel().enforceLocation());
+		this.getContext().getGbNodes().forEach(node -> node.getPanel().enforceLocation());
 
 		// Set anti-aliasing on for smoother appearance
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -355,9 +355,9 @@ public class Editor extends JPanel {
 				int weight = gui.getEdgeOptionsBar().getCurrentLineWeight();
 				g2d.setStroke(new BasicStroke(weight));
 				g2d.setColor(Preferences.PREVIEW_COLOR);
-				Point center = edgeBasePoint.getNodePanel().getLocation();
-				center.x += edgeBasePoint.getNodePanel().getRadius();
-				center.y += edgeBasePoint.getNodePanel().getRadius();
+				Point center = edgeBasePoint.getPanel().getLocation();
+				center.x += edgeBasePoint.getPanel().getRadius();
+				center.y += edgeBasePoint.getPanel().getRadius();
 				g2d.drawLine(center.x, center.y, mousePoint.x, mousePoint.y);
 				if (ctool == Tool.DIRECTED_EDGE) {
 					double dist = Point.distance(mousePoint.x, mousePoint.y, center.x, center.y);
@@ -425,15 +425,15 @@ public class Editor extends JPanel {
 				if (e.getFirstEnd() != n1) {
 					initAngle *= -1;
 				}
-				Point p1 = e.getFirstEnd().getNodePanel().getCenter();
-				Point p2 = e.getSecondEnd().getNodePanel().getCenter();
+				Point p1 = e.getFirstEnd().getPanel().getCenter();
+				Point p2 = e.getSecondEnd().getPanel().getCenter();
 
 				// Distance between the centers of the nodes
 				double dist = p1.distance(p2);
 
 				// Get the radii of both ends
-				int p1r = e.getFirstEnd().getNodePanel().getRadius();
-				int p2r = e.getSecondEnd().getNodePanel().getRadius();
+				int p1r = e.getFirstEnd().getPanel().getRadius();
+				int p2r = e.getSecondEnd().getPanel().getRadius();
 
 				// Compute components of vectors pointing from one node to the other
 				// The length of the vectors is the radius of the node they point from
@@ -617,10 +617,10 @@ public class Editor extends JPanel {
 	private static void drawSelfEdge(GBEdge e, GBNode n, Graphics2D g2d) {
 		double offsetAngle = e.getAngle();
 
-		Point nodeCenter = n.getNodePanel().getCenter();
+		Point nodeCenter = n.getPanel().getCenter();
 
 		// The radius of n1's circle
-		int n1r = n.getNodePanel().getRadius();
+		int n1r = n.getPanel().getRadius();
 
 		double centralAngle = Preferences.SELF_EDGE_SUBTENDED_ANGLE;
 		double edgeAngle = Preferences.SELF_EDGE_ARC_ANGLE;

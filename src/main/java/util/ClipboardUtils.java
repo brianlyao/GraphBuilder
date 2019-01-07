@@ -7,11 +7,12 @@ import org.javatuples.Pair;
 import org.javatuples.Quartet;
 import structures.EditorData;
 import structures.UOPair;
-import ui.Editor;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for clipboard (copy, paste, delete, etc.) procedures.
@@ -104,20 +105,15 @@ public class ClipboardUtils {
 	 * Given a set of nodes, obtain the subset of edges whose endpoints both lie in the
 	 * provided set of nodes.
 	 *
-	 * @param ctxt  The context whose relevant graph we are looking at.
+	 * @param ctxt  The context whose graph we are looking at.
 	 * @param nodes A set of nodes.
 	 * @return The map of edges.
 	 */
 	public static Map<UOPair<GBNode>, List<GBEdge>> getSubEdgeMap(GBContext ctxt, Set<GBNode> nodes) {
-		Map<UOPair<GBNode>, List<GBEdge>> edgeMap = ctxt.getGbEdges();
-		Map<UOPair<GBNode>, List<GBEdge>> subEdgeMap = new HashMap<>();
-		for (Map.Entry<UOPair<GBNode>, List<GBEdge>> emEntry : edgeMap.entrySet()) {
-			UOPair<GBNode> pairKey = emEntry.getKey();
-			if (nodes.contains(pairKey.getFirst()) && nodes.contains(pairKey.getSecond())) {
-				subEdgeMap.put(pairKey, emEntry.getValue());
-			}
-		}
-		return subEdgeMap;
+		Map<UOPair<GBNode>, List<GBEdge>> edges = ctxt.getGbEdges();
+		return ctxt.getGbEdges().keySet().stream()
+			.filter(pair -> nodes.contains(pair.getFirst()) && nodes.contains(pair.getSecond()))
+			.collect(Collectors.toMap(Function.identity(), edges::get));
 	}
 
 	/**
@@ -131,8 +127,8 @@ public class ClipboardUtils {
 		int maxX = 0;
 		int maxY = 0;
 		for (GBNode n : nodes) {
-			maxX = Math.max(maxX, n.getNodePanel().getXCoord() + 2 * n.getNodePanel().getRadius());
-			maxY = Math.max(maxY, n.getNodePanel().getYCoord() + 2 * n.getNodePanel().getRadius());
+			maxX = Math.max(maxX, n.getPanel().getXCoord() + 2 * n.getPanel().getRadius());
+			maxY = Math.max(maxY, n.getPanel().getYCoord() + 2 * n.getPanel().getRadius());
 		}
 
 		return new Point(maxX, maxY);
@@ -150,7 +146,7 @@ public class ClipboardUtils {
 		Set<GBNode> newNodes = new HashSet<>();
 		Map<GBNode, GBNode> oldToNew = new HashMap<>();
 		for (GBNode n : oldNodes) {
-			GBNode newNode = new GBNode(n);
+			GBNode newNode = new GBNode(n.getContext().getNextIdAndInc(), n);
 			newNodes.add(newNode);
 			oldToNew.put(n, newNode);
 		}
@@ -163,7 +159,8 @@ public class ClipboardUtils {
 	 * context as the originals.
 	 *
 	 * @param oldEdges The edges we want to make copies of.
-	 * @param oldToNew The mapping from old nodes to their new copies (as returned by copyNodes).
+	 * @param oldToNew The mapping from old nodes to their new copies
+	 *                 (as returned by copyNodes).
 	 * @return The new copied edges.
 	 */
 	public static Map<UOPair<GBNode>, List<GBEdge>> copyEdges(Map<UOPair<GBNode>, List<GBEdge>> oldEdges,
@@ -174,9 +171,8 @@ public class ClipboardUtils {
 
 			// Iterate through all edges associated with the "old" pair of nodes
 			for (GBEdge e : emEntry.getValue()) {
-				GBNode oldFirstEnd = e.getFirstEnd();
-				GBNode oldSecondEnd = e.getSecondEnd();
-				forThisPair.add(new GBEdge(oldToNew.get(oldFirstEnd), oldToNew.get(oldSecondEnd), e.isDirected()));
+				forThisPair.add(new GBEdge(e.getContext().getNextIdAndInc(), oldToNew.get(e.getFirstEnd()),
+										   oldToNew.get(e.getSecondEnd()), e.isDirected()));
 			}
 
 			GBNode newEnd1 = oldToNew.get(emEntry.getKey().getFirst());

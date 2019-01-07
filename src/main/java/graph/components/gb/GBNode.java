@@ -24,41 +24,40 @@ public class GBNode extends GBComponent {
 
 	// The JPanel containing this node's visual appearance
 	@Getter @Setter
-	private NodePanel nodePanel;
+	private NodePanel panel;
 
 	@Getter
 	private Node node;
 
 	/**
-	 * Initialize a new GBNode.
+	 * Construct a new GBNode with the given node.
 	 *
 	 * @param node      The node to attach a context to.
 	 * @param context   The context this belongs to.
-	 * @param nodePanel The panel for displaying on the editor.
+	 * @param panel The panel for displaying on the editor.
 	 */
-	public GBNode(Node node, GBContext context, NodePanel nodePanel) {
+	public GBNode(Node node, GBContext context, NodePanel panel) {
 		super(context);
 		this.node = node;
 		this.node.setGbNode(this);
-		this.nodePanel = nodePanel;
-		this.nodePanel.setGbData(this);
+		this.panel = panel;
+		this.panel.setGbData(this);
 	}
 
 	/**
 	 * Copy constructor. Uses the same context as the given GBNode, but the
 	 * underlying Node is new.
 	 *
+	 * @param id     The ID of the new underlying node.
 	 * @param gbNode The node whose context to copy.
 	 */
-	public GBNode(GBNode gbNode) {
-		this(new Node(), gbNode.getContext(), new NodePanel(gbNode.nodePanel));
+	public GBNode(int id, GBNode gbNode) {
+		this(new Node(id), gbNode.getContext(), new NodePanel(gbNode.panel));
 	}
 
 	@Override
 	public String toString() {
-		Point coords = nodePanel.getCoords();
-		return String.format("GBNode[x=%d,y=%d,r=%d,text=%s,id=%d]", coords.x, coords.y,
-							 nodePanel.getRadius(), nodePanel.getText() == null ? "" : nodePanel.getText(), getId());
+		return String.format("GBNode[%s:(%d,%d)]", this.getId(), panel.getXCoord(), panel.getYCoord());
 	}
 
 	@Override
@@ -68,11 +67,10 @@ public class GBNode extends GBComponent {
 
 	@Override
 	public String toStorageString() {
-		Point coords = nodePanel.getCoords();
-		return String.format("%s%d,%d,%d,%d,%s,%d,%d,%d", FileUtils.NODE_PREFIX, node.getId(), coords.x,
-							 coords.y, nodePanel.getRadius(), nodePanel.getText(),
-							 nodePanel.getFillColor().getRGB(), nodePanel.getBorderColor().getRGB(),
-							 nodePanel.getTextColor().getRGB());
+		Point coords = panel.getCoords();
+		return String.format("%s%d,%d,%d,%d,%s,%d,%d,%d", FileUtils.NODE_PREFIX, this.getId(), coords.x,
+							 coords.y, panel.getRadius(), panel.getText(), panel.getFillColor().getRGB(),
+							 panel.getBorderColor().getRGB(), panel.getTextColor().getRGB());
 	}
 
 }

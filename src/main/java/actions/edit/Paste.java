@@ -117,7 +117,7 @@ public class Paste extends ReversibleAction {
 			Point oldLocation = new Point(originalCenterOfMass.x + relativePos.get(oldNode).getFirst(),
 										  originalCenterOfMass.y + relativePos.get(oldNode).getSecond());
 			GBNode newNode = oldToNew.get(oldNode);
-			newNode.getNodePanel().setCoords(oldLocation.x + diffX, oldLocation.y + diffY);
+			newNode.getPanel().setCoords(oldLocation.x + diffX, oldLocation.y + diffY);
 			this.getContext().addNode(newNode);
 		}
 

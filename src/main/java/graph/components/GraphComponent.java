@@ -1,9 +1,6 @@
 package graph.components;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * An abstract class for a component of the graph.
@@ -13,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor @NoArgsConstructor
 public abstract class GraphComponent {
 
-	@Getter @Setter
+	@Getter @Setter(AccessLevel.PROTECTED)
 	private int id; // The unique id of this component
 
 }

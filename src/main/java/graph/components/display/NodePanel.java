@@ -56,9 +56,6 @@ public class NodePanel extends JPanel {
 	@Getter
 	private GBNode gbNode;
 
-	// For convenience, store the editor this panel is displayed in
-	private Editor editor;
-
 	// Location (of the panel's top left corner) on editor panel. The origin
 	// is at the top left of the editor panel.
 	private int x;
@@ -130,6 +127,7 @@ public class NodePanel extends JPanel {
 
 				NodePanel thisPanel = NodePanel.this;
 				boolean contains = thisPanel.containsPoint(clickPoint);
+				Editor editor = gbNode.getContext().getGUI().getEditor();
 				EditorData editorData = editor.getData();
 
 				if (SwingUtilities.isRightMouseButton(e)) {
@@ -175,7 +173,7 @@ public class NodePanel extends JPanel {
 							// selections and select this node
 							editorData.removeAllSelections();
 							for (GBNode wasSelected : editorData.getSelectedNodes()) {
-								editorData.removeNodePanelEntry(wasSelected.getNodePanel());
+								editorData.removeNodePanelEntry(wasSelected.getPanel());
 							}
 
 							// Add this node as a selection
@@ -184,7 +182,7 @@ public class NodePanel extends JPanel {
 						} else {
 							// If this node is already selected, we don't change the selections
 							for (GBNode selectedNode : editorData.getSelectedNodes()) {
-								editorData.addNodePanelEntry(selectedNode.getNodePanel());
+								editorData.addNodePanelEntry(selectedNode.getPanel());
 							}
 						}
 
@@ -198,7 +196,7 @@ public class NodePanel extends JPanel {
 						} else {
 							// If the base point is set, draw a new edge
 							GBNode source = editorData.getEdgeBasePoint();
-							NodePanel sourcePanel = source.getNodePanel();
+							NodePanel sourcePanel = source.getPanel();
 							Color currentLineColor = editor.getGUI().getEdgeOptionsBar().getLineColor();
 							int currentLineWeight = editor.getGUI().getEdgeOptionsBar().getCurrentLineWeight();
 							boolean directed = tool == Tool.DIRECTED_EDGE;
@@ -303,6 +301,7 @@ public class NodePanel extends JPanel {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				// A mapping from the moved panels to their original position (before the move)
+				Editor editor = gbNode.getContext().getGUI().getEditor();
 				EditorData editorData = editor.getData();
 				HashMap<NodePanel, OrderedPair<Point>> movementMap = new HashMap<>();
 				Point originalPoint;
@@ -335,6 +334,7 @@ public class NodePanel extends JPanel {
 					hovering = true;
 
 					// Repaint to clear preview edge artifacts
+					Editor editor = gbNode.getContext().getGUI().getEditor();
 					editor.getData().setPreviewUsingObject(true);
 					editor.repaint();
 				}
@@ -345,6 +345,7 @@ public class NodePanel extends JPanel {
 				hovering = false;
 
 				// Remove any existing preview edge object
+				Editor editor = gbNode.getContext().getGUI().getEditor();
 				editor.getData().clearPreviewEdge();
 				editor.getData().setPreviewUsingObject(false);
 				editor.repaint();
@@ -357,6 +358,7 @@ public class NodePanel extends JPanel {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
+				Editor editor = gbNode.getContext().getGUI().getEditor();
 				if (editor.getGUI().getCurrentTool() == Tool.SELECT &&
 					containsPoint(clickPoint) && SwingUtilities.isLeftMouseButton(e)) {
 					// If the panel is dragged using left click and the select tool
@@ -395,7 +397,7 @@ public class NodePanel extends JPanel {
 					for (GBNode selectedNode : editor.getData().getSelectedNodes()) {
 						if (selectedNode != thisPanelNode) {
 							// Compute the new coordinates of the selected nodes, and update them
-							NodePanel selectionNodePanel = selectedNode.getNodePanel();
+							NodePanel selectionNodePanel = selectedNode.getPanel();
 							int selectionRadius = selectionNodePanel.getRadius();
 							Point newSelectionPoint = new Point(selectionNodePanel.getXCoord() + changeX,
 																selectionNodePanel.getYCoord() + changeY);
@@ -413,6 +415,7 @@ public class NodePanel extends JPanel {
 
 			@Override
 			public void mouseMoved(MouseEvent e) {
+				Editor editor = gbNode.getContext().getGUI().getEditor();
 				EditorData editorData = editor.getData();
 				if (containsPoint(e.getPoint())) {
 					hovering = true;
@@ -422,7 +425,7 @@ public class NodePanel extends JPanel {
 
 					// Draw preview edges
 					if (editorData.getEdgeBasePoint() != null) {
-						NodePanel ebpPanel = editorData.getEdgeBasePoint().getNodePanel();
+						NodePanel ebpPanel = editorData.getEdgeBasePoint().getPanel();
 						Tool ctool = editor.getGUI().getCurrentTool();
 
 						if ((ctool == Tool.EDGE || ctool == Tool.DIRECTED_EDGE) && ebpPanel != null) {
@@ -431,7 +434,7 @@ public class NodePanel extends JPanel {
 							boolean directed = ctool == Tool.DIRECTED_EDGE;
 
 							// Create edge and set it as the preview
-							GBEdge preview = new GBEdge(ebpPanel.gbNode, gbNode, directed);
+							GBEdge preview = new GBEdge(-1, ebpPanel.gbNode, gbNode, directed);
 							preview.setColor(previewColor);
 							preview.setWeight(weight);
 
@@ -494,7 +497,6 @@ public class NodePanel extends JPanel {
 	 */
 	public void setGbData(GBNode gbn) {
 		gbNode = gbn;
-		editor = gbNode.getContext().getGUI().getEditor();
 	}
 
 	/**
@@ -545,7 +547,7 @@ public class NodePanel extends JPanel {
 			// on the direction the edge is being drawn from
 			GBEdge firstEdge = existingEdges.get(0);
 			if (numExistingEdges == 1 && to != from && !firstEdge.isSelfEdge()) {
-				if (to == firstEdge.getSecondEnd().getNodePanel()) {
+				if (to == firstEdge.getSecondEnd().getPanel()) {
 					edgePosition = numExistingEdges - edgePosition;
 				}
 			} else if (to != from && !firstEdge.isSelfEdge()) {
@@ -685,6 +687,7 @@ public class NodePanel extends JPanel {
 		Color trueFillColor = fillColor;
 		Color trueBorderColor = borderColor;
 
+		Editor editor = gbNode.getContext().getGUI().getEditor();
 		if (gbNode == editor.getData().getPathBasePoint()) {
 			trueFillColor = Preferences.ACTION_COLOR1;
 		} if (gbNode.isHighlighted()) {
